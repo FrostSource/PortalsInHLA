@@ -113,7 +113,7 @@ end
 
 function PortalGun:init()
     print("PortalGun init")
-    local player = player or Entities:GetLocalPlayer()
+    player = player or Entities:GetLocalPlayer()
     PortalGun.Player = player
     if not player:GetHMDAvatar() then
         return
@@ -233,8 +233,7 @@ end
 
 sinceLastshot = 0
 function PortalGun:shoot()
-    
-    if not GlobalSys:CommandLineCheck('-vr') then
+    if not player:GetHMDAvatar() then
         return 0.5
     end
     PortalGun:HandlePickupAbility()
