@@ -258,7 +258,6 @@ function PortalGun:shoot()
         elseif PortalGun.NotActive == true then
             print("Failed to fire because NotActive is true")
         end
-        --I added fix for sound loop and hand invisibility
         return 0.1
     end
     if PortalGun.Player:IsDigitalActionOnForHand(0,PortalGun.BluePortalButton) and PortalGun.CantFireBlue == false then
