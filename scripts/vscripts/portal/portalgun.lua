@@ -126,6 +126,7 @@ function PortalGun:init()
     thisEntity:SetLocalAngles(0,180,0)
     thisEntity:RegisterAnimTagListener(AnimGraphListener)
     thisEntity:SetOwner(player)
+    PortalGun.HoldingHand:SetRenderAlpha(0)
 
     PortalGun.entity = thisEntity
 
