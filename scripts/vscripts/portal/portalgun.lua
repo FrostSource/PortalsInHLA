@@ -249,12 +249,24 @@ function PortalGun:shoot()
         --print(PortalGun.CanFire)
     end
     if PortalGun.CanFire == false or PortalGun.BlockFire == true or PortalGun.SupendPickupFire == true or PortalGun.NotActive == true then
+        if PortalGun.CanFire == false then
+            print("Failed to fire because CanFire is false")
+        elseif PortalGun.BlockFire == true then
+            print("Failed to fire because BlockFire is true")
+        elseif PortalGun.SupendPickupFire == true then
+            print("Failed to fire because SupendPickupFire is true")
+        elseif PortalGun.NotActive == true then
+            print("Failed to fire because NotActive is true")
+        end
+        --I added fix for sound loop and hand invisibility
         return 0.1
     end
     if PortalGun.Player:IsDigitalActionOnForHand(0,PortalGun.BluePortalButton) and PortalGun.CantFireBlue == false then
+        print("Firing blue portal")
         PortalGun:FireGun(Colors.Blue)
     end
     if PortalGun.Player:IsDigitalActionOnForHand(0,PortalGun.OrangePortalButton) and PortalGun.CantFireOrange == false then
+        print("Firing orange portal")
         PortalGun:FireGun(Colors.Orange)
     end
     return 0.1
