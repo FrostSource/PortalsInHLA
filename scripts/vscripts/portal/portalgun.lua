@@ -234,7 +234,7 @@ end
 sinceLastshot = 0
 function PortalGun:shoot()
     
-    if not player:GetHMDAvatar() then
+    if not GlobalSys:CommandLineCheck('-vr') then
         return 0.5
     end
     PortalGun:HandlePickupAbility()
