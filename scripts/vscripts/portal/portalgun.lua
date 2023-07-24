@@ -161,6 +161,10 @@ end
 function HandeWeaponSwitch(args,idk)
     --DeepPrintTable(idk)
     if idk["item"] ~= "hand_use_controller" then
+        local parent = thisEntity:GetMoveParent()
+        if parent then
+            parent:SetRenderAlpha(255)
+        end
         thisEntity:SetParent(nil,"")
         thisEntity:SetAbsOrigin(Vector(0,0,0))
         thisEntity:SetAbsAngles(0,0,0)
@@ -169,6 +173,7 @@ function HandeWeaponSwitch(args,idk)
 
     else
         thisEntity:SetParent(PortalGun.HoldingHand, "hand_r")
+        PortalGun.HoldingHand:SetRenderAlpha(0)
         thisEntity:SetLocalOrigin(Vector(-7.5, -1, -2.2))
         thisEntity:SetLocalAngles(15,180,0)
         thisEntity:SetOwner(player)
