@@ -647,7 +647,7 @@ function Activate(ActivateType)
                 Entities:FindByName(nil,Colors.Orange.."Portalview"):Destroy()
                 PortalManager:CreatePortalAt(PortalManager.Storage:LoadVector("orangePortalPos"),PortalManager.Storage:LoadVector("orangePortalNormal"),Colors.Orange)
             end
-            PortalManager.PortableFuncs = PortalManager.Storage:LoadBoolean("PortableFunc")
+            PortalManager.PortableFunc = PortalManager.Storage:LoadBoolean("PortableFunc")
         end,"restorg",0.2)
         
     end
