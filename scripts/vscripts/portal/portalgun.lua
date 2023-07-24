@@ -210,7 +210,7 @@ function PortalGun:HandlePickupAbility()
         end
         PortalGun.SupendPickupFire = true
     elseif player:GetAnalogActionPositionForHand(0,1).x < 0.5 and PortalGun.PickedEntity ~= nil then
-        StopSoundEvent("PortalGun.UseLoop",player)
+        StopSoundEvent("PortalGun.UseLoop",thisEntity)
         PortalGun.PickedEntity = nil
         PortalGun.SupendPickupFire = false
     elseif PortalGun.PickedEntity ~= nil then
