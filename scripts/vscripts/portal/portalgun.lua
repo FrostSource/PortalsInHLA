@@ -79,6 +79,12 @@ function GunRestore()
     if not player:GetHMDAvatar() then
         return
     end
+
+    -- Vive controller uses one button for grenade/reload, so we remap to burst fire
+    if player:GetVRControllerType() == 2 then
+        PortalGun.OrangePortalButton = 14
+    end
+
     PortalGun.Hand = player:GetHMDAvatar():GetVRHand(1)
     PortalGun.HoldingHand = player:GetHMDAvatar():GetVRHand(1):FirstMoveChild()
     PortalGun.entity = thisEntity
