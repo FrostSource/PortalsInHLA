@@ -7,7 +7,8 @@ _G.mins = Vector(-(portalx / 2), -(portaly / 2), -(portalz / 2))
 _G.maxs = Vector(portalx / 2, portaly / 2, portalz / 2)
 
 -- Debugging = _G.Debugging or false
-_G.Debugging = false
+_G.Debugging = Convars:GetBool("portal_debugging")
+Convars:RegisterConvar("portal_debugging_is_on", _G.Debugging and "1" or "0", "", 0)
 Convars:RegisterCommand("portal_debugging", function (_, on)
     if on == nil or on == "" then
         on = not _G.Debugging
@@ -18,6 +19,7 @@ Convars:RegisterCommand("portal_debugging", function (_, on)
     end
     _G.Debugging = on
 end, "Toggle portal debugging", 0)
+
 
 
 tickrate = _G.tickrate or 0.05
