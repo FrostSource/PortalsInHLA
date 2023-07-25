@@ -6,7 +6,18 @@ local detectRadius = portaly
 _G.mins = Vector(-(portalx / 2), -(portaly / 2), -(portalz / 2))
 _G.maxs = Vector(portalx / 2, portaly / 2, portalz / 2)
 
-Debugging = _G.Debugging or false
+-- Debugging = _G.Debugging or false
+_G.Debugging = false
+Convars:RegisterCommand("portal_debugging", function (_, on)
+    if on == nil or on == "" then
+        on = not _G.Debugging
+    elseif on == false or on == "0" or on == "false" or on == "off" then
+        on = false
+    else
+        on = true
+    end
+    _G.Debugging = on
+end, "Toggle portal debugging", 0)
 
 
 tickrate = _G.tickrate or 0.05
@@ -141,7 +152,7 @@ function PortalManager:init()
             local org = ent:GetOrigin()
             
             local portableEnts = Entities:FindAllInSphere(org, detectRadius)
-            if Debugging then
+            if _G.Debugging then
                 DebugDrawLine(org, org + (dir * 10), 255, 0, 0, true, 1)
                 --DebugDrawSphere(org, Vector(0, 0, 50), 10, detectRadius, true, 0.1)
 
@@ -240,7 +251,7 @@ function PortalManager:teleport(portableEnt, colorportal)
     --local newAngles = VectorToAngles(Portal:TransformPointEntityToWorld(portableEnt:GetAnglesAsVector()))
     --portableEnt:SetAngles(-newAngles.x,-newAngles.y,-newAngles.z)
     portableEnt:ApplyAbsVelocityImpulse((-vel)+newVel-dir)
-    if Debugging then
+    if _G.Debugging then
         DebugDrawLine(OriginalPortal:GetOrigin(), OriginalPortal:GetOrigin() + vel, 255, 0, 0, true, 10)
         DebugDrawLine(Portal:GetOrigin(), Portal:GetOrigin() + newVel, 0, 255, 0, true, 10)
         print(vel)
@@ -335,7 +346,7 @@ function TraceDirection(position,dir)
         ignore = player,
     }
     TraceLine(TraceTable)
-    if Debugging then
+    if _G.Debugging then
         if TraceTable.hit then
             DebugDrawLine(TraceTable.startpos,TraceTable.endpos,255,0,0,true,3)
         else
@@ -599,7 +610,7 @@ function PlayerShoot()
             end
             
         
-            if Debugging then
+            if _G.Debugging then
                 DebugDrawLine(traceTable.startpos, traceTable.pos, 0, 255, 0, false, 1)
                 DebugDrawLine(traceTable.pos, traceTable.pos + traceTable.normal * 10, 0, 0, 255, false, 1)
             end
@@ -608,12 +619,12 @@ function PlayerShoot()
             else
                 currentPortal = Colors.Blue
             end
-            if Debugging then
+            if _G.Debugging then
                 print("Createing Portal Color:" .. currentPortal)
             end
             PortalManager:TryToCreatePortalAt(traceTable.pos, traceTable.normal, currentPortal)
         else
-            if Debugging then
+            if _G.Debugging then
                 DebugDrawLine(traceTable.startpos, traceTable.endpos, 255, 0, 0, false, 1)
             end
         end
@@ -673,7 +684,7 @@ function Precache(context)
 end
 
 function SpawnOrangePortal(args)
-    if Debugging then
+    if _G.Debugging then
         print("Create Orange Portal")
         
     end
@@ -681,7 +692,7 @@ function SpawnOrangePortal(args)
     PortalManager:CreatePortalAt(caller:GetOrigin(), caller:GetForwardVector(), Colors.Orange)
 end
 function SpawnBluePortal(args)
-    if Debugging then
+    if _G.Debugging then
         print("Create Blue Portal")
         
     end
@@ -690,7 +701,7 @@ function SpawnBluePortal(args)
 end
 
 function SetFuncMode(args)
-    if Debugging then
+    if _G.Debugging then
         print("Set Func Mode")
         
     end

@@ -1,5 +1,5 @@
 tickrate = _G.tickrate or 0.05
-Debugging = _G.Debugging or false
+-- Debugging = _G.Debugging or false
 Colors = _G.Colors or {
     Blue = "blue",
     Orange = "orange"
@@ -249,30 +249,30 @@ function PortalGun:shoot()
         --print(PortalGun.CanFire)
     end
     if PortalGun.CanFire == false or PortalGun.BlockFire == true or PortalGun.SupendPickupFire == true or PortalGun.NotActive == true then
-        if PortalGun.CanFire == false then
-            print("Failed to fire because CanFire is false")
-        elseif PortalGun.BlockFire == true then
-            print("Failed to fire because BlockFire is true")
-        elseif PortalGun.SupendPickupFire == true then
-            print("Failed to fire because SupendPickupFire is true")
-        elseif PortalGun.NotActive == true then
-            print("Failed to fire because NotActive is true")
+        if _G.Debugging then
+            if PortalGun.CanFire == false then
+                print("Failed to fire because CanFire is false")
+            elseif PortalGun.BlockFire == true then
+                print("Failed to fire because BlockFire is true")
+            elseif PortalGun.SupendPickupFire == true then
+                print("Failed to fire because SupendPickupFire is true")
+            elseif PortalGun.NotActive == true then
+                print("Failed to fire because NotActive is true")
+            end
         end
         return 0.1
     end
     if PortalGun.Player:IsDigitalActionOnForHand(0,PortalGun.BluePortalButton) and PortalGun.CantFireBlue == false then
-        print("Firing blue portal")
         PortalGun:FireGun(Colors.Blue)
     end
     if PortalGun.Player:IsDigitalActionOnForHand(0,PortalGun.OrangePortalButton) and PortalGun.CantFireOrange == false then
-        print("Firing orange portal")
         PortalGun:FireGun(Colors.Orange)
     end
     return 0.1
 end
 
 function PortalGun:FireGun(Color)
-    if Debugging then
+    if _G.Debugging then
         print(Color.." Portal")
     end
     PortalGun.entity:SetGraphParameterBool("bfired",true)
@@ -310,7 +310,7 @@ function PortalGun:FireGun(Color)
         else
             StartSoundEventFromPositionReliable("PortalGun.Shoot.Orange",gunmuzzle)
         end
-        if Debugging then
+        if _G.Debugging then
             DebugDrawLine(traceTable.startpos, traceTable.endpos, 0, 255, 0, false, 1)
             DebugDrawLine(traceTable.pos, traceTable.endpos + traceTable.normal * 10, 0, 0, 255, false, 1)
         end
