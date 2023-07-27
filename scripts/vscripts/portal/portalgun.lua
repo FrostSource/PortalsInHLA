@@ -42,6 +42,7 @@ function Precache(context)
     print("Portalgun Precache")
     PrecacheResource("particle", "particles/portalgun_barrel.vpcf", context)
     PrecacheResource("particle", "particles/portalgun_light.vpcf", context)
+    PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
 end
 function Activate(activateType)
     print("PortalGun Activated")
@@ -276,6 +277,14 @@ function PortalGun:shoot()
     return 0.1
 end
 
+local function createFailedPortalEffect(pos, dir, color)
+    StartSoundEventFromPositionReliable("PortalGun.Shoot.Fail", pos)
+    StartSoundEventFromPositionReliable("PortalGun.Shoot.FailLayer", pos)
+    local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, thisEntity)
+    ParticleManager:SetParticleControl(pindex, 0, pos + dir)
+    ParticleManager:SetParticleControl(pindex, 2, PortalManager.ColorEnts[color]:GetOrigin())
+end
+
 function PortalGun:FireGun(Color)
     if _G.Debugging then
         print(Color.." Portal")
@@ -290,22 +299,33 @@ function PortalGun:FireGun(Color)
         ignore = player
     }
     TraceLine(traceTable)
-    
+
     if traceTable.hit then
         if Color == Colors.Blue then
             EntFireByHandle(thisEntity,traceTable.enthit,"FireUser1")
         else
             EntFireByHandle(thisEntity,traceTable.enthit,"FireUser2")
         end
+        local surfaceIsPortable = true
         if PortalManager.PortableFunc then
             if  traceTable.enthit:GetClassname() ~= "func_brush" or not string.starts(traceTable.enthit:GetName(),PortalManager.PortalPrefix) then
-                return tickrate
+                surfaceIsPortable = false
             end
         else
             if  traceTable.enthit:GetClassname() == "func_brush" and not string.starts(traceTable.enthit:GetName(),PortalManager.PortalPrefix) then
-                return tickrate
+                surfaceIsPortable = false
             end
         end
+        if _G.Debugging then
+            -- debugoverlay:Line(traceTable.startpos, traceTable.pos, surfaceIsPortable and 0 or 255, surfaceIsPortable and 255 or 0, 0, 255, false, 1)
+            DebugDrawLine(traceTable.startpos, traceTable.endpos, surfaceIsPortable and 0 or 255, surfaceIsPortable and 255 or 0, 0, false, 1)
+            DebugDrawLine(traceTable.pos, traceTable.pos + traceTable.normal * 10, 0, 0, 255, false, 1)
+        end
+        if not surfaceIsPortable then
+            createFailedPortalEffect(traceTable.pos, traceTable.normal, Color)
+            return tickrate
+        end
+
         local pindex = ParticleManager:CreateParticle("particles/portalgun_shooting.vpcf", 1, thisEntity)
         ParticleManager:SetParticleControl(pindex, 0, gunmuzzle)
         ParticleManager:SetParticleControlForward(pindex, 1, gunforward)
@@ -314,10 +334,6 @@ function PortalGun:FireGun(Color)
             StartSoundEventFromPositionReliable("PortalGun.Shoot.Blue",gunmuzzle)
         else
             StartSoundEventFromPositionReliable("PortalGun.Shoot.Orange",gunmuzzle)
-        end
-        if _G.Debugging then
-            DebugDrawLine(traceTable.startpos, traceTable.endpos, 0, 255, 0, false, 1)
-            DebugDrawLine(traceTable.pos, traceTable.endpos + traceTable.normal * 10, 0, 0, 255, false, 1)
         end
         if _G.PortalManager:TryToCreatePortalAt(traceTable.pos, traceTable.normal, Color) == false then
         else
