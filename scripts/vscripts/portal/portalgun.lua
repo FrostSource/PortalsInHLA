@@ -1,3 +1,6 @@
+
+local SECONDS_BETWEEN_EACH_SHOT = 0.2
+
 tickrate = _G.tickrate or 0.05
 -- Debugging = _G.Debugging or false
 Colors = _G.Colors or {
@@ -238,16 +241,17 @@ function PortalGun:shoot()
         return 0.5
     end
     PortalGun:HandlePickupAbility()
-    if PortalGun.CanFire == false and sinceLastshot < 1 then
+    if PortalGun.CanFire == false and sinceLastshot < SECONDS_BETWEEN_EACH_SHOT then
         sinceLastshot = sinceLastshot + FrameTime()*5
         --print("Cant fire yet")
         --print(sinceLastshot)
-    elseif sinceLastshot > 1 then
+    elseif sinceLastshot > SECONDS_BETWEEN_EACH_SHOT then
         sinceLastshot = 0
         PortalGun.CanFire = true
         --print("Can fire")
         --print(PortalGun.CanFire)
     end
+
     if PortalGun.CanFire == false or PortalGun.BlockFire == true or PortalGun.SupendPickupFire == true or PortalGun.NotActive == true then
         if _G.Debugging then
             if PortalGun.CanFire == false then
@@ -262,6 +266,7 @@ function PortalGun:shoot()
         end
         return 0.1
     end
+
     if PortalGun.Player:IsDigitalActionOnForHand(0,PortalGun.BluePortalButton) and PortalGun.CantFireBlue == false then
         PortalGun:FireGun(Colors.Blue)
     end
