@@ -61,18 +61,7 @@ function base:Open(position, normal, color)
     devprints("Opening portal", Debug.SimpleVector(position), Debug.SimpleVector(normal), color.name, Debug.SimpleVector(color.color))
 
     self.colorName = color.name
-    -- local normalAngles = VectorToAngles(normal)
     local normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
-    -- if normal.x == 0 and normal.y == 0 and (normal.z > 0.999 or normal.z < -0.999) then
-    --     local newnormal = Vector(Player:GetOrigin().x,Player:GetOrigin().y,0)-Vector(position.x,position.y,0)
-    --     newnormal = newnormal:Normalized()
-    --     normalAngles = VectorToAngles(newnormal)
-    --     if normal.z > 0.999 then
-    --         normalAngles = RotateOrientation(normalAngles, QAngle(-90, 0, 180))
-    --     else
-    --         normalAngles = RotateOrientation(normalAngles, QAngle(90, 0, 180))
-    --     end
-    -- end
 
     self.aimat = SpawnEntityFromTableSynchronous("point_aimat", {
         targetname = color.name .. "Portal_aimat",
@@ -154,13 +143,8 @@ function base:UpdateConnection()
             EntFire(portal.camera, portal.camera:GetName(), "Enable")
         end
 
-        -- self.monitor:SetOrigin(self.aimat:GetOrigin() + self.aimat:GetForwardVector() * 2)
-        -- connectedPortal.monitor:SetOrigin(connectedPortal.aimat:GetOrigin() + connectedPortal.aimat:GetForwardVector() * 2)
-
     else
-
         EntFire(self.camera, self.camera:GetName(), "Enable")
-
     end
 end
 

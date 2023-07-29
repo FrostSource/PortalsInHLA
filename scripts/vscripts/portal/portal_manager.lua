@@ -143,10 +143,10 @@ function PortalManager:TracePortableSurface(startpos, forward, ignore)
             end
         end
 
-        -- if self:Debugging() then
-        --     DebugDrawLine(traceTable.startpos, traceTable.endpos, surfaceIsPortable and 0 or 255, surfaceIsPortable and 255 or 0, 0, false, 1)
-        --     DebugDrawLine(traceTable.pos, traceTable.pos + traceTable.normal * 10, 0, 0, 255, false, 1)
-        -- end
+        if self:Debugging() then
+            DebugDrawLine(traceTable.startpos, traceTable.endpos, surfaceIsPortable and 0 or 255, surfaceIsPortable and 255 or 0, 0, false, 1)
+            DebugDrawLine(traceTable.pos, traceTable.pos + traceTable.normal * 10, 0, 0, 255, false, 1)
+        end
 
         traceTable.surfaceIsPortable = surfaceIsPortable
     end
@@ -174,28 +174,9 @@ function PortalManager:ReorientPortalPerpendicular(normal, forward)
         normalAngles = RotateOrientation(normalAngles, QAngle(xaxis, 0, 0))
     end
     return normalAngles
-    -- if normal.x == 0 and normal.y == 0 and (normal.z > 0.999 or normal.z < -0.999) then
-    -- normal:IsPerpendicularTo(object:GetForwardVector())
-    --     local newnormal = Vector(Player:GetOrigin().x,Player:GetOrigin().y,0)-Vector(position.x,position.y,0)
-    --     newnormal = newnormal:Normalized()
-    --     normalAngles = VectorToAngles(newnormal)
-    --     if normal.z > 0.999 then
-    --         normalAngles = RotateOrientation(normalAngles, QAngle(-90, 0, 180))
-    --     else
-    --         normalAngles = RotateOrientation(normalAngles, QAngle(90, 0, 180))
-    --     end
-    -- end
 end
 
 function PortalManager:TryCreatePortalAt(position, normal, color)
-    -- local normalAngles = VectorToAngles(normal)
-
-    -- if normal.x == 0 and normal.y == 0 and (normal.z > 0.999 or normal.z < -0.999) then
-    --     local newnormal = Vector(Player:GetOrigin().x,Player:GetOrigin().y,0)-Vector(position.x,position.y,0)
-    --     newnormal = newnormal:Normalized()
-    --     normalAngle = VectorToAngles(newnormal)
-    --     normalAngle = RotateOrientation(normalAngle, QAngle(-90, 0, 0))
-    -- end
     local normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
 
     local UpTrace = self:TraceDirection(position + normalAngles:Forward() * 10, normalAngles:Up() * PORTAL_SIZE_Z / 2)
@@ -257,7 +238,6 @@ function PortalManager:CreatePortalAt(position, normal, color)
     end
 
     if self:IsPortalOpen(color) then
-        print("Closing already open portal")
         self:ClosePortal(color)
     end
 
@@ -268,8 +248,6 @@ function PortalManager:CreatePortalAt(position, normal, color)
 
     -- Portal handles its own opening/connection logic
     newPortal:Open(position, normal, color)
-
-    -- self.portals[color.name] = newPortal
 
     local connectedPortal = self:GetConnectedPortal(color)
     if connectedPortal then
@@ -284,7 +262,6 @@ function PortalManager:ClosePortal(color)
         return
     end
 
-    -- local portal = self.portals[color.name]
     local portal = self:GetPortal(color)
 
     if portal then
@@ -306,7 +283,6 @@ end
 ---@param color PortalColor
 ---@return boolean
 function PortalManager:IsPortalOpen(color)
-    -- return self.portals[color.name] ~= nil
     return self:GetPortal(color) ~= nil
 end
 
@@ -328,7 +304,6 @@ end
 ---@param originalColor PortalColors|PortalColor|string # Color table or name of color.
 ---@return Portal?
 function PortalManager:GetConnectedPortal(originalColor)
-    -- local connectedPortal = self.portals[originalColor.connection]
     if type(originalColor) == "string" then
         originalColor = self.colors[originalColor]
     end
