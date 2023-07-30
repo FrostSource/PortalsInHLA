@@ -31,3 +31,5 @@ omnisharp.json
 *.blend4
 /scripts/vscripts/.vscode
 /scripts/vscripts/maskfinder
+
+*__test*
