@@ -1,5 +1,34 @@
 local PTX_PORTAL_EFFECT = "particles/portal_effect_parent.vpcf"
 
+---These are classes which are allowed to be teleported through a portal.
+local PORTAL_CLASS_WHITELIST = {
+    "prop_physics",
+    "func_physbox",
+    "npc_manhack",
+    "item_hlvr_grenade_frag",
+    "item_hlvr_grenade_xen",
+    "item_hlvr_prop_battery",
+    "prop_physics_interactive",
+    "prop_physics_override",
+    "prop_ragdoll",
+    "generic_actor",
+    "hlvr_weapon_energygun",
+    "item_healthvial",
+    "item_item_crate",
+    "item_hlvr_crafting_currency_large",
+    "item_hlvr_crafting_currency_small",
+    "item_hlvr_clip_energygun",
+    "item_hlvr_clip_energygun_multiple",
+    "item_hlvr_clip_rapidfire",
+    "item_hlvr_clip_shotgun_single",
+    "item_hlvr_clip_shotgun_multiple",
+    "item_hlvr_clip_generic_pistol",
+    "item_hlvr_clip_generic_pistol_multiple",
+}
+
+
+local TICKRATE = 0.05
+
 ---@class Portal : EntityClass
 local base = entity("Portal")
 
@@ -12,10 +41,10 @@ base.portalModel = nil
 
 base.camera = nil
 base.monitor = nil
+base.trigger = nil
 
 ---@type string
 base.colorName = ""
-
 
 ---Called automatically on spawn
 ---@param spawnkeys CScriptKeyValues
@@ -40,6 +69,7 @@ function base:CleanupAndDestroy()
     if self.particleSystem then self.particleSystem:Kill() end
     if self.teleport then self.teleport:Kill() end
     if self.portalModel then self.portalModel:Kill() end
+    self.trigger:DisconnectRedirectedOutput("OnStartTouch", "OnTriggerTouch", self)
 
     self:Kill()
 end
@@ -49,7 +79,7 @@ function base:UpdateEffects()
         ParticleManager:DestroyParticle(self.__ptxEffect, false)
     end
     self.__ptxEffect = ParticleManager:CreateParticleForPlayer(PTX_PORTAL_EFFECT, 1, self.particleSystem, Player)
-    ParticleManager:SetParticleControl(self.__ptxEffect, 5, PortalManager.colors[self.colorName].color)
+    ParticleManager:SetParticleControl(self.__ptxEffect, 5, PortalManager.colors[self.colorName].color:ToDecimalVector())
 end
 
 ---Open this portal with new properties.
@@ -58,7 +88,9 @@ end
 ---@param color PortalColor
 ---@overload fun()
 function base:Open(position, normal, color)
-    devprints("Opening portal", Debug.SimpleVector(position), Debug.SimpleVector(normal), color.name, Debug.SimpleVector(color.color))
+    devprints("Opening portal", Debug.SimpleVector(position), Debug.SimpleVector(normal), color.name, Debug.SimpleVector(color.color:ToVector()))
+    print(color.color[1], color.color[2], color.color[3])
+    print()
 
     self.colorName = color.name
     local normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
@@ -69,6 +101,13 @@ function base:Open(position, normal, color)
         angles = normalAngles
     })
     self.aimat:SetForwardVector(AnglesToVector(normalAngles))--(normal)
+    debugoverlay:VertArrow(self.aimat:GetOrigin(), self.aimat:GetOrigin() + self.aimat:GetForwardVector() * 64, 8, 255, 0, 0, 255, false, 900)
+    self:SetOrigin(self.aimat:GetOrigin())
+    self:SetQAngle(self.aimat:GetAngles())
+    local aimdebug = SpawnEntityFromTableSynchronous("prop_dynamic", {model="models/editor/point_aimat.vmdl"})
+    aimdebug:SetParent(self.aimat, "")
+    aimdebug:SetLocalOrigin(Vector())
+    aimdebug:SetLocalAngles(0,0,0)
 
     local normalRotated = RotateOrientation(normalAngles, QAngle(90, 0, 0))
 
@@ -102,6 +141,8 @@ function base:Open(position, normal, color)
 
     self.camera = PortalManager:GetPortalCamera(color)
     self.monitor = PortalManager:GetPortalMonitor(color)
+    self.trigger = PortalManager:GetPortalTrigger(color)
+    self.trigger:RedirectOutput("OnStartTouch", "OnTriggerTouch", self)
 
     self:UpdateEffects()
 
@@ -122,6 +163,7 @@ function base:GetConnectedPortal()
 end
 
 function base:Close()
+    ---@TODO Notify connected portal that it has closed
     self:CleanupAndDestroy()
 end
 
@@ -143,20 +185,126 @@ function base:UpdateConnection()
             EntFire(portal.camera, portal.camera:GetName(), "Enable")
         end
 
+        self:ResumeThink()
+
     else
         EntFire(self.camera, self.camera:GetName(), "Enable")
+        self:PauseThink()
+    end
+end
+
+---Get if an entity can teleport to connected portal.
+---@TODO Determine exactly how this works
+---@param ent EntityHandle
+---@return boolean
+function base:CanTeleport(ent)
+    local connectedPortal = self:GetConnectedPortal()
+    if not connectedPortal then
+        return false
+    end
+    ---@TODO Check free space at connected portal
+    return true
+
+end
+
+---Called
+---@param params IOParams
+function base:OnTriggerTouch(params, test)
+    local ent = params.activator
+
+    -- Disallow entities owned by player
+    if ent:GetOwner() then
+        local ownerClass = ent:GetOwner():GetClassname()
+        if ownerClass == "player" or ownerClass == "hl_prop_vr_hand" or ownerClass == "prop_hmd_avatar" or ownerClass == "hl_vr_teleport_controller" then
+            return
+        end
+    end
+
+    if not vlua.find(PORTAL_CLASS_WHITELIST, ent:GetClassname()) then
+        return
+    end
+
+    self:Teleport(ent)
+end
+
+---This should be fine to be a local to this class script
+local lastPlayerTeleport = 0
+
+---Teleports an entity from this portal to its connected portal (if one exists).
+---@param ent EntityHandle
+function base:Teleport(ent)
+    if self:CanTeleport(ent) then
+
+        local connectedPortal = self:GetConnectedPortal()--[[@as Portal]]
+
+        devprints(self:GetName(), "teleporting", ent:GetClassname())
+
+        if ent:IsPlayer() then
+            print('teleport player')
+            -- Teleport player
+            if lastPlayerTeleport - GetFrameCount() < 0 and self:CanTeleport(Player) then
+                -- In VR
+                if Player.HMDAvatar ~= nil then
+                    Player.HMDAvatar:SetAbsOrigin(
+                        (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30) + (Player.HMDAnchor:GetOrigin() - Player.HMDAvatar:GetOrigin())
+                    )
+                    StartSoundEvent("PortalPlayer.Enter", Player)
+                    lastPlayerTeleport = GetFrameCount() + 50
+                -- In NOVR
+                else
+                    print(lastPlayerTeleport - GetFrameCount() < 0, lastPlayerTeleport, GetFrameCount())
+                    Player:SetOrigin(Player:GetOrigin() + Vector(0, 0, 10))
+                    self:Teleport(Player)
+                    lastPlayerTeleport = GetFrameCount() + 10
+                end
+            end
+        else
+            local localPositionOnPortal = self:TransformPointWorldToEntity(ent:GetOrigin())
+            local dir = connectedPortal:GetForwardVector()
+            -- Teleport from OriginalPortal to Portal but keep velocity and rotation of the entity with offset to keep it from constantly teleporting back and forth
+            ent:SetOrigin(connectedPortal:TransformPointEntityToWorld(localPositionOnPortal + Vector(PORTAL_MAXS.x, 0, 0)))
+
+            -- Rotate Velocity to match the new direction
+            local vel = GetPhysVelocity(ent)
+            local newVel = dir * vel:Length() * 0.95
+
+            ent:ApplyAbsVelocityImpulse(-vel + newVel - dir)
+
+            if PortalManager:Debugging() then
+                DebugDrawLine(self:GetOrigin(), self:GetOrigin() + vel, 255, 0, 0, true, 10)
+                DebugDrawLine(connectedPortal:GetOrigin(), connectedPortal:GetOrigin() + newVel, 0, 255, 0, true, 10)
+                print(Debug.SimpleVector(vel))
+                print(Debug.SimpleVector(newVel))
+                print("___________")
+            end
+
+            if PortalManager.portalGun and PortalManager.portalGun.__pickupEntity == ent then
+                PortalManager.portalGun:DropItem()
+            end
+        end
+
     end
 end
 
 ---Main entity think function. Think state is saved between loads
 function base:Think()
 
-    -- local connectedPortal = self:GetConnectedPortal()
-    -- if connectedPortal then
-    --     local playerToPortal = 
-    -- end
+    local connectedPortal = self:GetConnectedPortal()--[[@as Portal]]
 
-    return 0
+    -- Update render camera
+    local PlayerToConnectedPortal = connectedPortal.aimat:TransformPointWorldToEntity(Player:EyePosition())
+    PlayerToConnectedPortal.z = PlayerToConnectedPortal.z * -1
+    PlayerToConnectedPortal.x = Clamp(PlayerToConnectedPortal.x, 0, 40)
+    PlayerToConnectedPortal.y = Clamp(PlayerToConnectedPortal.y / 10, -15, 15)
+    PlayerToConnectedPortal.z = Clamp(PlayerToConnectedPortal.z / 10, -10, 10)
+
+    local camPos = self.aimat:TransformPointEntityToWorld(-PlayerToConnectedPortal)
+    self.camera:SetOrigin(camPos)
+
+    local angles = VectorToAngles( self.aimat:TransformPointEntityToWorld(PlayerToConnectedPortal) - self.aimat:GetOrigin() )
+    self.camera:SetQAngle(angles)
+
+    return TICKRATE
 end
 
 --Used for classes not attached directly to entities

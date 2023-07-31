@@ -37,6 +37,9 @@ base.pickupRange = 100
 ---@type EntityHandle
 base.__pickupEntity = nil
 
+---Stops the pickup ability until trigger is released.
+base.__disablePickupUntilTriggerRelease = false
+
 base.orangePortalEnabled = true
 base.bluePortalEnabled = true
 
@@ -60,6 +63,8 @@ function base:Precache(context)
     PrecacheResource("particle", "particles/portalgun_barrel.vpcf", context)
     PrecacheResource("particle", "particles/portalgun_light.vpcf", context)
     PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
+    -- for debugging
+    PrecacheModel("models/editor/point_aimat.vmdl", context)
 end
 
 ---Called automatically on spawn
@@ -180,8 +185,8 @@ function base:TryFirePortal(color)
         PortalGun.Hand:FireHapticPulse(1)
 
         -- Set the gun color particles
-        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color.color)
-        ParticleManager:SetParticleControl(self.__ptxLight, 5, color.color)
+        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color.color:ToDecimalVector())
+        ParticleManager:SetParticleControl(self.__ptxLight, 5, color.color:ToDecimalVector())
 
         if PortalManager:Debugging() then
             print("Trying to fire portal", color)
@@ -198,14 +203,14 @@ function base:TryFirePortal(color)
         local pindex = ParticleManager:CreateParticle("particles/portalgun_shooting.vpcf", 1, thisEntity)
         ParticleManager:SetParticleControl(pindex, 0, muzzleOrigin)
         ParticleManager:SetParticleControlForward(pindex, 1, muzzleForward)
-        ParticleManager:SetParticleControl(pindex, 5, color.color)
+        ParticleManager:SetParticleControl(pindex, 5, color.color:ToDecimalVector())
         if portalIsBlue then
             StartSoundEventFromPositionReliable("PortalGun.Shoot.Blue", muzzleOrigin)
         else
             StartSoundEventFromPositionReliable("PortalGun.Shoot.Orange", muzzleOrigin)
         end
 
-        local result = PortalManager:TracePortableSurface(muzzleOrigin, muzzleForward, Player)
+        local result = PortalManager:TracePortalableSurface(muzzleOrigin, muzzleForward, Player)
         if result.hit then
 
             -- FireUser1 for blue, FireUser2 or orange
@@ -213,8 +218,8 @@ function base:TryFirePortal(color)
                 EntFireByHandle(self, result.enthit, portalIsBlue and "FireUser1" or "FireUser2")
             end
 
-            if not result.surfaceIsPortable then
-                createFailedPortalEffect(result.pos, result.normal, color.color)
+            if not result.surfaceIsPortalable then
+                createFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
                 return false
             end
 
@@ -236,6 +241,11 @@ function base:TryFirePortal(color)
 
     -- Buttons aren't ready to fire
     return false
+end
+
+function base:DropItem()
+    self.__disablePickupUntilTriggerRelease = true
+    self.__pickupEntity = nil
 end
 
 function base:HandlePickupAbility()
@@ -289,9 +299,12 @@ function base:Think()
 
     if self:IsEquipped() then
 
-        if Input:Button(self.hand, self.pickupButton) then
+        if not self.__disablePickupUntilTriggerRelease and Input:Button(self.hand, self.pickupButton) then
             self:HandlePickupAbility()
         else
+            if self.__disablePickupUntilTriggerRelease then
+                self.__disablePickupUntilTriggerRelease = false
+            end
             if self.__pickupEntity ~= nil then
                 self.__pickupEntity = nil
                 StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())

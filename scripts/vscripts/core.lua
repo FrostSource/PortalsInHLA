@@ -554,6 +554,7 @@ ifrequire 'math.core'
 ifrequire 'data.queue'
 ifrequire 'data.stack'
 ifrequire 'data.inventory'
+ifrequire 'data.color'
 
 -- Useful extravaganza libraries
 
