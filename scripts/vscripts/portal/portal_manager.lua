@@ -135,11 +135,9 @@ function PortalManager:TracePortalableSurface(startpos, forward, ignore)
     if traceTable.hit then
 
         local surfaceIsPortalable = true
-        print(traceTable.enthit:GetName())
 
         if self.AllowPortalsOnlyOnPrefixedEntities then
             if not traceTable.enthit:GetName():startswith(self.PortalableSurfaceNamePrefix) then
-                print('surface is NOT portalable')
                 surfaceIsPortalable = false
             end
         end
@@ -302,7 +300,6 @@ end
 ---@return EntityHandle?
 function PortalManager:GetPortalCamera(color)
     color = resolveColor(color)
-    -- return Entities:FindByName(nil, "@" .. color.name .. "PointCamera")
     return Entities:FindByName(nil, "_PortalCamera" .. color.name)
 end
 
@@ -311,7 +308,6 @@ end
 ---@return EntityHandle?
 function PortalManager:GetPortalMonitor(color)
     color = resolveColor(color)
-    -- return Entities:FindByName(nil, "@" .. color.name .. "FuncMonitor")
     return Entities:FindByName(nil, "_PortalMonitor" .. color.name)
 end
 
@@ -320,8 +316,6 @@ end
 ---@return EntityHandle?
 function PortalManager:GetPortalTrigger(color)
     color = resolveColor(color)
-    -- return Entities:FindByName(nil, "@" .. color.name .. "ObjectTrigger")
-    print("Looking for trigger", "_PortalTrigger" .. color.name)
     return Entities:FindByName(nil, "_PortalTrigger" .. color.name)
 end
 
@@ -364,6 +358,4 @@ RegisterPlayerEventCallback("player_activate", function (params)
     PortalManager.PortalableSurfaceNamePrefix = Player:LoadString("PortalableSurfaceNamePrefix", PortalManager.PortalableSurfaceNamePrefix)
     PortalManager.AllowPortalsOnlyOnPrefixedEntities = Player:LoadBoolean("AllowPortalsOnlyOnPrefixedEntities", PortalManager.AllowPortalsOnlyOnPrefixedEntities)
     PortalManager.colors = Player:LoadTable("PortalColors", PortalManager.colors)
-    print("\n Loaded colors")
-    Debug.PrintTable(PortalManager.colors)
 end)

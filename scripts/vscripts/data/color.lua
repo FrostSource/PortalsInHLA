@@ -127,7 +127,6 @@ if pcall(require, "storage") then
     ---@return Color|nil
     ---@luadoc-ignore
     function ColorClass.__load(handle, name)
-		print("CUSTOM COLOR LOAD")
         local color = Storage.LoadTableCustom(handle, name, "Color")
         if color == nil then return nil end
 		color.__address = getaddress(color)

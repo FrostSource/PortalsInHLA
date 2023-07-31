@@ -28,7 +28,6 @@ function base:OnReady(loaded)
     if not loaded then
         -- Must wait until player exists to save color table
         RegisterPlayerEventCallback("player_activate", function (params)
-            print("\n\n PLAYER READY DO SAVE COLOR THING \n\n")
             local portal1Camera = self:FindInPrefab("portal_1_camera")
             local portal2Camera = self:FindInPrefab("portal_2_camera")
             local portal1Monitor = self:FindInPrefab("portal_1_monitor")

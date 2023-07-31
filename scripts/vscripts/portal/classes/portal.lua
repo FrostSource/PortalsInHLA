@@ -63,7 +63,7 @@ function base:OnReady(loaded)
 end
 
 function base:CleanupAndDestroy()
-    -- devprints("Destroying portal", self:GetName())
+    devprints2("Destroying portal", self:GetName())
     if self.glowLight then self.glowLight:Kill() end
     if self.aimat then self.aimat:Kill() end
     if self.particleSystem then self.particleSystem:Kill() end
@@ -89,8 +89,6 @@ end
 ---@overload fun()
 function base:Open(position, normal, color)
     devprints("Opening portal", Debug.SimpleVector(position), Debug.SimpleVector(normal), color.name, Debug.SimpleVector(color.color:ToVector()))
-    print(color.color[1], color.color[2], color.color[3])
-    print()
 
     self.colorName = color.name
     local normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
@@ -101,13 +99,16 @@ function base:Open(position, normal, color)
         angles = normalAngles
     })
     self.aimat:SetForwardVector(AnglesToVector(normalAngles))--(normal)
-    debugoverlay:VertArrow(self.aimat:GetOrigin(), self.aimat:GetOrigin() + self.aimat:GetForwardVector() * 64, 8, 255, 0, 0, 255, false, 900)
+    -- debugoverlay:VertArrow(self.aimat:GetOrigin(), self.aimat:GetOrigin() + self.aimat:GetForwardVector() * 64, 8, 255, 0, 0, 255, false, 900)
+
+    -- Update self to aimat transform
     self:SetOrigin(self.aimat:GetOrigin())
     self:SetQAngle(self.aimat:GetAngles())
-    local aimdebug = SpawnEntityFromTableSynchronous("prop_dynamic", {model="models/editor/point_aimat.vmdl"})
-    aimdebug:SetParent(self.aimat, "")
-    aimdebug:SetLocalOrigin(Vector())
-    aimdebug:SetLocalAngles(0,0,0)
+
+    -- local aimdebug = SpawnEntityFromTableSynchronous("prop_dynamic", {model="models/editor/point_aimat.vmdl"})
+    -- aimdebug:SetParent(self.aimat, "")
+    -- aimdebug:SetLocalOrigin(Vector())
+    -- aimdebug:SetLocalAngles(0,0,0)
 
     local normalRotated = RotateOrientation(normalAngles, QAngle(90, 0, 0))
 
@@ -240,7 +241,6 @@ function base:Teleport(ent)
         devprints(self:GetName(), "teleporting", ent:GetClassname())
 
         if ent:IsPlayer() then
-            print('teleport player')
             -- Teleport player
             if lastPlayerTeleport - GetFrameCount() < 0 and self:CanTeleport(Player) then
                 -- In VR
@@ -252,7 +252,6 @@ function base:Teleport(ent)
                     lastPlayerTeleport = GetFrameCount() + 50
                 -- In NOVR
                 else
-                    print(lastPlayerTeleport - GetFrameCount() < 0, lastPlayerTeleport, GetFrameCount())
                     Player:SetOrigin(Player:GetOrigin() + Vector(0, 0, 10))
                     self:Teleport(Player)
                     lastPlayerTeleport = GetFrameCount() + 10
