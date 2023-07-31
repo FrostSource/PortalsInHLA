@@ -20,7 +20,7 @@ local function novrPortalThink()
 
                 if not result.surfaceIsPortalable then
                     -- createFailedPortalEffect(result.pos, result.normal, color.color)
-                    return
+                    return 0
                 end
 
                 if PortalManager:TryCreatePortalAt(result.pos, result.normal, currentPortalColor) then
