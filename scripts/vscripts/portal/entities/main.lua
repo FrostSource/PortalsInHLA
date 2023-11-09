@@ -60,7 +60,7 @@ Expose(AllowPortalsOnAnySurface, "AllowPortalsOnAnySurface")
 ---Close all open portals, anywhere.
 ---@param params IOParams
 local function CloseAllPortals(params)
-    error("CloseAllPortals is not yet implemented, sorry!")
+    PortalManager:CloseAllPortals()
 end
 Expose(CloseAllPortals, "CloseAllPortals")
 

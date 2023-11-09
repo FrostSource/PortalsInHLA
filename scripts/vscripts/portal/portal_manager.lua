@@ -279,6 +279,16 @@ function PortalManager:ClosePortal(color)
     return false
 end
 
+---Close all portals open in the map.
+function PortalManager:CloseAllPortals()
+    for index, value in ipairs(Entities:FindAllByClassname("logic_script")) do
+        if isinstance(value, "Portal") then
+            local portal = value--[[@as Portal]]
+            portal:Close()
+        end
+    end
+end
+
 ---Get a portal entity by color.
 ---@param color PortalColor|string
 ---@return Portal?
@@ -370,4 +380,8 @@ Convars:RegisterCommand("portalgun_give", function (_, ...)
         })--[[@as PortalGun]]
     end
     portalgun:AttachToHand()
+end, "", 0)
+
+Convars:RegisterCommand("close_all_portals", function (_, ...)
+    PortalManager:CloseAllPortals()
 end, "", 0)

@@ -126,7 +126,7 @@ function base:Open(position, normal, color)
     self.portalModel = SpawnEntityFromTableSynchronous("prop_dynamic", {
         targetname = color.name .. "Portalview",
         angles = normalRotated,
-        ---@TODO Update material to use dynamic expressions
+        ---@TODO Update material to use dynamic expressions (2023-11-10 don't remember why expressions were wanted)
         skin = color.name,
         model = "models/vrportal/portalshape.vmdl",
     })
@@ -165,6 +165,9 @@ end
 
 function base:Close()
     ---@TODO Notify connected portal that it has closed
+    EntFire(self.camera, self.camera:GetName(), "Disable")
+    EntFire(self.monitor, self.monitor:GetName(), "Disable")
+    self.monitor:SetRenderAlpha(0)
     self:CleanupAndDestroy()
 end
 
@@ -183,13 +186,16 @@ function base:UpdateConnection()
             angles = VectorToAngles(portal.aimat:GetForwardVector())
             portal.camera:SetAngles(angles.x, angles.y, angles.z)
 
+            portal.monitor:SetRenderAlpha(255)
             EntFire(portal.camera, portal.camera:GetName(), "Enable")
+            EntFire(portal.monitor, portal.monitor:GetName(), "Enable")
         end
 
         self:ResumeThink()
 
     else
         EntFire(self.camera, self.camera:GetName(), "Enable")
+        EntFire(self.monitor, self.monitor:GetName(), "Enable")
         self:PauseThink()
     end
 end
