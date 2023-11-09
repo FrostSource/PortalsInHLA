@@ -49,6 +49,7 @@ base.__ptxBarrel = -1
 base.__ptxLight = -1
 
 base.__timeSinceLastFire = 0
+base.__timeSinceLastUsed = 0
 
 ---The hand that this gun is attached to.
 ---@type CPropVRHand
