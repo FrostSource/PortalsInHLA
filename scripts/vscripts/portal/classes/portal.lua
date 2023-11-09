@@ -1,5 +1,10 @@
 local PTX_PORTAL_EFFECT = "particles/portal_effect_parent.vpcf"
 
+local SND_CLOSE = "Portal.Close"
+local SND_CLOSE_BLUE = "Portal.Close.Blue"
+local SND_CLOSE_ORANGE = "Portal.Close.Orange"
+local SND_TELEPORT_ENTER = "PortalPlayer.Enter"
+
 ---These are classes which are allowed to be teleported through a portal.
 local PORTAL_CLASS_WHITELIST = {
     "prop_physics",
@@ -168,6 +173,14 @@ function base:Close()
     EntFire(self.camera, self.camera:GetName(), "Disable")
     EntFire(self.monitor, self.monitor:GetName(), "Disable")
     self.monitor:SetRenderAlpha(0)
+    local sndevnt = SND_CLOSE
+    if self.colorName == PortalManager.colors.blue.name then
+        sndevnt = SND_CLOSE_BLUE
+    elseif self.colorName == PortalManager.colors.orange.name then
+        sndevnt = SND_CLOSE_ORANGE
+    end
+    StartSoundEventFromPositionReliable(sndevnt, self:GetOrigin())
+
     self:CleanupAndDestroy()
 end
 
@@ -254,7 +267,7 @@ function base:Teleport(ent)
                     Player.HMDAvatar:SetAbsOrigin(
                         (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30) + (Player.HMDAnchor:GetOrigin() - Player.HMDAvatar:GetOrigin())
                     )
-                    StartSoundEvent("PortalPlayer.Enter", Player)
+                    StartSoundEvent(SND_TELEPORT_ENTER, Player)
                     lastPlayerTeleport = GetFrameCount() + 50
                 -- In NOVR
                 else
