@@ -81,6 +81,9 @@ function base:OnReady(loaded)
         if Player:GetVRControllerType() == 2 then
             self.orangePortalButton = 14
         end
+        Input:TrackButton(self.bluePortalButton)
+        Input:TrackButton(self.orangePortalButton)
+        Input:TrackButton(self.pickupButton)
     end)
 
     self:RegisterAnimTagListener(function (tagName, status)
