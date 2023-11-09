@@ -182,7 +182,7 @@ function base:TryFirePortal(color)
     if (self.fireButtonIsHeld and time >= Convars:GetFloat("portalgun_held_button_fire_fire_delay")) or time >= Convars:GetFloat("portalgun_fire_delay") then
         self.__timeSinceLastFire = Time()
 
-        PortalGun.Hand:FireHapticPulse(1)
+        self.hand:FireHapticPulse(1)
 
         -- Set the gun color particles
         ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color.color:ToDecimalVector())
