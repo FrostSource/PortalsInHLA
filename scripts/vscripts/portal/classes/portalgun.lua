@@ -177,7 +177,6 @@ end
 ---@param color Vector
 local function createFailedPortalEffect(pos, dir, color)
     StartSoundEventFromPositionReliable("PortalGun.Shoot.Fail", pos)
-    StartSoundEventFromPositionReliable("PortalGun.Shoot.FailLayer", pos)
     local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, thisEntity)
     ParticleManager:SetParticleControl(pindex, 0, pos + dir)
     ParticleManager:SetParticleControl(pindex, 2, color)
