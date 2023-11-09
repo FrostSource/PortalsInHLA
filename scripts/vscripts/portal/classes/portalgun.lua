@@ -4,7 +4,7 @@ local SND_EQUIP = "PortalGun.Equipped"
 local SND_USE = "PortalGun.Use"
 local SND_USE_LOOP = "PortalGun.UseLoop"
 local SND_USE_FAILED = "PortalGun.UseFailed"
-local SND_USE_FINISHED = ""
+local SND_USE_FINISHED = "PortalGun.UseStop"
 
 ---List of classnames that can be picked up by the gun
 local PICKUP_CLASS_WHITELIST = {
