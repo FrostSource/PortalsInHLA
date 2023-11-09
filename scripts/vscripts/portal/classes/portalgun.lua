@@ -136,7 +136,7 @@ function base:DetachFromHand()
 end
 
 ---Attaches the gun to primary or secondary hand.
----@param useSecondary boolean # If true, will attach to secondary hand.
+---@param useSecondary? boolean # If true, will attach to secondary hand.
 function base:AttachToHand(useSecondary)
     if not Player.HMDAvatar then
         print("Warning - Cannot attach portal gun to hand outside of VR! " .. _sourceline())
@@ -153,8 +153,10 @@ function base:AttachToHand(useSecondary)
 
         self.hand = hand
         self:SetParent(glove, "")
-        self:SetLocalOrigin(Vector(-7.5, -1, -2.2))
-        self:SetLocalAngles(0,180,0)
+        -- self:SetLocalOrigin(Vector(-7.5, -1, -2.2))
+        -- self:SetLocalAngles(0,180,0)
+        self:SetLocalOrigin(Vector(5.5, 0, -1))
+        self:SetLocalAngles(0,0,0)
         self:SetOwner(Player)
         glove:SetRenderAlpha(0)
 
