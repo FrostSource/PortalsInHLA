@@ -232,7 +232,6 @@ function base:TryFirePortal(color)
             end
 
             if PortalManager:TryCreatePortalAt(result.pos, result.normal, color) then
-                StartSoundEventFromPositionReliable("Portal.Open", result.pos)
                 if portalIsBlue then
                     StartSoundEventFromPositionReliable("Portal.Open.Blue", result.pos)
                 else
