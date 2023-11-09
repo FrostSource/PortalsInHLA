@@ -17,7 +17,10 @@ local PICKUP_CLASS_WHITELIST = {
 ---PortalGun related convars
 Convars:RegisterConvar("portalgun_fire_delay", "0.2", "Min seconds between each portal fire press.", 0)
 Convars:RegisterConvar("portalgun_held_button_fire_fire_delay", "0.5", "Min seconds between each portal fire held.", 0)
-
+Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code for holding objects", 0)
+Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
+Convars:RegisterConvar("portalgun_pickup_distance", "100", "Object hover distance from the portalgun origin", 0)
+Convars:RegisterConvar("portalgun_pickup_rotate_scale", "0.5", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
 
@@ -263,13 +266,31 @@ function base:HandlePickupAbility()
         end
         local ent = self.__pickupEntity
 
-        local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
-        local amount = min(amountBy, 2)
-        local finalPosition = self:GetOrigin() + self:GetForwardVector() * 100
-        if VectorDistance(finalPosition, ent:GetOrigin()) < 25 then
-            ent:ApplyAbsVelocityImpulse(-GetPhysVelocity(ent) / 2)
+        local desiredPosition = self:GetOrigin() + self:GetForwardVector() * Convars:GetFloat("portalgun_pickup_distance")
+        if Convars:GetBool("portalgun_use_old_pickup_method") then
+            local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
+            local amount = min(amountBy, 2)
+            if VectorDistance(desiredPosition, ent:GetOrigin()) < 25 then
+                ent:ApplyAbsVelocityImpulse(-GetPhysVelocity(ent) / 2)
+            else
+                ent:ApplyAbsVelocityImpulse( ((desiredPosition - ent:GetOrigin()) * amount) - (GetPhysVelocity(ent) / 2) )
+            end
         else
-            ent:ApplyAbsVelocityImpulse( ((finalPosition - ent:GetOrigin()) * amount) - (GetPhysVelocity(ent) / 2) )
+            local velocity = (desiredPosition - ent:GetOrigin()) / Convars:GetFloat("portalgun_pickup_attenuation")
+            velocity = velocity - GetPhysVelocity(ent)
+            ent:ApplyAbsVelocityImpulse(velocity)
+
+            local aimAt = nil
+            -- Example of special rotation entities
+            if ent:GetName() == "@Wheatly" then
+                aimAt = (Player:EyePosition() - ent:GetOrigin()):Normalized()
+            else
+                -- Default face portalgun
+                ---@TODO Capture angles when picked up to maintain original angle
+                aimAt = (self:GetOrigin() - ent:GetOrigin()):Normalized()
+            end
+            local newAim = ent:GetForwardVector():Slerp(aimAt, Convars:GetFloat("portalgun_pickup_rotate_scale")--[[@as number]])
+            ent:SetForwardVector(newAim)
         end
     else
         -- Find new pickup entity
@@ -295,6 +316,8 @@ function base:HandlePickupAbility()
                 StartSoundEventFromPositionReliable(SND_USE_FAILED, self:GetAbsOrigin())
                 self.__timeSinceLastUsed = 0
             end
+
+            ---@TODO Modulate hover distance based on object size
         end
     end
 end
