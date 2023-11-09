@@ -359,3 +359,15 @@ RegisterPlayerEventCallback("player_activate", function (params)
     PortalManager.AllowPortalsOnlyOnPrefixedEntities = Player:LoadBoolean("AllowPortalsOnlyOnPrefixedEntities", PortalManager.AllowPortalsOnlyOnPrefixedEntities)
     PortalManager.colors = Player:LoadTable("PortalColors", PortalManager.colors)
 end)
+
+Convars:RegisterCommand("portalgun_give", function (_, ...)
+    local portalgun = Entities:FindByName(nil, "@PortalGun")--[[@as PortalGun]]
+    if portalgun == nil then
+        portalgun = SpawnEntityFromTableSynchronous("npc_furniture", {
+            targetname = "@PortalGun",
+            model = "models/vrportal/portalgun.vmdl",
+            vscripts = "portal/entities/portalgun",
+        })--[[@as PortalGun]]
+    end
+    portalgun:AttachToHand()
+end, "", 0)
