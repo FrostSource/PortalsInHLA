@@ -88,23 +88,23 @@ function base:OnReady(loaded)
         Input:TrackButton(self.bluePortalButton)
         Input:TrackButton(self.orangePortalButton)
         Input:TrackButton(self.pickupButton)
+
+        self.__ptxBarrel = ParticleManager:CreateParticle("particles/portalgun_barrel.vpcf", 1, self)
+        self.__ptxLight = ParticleManager:CreateParticle("particles/portalgun_light.vpcf", 1, self)
+        ParticleManager:SetParticleAlwaysSimulate(self.__ptxBarrel)
+        ParticleManager:SetParticleAlwaysSimulate(self.__ptxLight)
+
+        --ParticleManager:SetParticleControl(PortalGun.BarrelParticleIndex, 5,_G.PortalManager.ColorEnts[Colors.Blue]:GetOrigin())
+        ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 0, self, 5, "innerlaser", Vector(0,0,0), true)
+        ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 1, self, 5, "innerlaser_end", Vector(0,0,0), true)
+        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, Vector(0,0.4,1))
+        ParticleManager:SetParticleControlEnt(self.__ptxLight, 0, self, 5, "light", Vector(0,0,0), true)
+        ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
     end)
 
     self:RegisterAnimTagListener(function (tagName, status)
         self:AnimGraphListener(tagName, status)
     end)
-
-    self.__ptxBarrel = ParticleManager:CreateParticle("particles/portalgun_barrel.vpcf", 1, self)
-    self.__ptxLight = ParticleManager:CreateParticle("particles/portalgun_light.vpcf", 1, self)
-    ParticleManager:SetParticleAlwaysSimulate(self.__ptxBarrel)
-    ParticleManager:SetParticleAlwaysSimulate(self.__ptxLight)
-
-    --ParticleManager:SetParticleControl(PortalGun.BarrelParticleIndex, 5,_G.PortalManager.ColorEnts[Colors.Blue]:GetOrigin())
-    ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 0, self, 5, "innerlaser", Vector(0,0,0), true)
-    ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 1, self, 5, "innerlaser_end", Vector(0,0,0), true)
-    ParticleManager:SetParticleControl(self.__ptxBarrel, 5, Vector(0,0.4,1))
-    ParticleManager:SetParticleControlEnt(self.__ptxLight, 0, self, 5, "light", Vector(0,0,0), true)
-    ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
 
     -- Update the global handle
     PortalManager.portalGun = self
