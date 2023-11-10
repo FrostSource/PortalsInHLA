@@ -6,6 +6,9 @@ local SND_USE_LOOP = "PortalGun.UseLoop"
 local SND_USE_FAILED = "PortalGun.UseFailed"
 local SND_USE_FINISHED = "PortalGun.UseStop"
 
+local PTX_PROJECTILE_BLUE = "particles/portal_projectile/portal_1_projectile_stream.vpcf"
+local PTX_PROJECTILE_ORANGE = "particles/portal_projectile/portal_2_projectile_stream.vpcf"
+
 ---List of classnames that can be picked up by the gun
 local PICKUP_CLASS_WHITELIST = {
     "prop_physics",
@@ -21,6 +24,7 @@ Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code
 Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
 Convars:RegisterConvar("portalgun_pickup_distance", "100", "Object hover distance from the portalgun origin", 0)
 Convars:RegisterConvar("portalgun_pickup_rotate_scale", "0.5", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
+Convars:RegisterConvar("portalgun_projectile_speed", "1200", "Speed of projectile particle", 0)
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
 
@@ -67,8 +71,11 @@ function base:Precache(context)
     PrecacheResource("particle", "particles/portalgun_barrel.vpcf", context)
     PrecacheResource("particle", "particles/portalgun_light.vpcf", context)
     PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
+    PrecacheResource("particle", PTX_PROJECTILE_BLUE, context)
+    PrecacheResource("particle", PTX_PROJECTILE_ORANGE, context)
     -- for debugging
     PrecacheModel("models/editor/point_aimat.vmdl", context)
+    PrecacheModel("models/effects/cube_empty.vmdl", context)
 end
 
 ---Called automatically on spawn
@@ -208,10 +215,10 @@ function base:TryFirePortal(color)
 
         -- Play portal shooting effects
         self:SetGraphParameterBool("bfired", true)
-        local pindex = ParticleManager:CreateParticle("particles/portalgun_shooting.vpcf", 1, thisEntity)
-        ParticleManager:SetParticleControl(pindex, 0, muzzleOrigin)
-        ParticleManager:SetParticleControlForward(pindex, 1, muzzleForward)
-        ParticleManager:SetParticleControl(pindex, 5, color.color:ToDecimalVector())
+        -- local pindex = ParticleManager:CreateParticle("particles/portalgun_shooting.vpcf", 1, thisEntity)
+        -- ParticleManager:SetParticleControl(pindex, 0, muzzleOrigin)
+        -- ParticleManager:SetParticleControlForward(pindex, 1, muzzleForward)
+        -- ParticleManager:SetParticleControl(pindex, 5, color.color:ToDecimalVector())
         if portalIsBlue then
             StartSoundEventFromPositionReliable("PortalGun.Shoot.Blue", muzzleOrigin)
         else
@@ -219,6 +226,17 @@ function base:TryFirePortal(color)
         end
 
         local result = PortalManager:TracePortalableSurface(muzzleOrigin, muzzleForward, Player)
+
+        local mover = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
+            origin = muzzleOrigin,
+            model = "models/effects/cube_empty.vmdl",
+            ScriptedMovement = "1",
+        })
+        mover:SetVelocity(muzzleForward * Convars:GetFloat("portalgun_projectile_speed"))
+        local pindex = ParticleManager:CreateParticle(portalIsBlue and PTX_PROJECTILE_BLUE or PTX_PROJECTILE_ORANGE, 1, mover)
+        ParticleManager:SetParticleControl(pindex, 2, color.color:ToVector())
+        mover:EntFire("Kill", nil, (result.hit and 5000 or VectorDistance(muzzleOrigin, result.pos)) / mover:GetVelocity():Length())
+
         if result.hit then
 
             -- FireUser1 for blue, FireUser2 or orange
