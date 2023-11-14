@@ -74,7 +74,8 @@ Convars:RegisterCommand("portal_debugging", function (_, on)
 end, "Toggle portal debugging", 0)
 
 function PortalManager:Debugging()
-    return Convars:GetInt("developer") > 0 or Convars:GetBool("portal_debugging_is_on")
+    -- return Convars:GetInt("developer") > 0 or Convars:GetBool("portal_debugging_is_on")
+    return Convars:GetBool("portal_debugging_is_on")
 end
 
 ---Add a portal color

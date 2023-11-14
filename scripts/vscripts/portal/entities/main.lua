@@ -18,50 +18,62 @@ end
 ---Open the blue portal at the caller.
 ---@param params IOParams
 local function OpenBluePortal(params)
-    PortalManager:TryCreatePortalAt(params.caller:GetOrigin(), params.caller:GetForwardVector(), "blue")
+    local ent
+    if IsEntity(params) then
+        ent = params
+    else
+        ent = params.caller
+    end
+    PortalManager:TryCreatePortalAt(ent:GetOrigin(), ent:GetForwardVector(), "blue")
 end
-Expose(OpenBluePortal, "OpenBluePortal")
+Expose(OpenBluePortal, "OpenBluePortal", _G)
 
 ---Open the orange portal at the caller.
 ---@param params IOParams
 local function OpenOrangePortal(params)
-    PortalManager:TryCreatePortalAt(params.caller:GetOrigin(), params.caller:GetForwardVector(), "orange")
+    local ent
+    if IsEntity(params) then
+        ent = params
+    else
+        ent = params.caller
+    end
+    PortalManager:TryCreatePortalAt(ent:GetOrigin(), ent:GetForwardVector(), "orange")
 end
-Expose(OpenOrangePortal, "OpenOrangePortal")
+Expose(OpenOrangePortal, "OpenOrangePortal", _G)
 
 ---Close the blue portal.
 ---@param params IOParams
 local function CloseBluePortal(params)
     PortalManager:ClosePortal("blue")
 end
-Expose(CloseBluePortal, "CloseBluePortal")
+Expose(CloseBluePortal, "CloseBluePortal", _G)
 
 ---Open the orange portal at the caller.
 ---@param params IOParams
 local function CloseOrangePortal(params)
     PortalManager:ClosePortal("orange")
 end
-Expose(CloseOrangePortal, "CloseOrangePortal")
+Expose(CloseOrangePortal, "CloseOrangePortal", _G)
 
 ---Allow portals to only be placed on prefixed entities.
 ---@param params IOParams
 local function AllowPortalsOnlyOnPrefixedSurfaces(params)
     PortalManager:SetAllowPortalsOnlyOnPrefixedEntities(true)
 end
-Expose(AllowPortalsOnlyOnPrefixedSurfaces, "AllowPortalsOnlyOnPrefixedSurfaces")
+Expose(AllowPortalsOnlyOnPrefixedSurfaces, "AllowPortalsOnlyOnPrefixedSurfaces", _G)
 
 ---Allow portals to be placed on any surface.
 ---@param params IOParams
 local function AllowPortalsOnAnySurface(params)
     PortalManager:SetAllowPortalsOnlyOnPrefixedEntities(false)
 end
-Expose(AllowPortalsOnAnySurface, "AllowPortalsOnAnySurface")
+Expose(AllowPortalsOnAnySurface, "AllowPortalsOnAnySurface", _G)
 
 ---Close all open portals, anywhere.
 ---@param params IOParams
 local function CloseAllPortals(params)
     PortalManager:CloseAllPortals()
 end
-Expose(CloseAllPortals, "CloseAllPortals")
+Expose(CloseAllPortals, "CloseAllPortals", _G)
 
 print("Main portal entity initiated")
