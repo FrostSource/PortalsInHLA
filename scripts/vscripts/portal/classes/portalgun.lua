@@ -182,9 +182,9 @@ end
 ---@param pos Vector
 ---@param dir Vector
 ---@param color Vector
-local function createFailedPortalEffect(pos, dir, color)
+function base:CreateFailedPortalEffect(pos, dir, color)
     StartSoundEventFromPositionReliable("PortalGun.Shoot.Fail", pos)
-    local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, thisEntity)
+    local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, Player)
     ParticleManager:SetParticleControl(pindex, 0, pos + dir)
     ParticleManager:SetParticleControl(pindex, 2, color)
 end
@@ -245,7 +245,7 @@ function base:TryFirePortal(color)
             end
 
             if not result.surfaceIsPortalable then
-                createFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
+                self:CreateFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
                 return false
             end
 
