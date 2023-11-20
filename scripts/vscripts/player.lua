@@ -648,6 +648,22 @@ function CBasePlayer:GetWorldForward()
     return f
 end
 
+function CBasePlayer:SetAnchorForwardAroundPlayer(forward)
+    local oldPos = self:GetAbsOrigin()
+    local relativePos = self.HMDAnchor:TransformPointWorldToEntity(oldPos)
+    self.HMDAnchor:SetForwardVector(forward)
+    local newPos = self.HMDAnchor:TransformPointEntityToWorld(relativePos)
+    self.HMDAnchor:SetAbsOrigin(self.HMDAnchor:GetAbsOrigin() + (oldPos - newPos))
+end
+
+function CBasePlayer:SetAnchorOriginAroundPlayer(pos)
+    self.HMDAnchor:SetAbsOrigin(pos + (self.HMDAnchor:GetAbsOrigin() - self:GetAbsOrigin()))
+end
+
+function CBasePlayer:SetMovementEnabled(enabled)
+    DoEntFireByInstanceHandle(self, "EnableTeleport", enabled and "1" or "0", 0, nil, nil)
+end
+
 ---@class __PlayerRegisteredEventData
 ---@field callback function
 ---@field context any

@@ -7,6 +7,8 @@ local SND_TELEPORT_ENTER = "PortalPlayer.Enter"
 
 ---These are classes which are allowed to be teleported through a portal.
 local PORTAL_CLASS_WHITELIST = {
+    "player",
+
     "prop_physics",
     "func_physbox",
     "npc_manhack",
@@ -257,50 +259,115 @@ function base:Teleport(ent)
 
         local connectedPortal = self:GetConnectedPortal()--[[@as Portal]]
 
-        devprints(self:GetName(), "teleporting", ent:GetClassname())
+        devprints(self:GetName(), "teleporting", ent:GetClassname(), "to", connectedPortal.colorName)
 
         if ent:IsPlayer() then
             -- Teleport player
             if lastPlayerTeleport - GetFrameCount() < 0 and self:CanTeleport(Player) then
                 -- In VR
                 if Player.HMDAvatar ~= nil then
-                    Player.HMDAvatar:SetAbsOrigin(
-                        (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30) + (Player.HMDAnchor:GetOrigin() - Player.HMDAvatar:GetOrigin())
-                    )
-                    StartSoundEvent(SND_TELEPORT_ENTER, Player)
+                --     Player.HMDAvatar:SetAbsOrigin(
+                --         (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30) + (Player.HMDAnchor:GetOrigin() - Player.HMDAvatar:GetOrigin())
+                --     )
+
+                    -- local relative = self:TransformPointWorldToEntity(Player.HMDAvatar:GetAbsOrigin())
+                    -- local newpos = connectedPortal:GetAbsOrigin() + relative
+                    -- -- Player.HMDAvatar:SetAbsOrigin()
+                    -- debugoverlay:Box(Player.HMDAvatar:GetBoundingMins()+newpos, Player.HMDAvatar:GetBoundingMaxs()+newpos, 255,0,0,255,true,5)
+
+                    -- local portalMovementVector = Player.HMDAvatar:GetAbsOrigin() - self:GetAbsOrigin()
+                    -- local exitPosition = connectedPortal:GetAbsOrigin() + portalMovementVector
+                    -- local entryToExitRotation = Player.HMD
+
+
+                    local pos = connectedPortal:TransformPointEntityToWorld(Vector())--Vector(PORTAL_MAXS.x+ 48, 0, -PORTAL_MAXS.z)
+                    pos= (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 100)
+                    -- print("POS", pos, connectedPortal.colorName)
+                    -- -- Player:SetAnchorOriginAroundPlayer(Vector(0,0,100))
+                    -- Player.HMDAnchor:SetAbsOrigin(pos)
+
+                    
+                    local dir = connectedPortal:GetForwardVector()
+                    local forward = Player.HMDAnchor:GetForwardVector()
+                    local newForward = dir * forward:Length()
+                    newForward = -forward + newForward - dir
+                    newForward.z = 0
+                    -- Player:SetAnchorForwardAroundPlayer(newForward)
+                    
+                    Player.HMDAvatar:SetAbsOrigin(pos)
+
+                    -- Player:SetMovementEnabled(false)
+
+                        -- local oldPos = Player.HMDAvatar:GetAbsOrigin()
+                        -- local relativePos = Player.HMDAnchor:TransformPointWorldToEntity(oldPos)
+                        -- Player.HMDAnchor:SetForwardVector(newForward)
+                        -- local newPos = Player.HMDAnchor:TransformPointEntityToWorld(relativePos)
+                        -- local calcPos = Player.HMDAnchor:GetAbsOrigin() + (oldPos - newPos)
+                        -- Player.HMDAnchor:SetAbsOrigin(calcPos)
+                        Player:SetAnchorForwardAroundPlayer(newForward)
+
+
+                        -- Player.HMDAnchor:SetAbsOrigin(pos + (Player.HMDAnchor:GetAbsOrigin() - calcPos))
+                        -- debugoverlay:Sphere(pos + (Player.HMDAnchor:GetAbsOrigin() - calcPos), 8, 255, 0, 0, 255, true, 40)
+                        -- Player.HMDAnchor:SetAbsOrigin((connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30) + (Player.HMDAnchor:GetOrigin() - Player.HMDAvatar:GetOrigin()))
+                    
+                        -- self.HMDAnchor:SetAbsOrigin(pos + (self.HMDAnchor:GetAbsOrigin() - self:GetAbsOrigin()))
+                    
+                    Player:Delay(function() 
+                        -- Player:SetMovementEnabled(true)
+                    
+                        -- DebugDrawBox(Player:GetOrigin(), Player:GetBoundingMins(), Player:GetBoundingMaxs(), 255, 0, 0, 255, 100)
+                    end)
+
                     lastPlayerTeleport = GetFrameCount() + 50
                 -- In NOVR
                 else
-                    Player:SetOrigin(Player:GetOrigin() + Vector(0, 0, 10))
-                    self:Teleport(Player)
-                    lastPlayerTeleport = GetFrameCount() + 10
+                    -- Player:SetOrigin(Player:GetOrigin() + Vector(0, 0, 10))
+                    -- self:Teleport(Player)
+
+                    -- Player:SetAbsOrigin(
+                    --     (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30)
+                    -- )
+                    -- lastPlayerTeleport = GetFrameCount() + 10
+
+                    self:TeleportPhysicalEntity(Player, connectedPortal)
+                    local dir = connectedPortal:GetForwardVector()
+                    local forward = Player:GetForwardVector()
+                    local newForward = dir * forward:Length()
+                    Player:SetForwardVector(-forward + newForward - dir)
                 end
+                StartSoundEvent(SND_TELEPORT_ENTER, Player)
             end
         else
-            local localPositionOnPortal = self:TransformPointWorldToEntity(ent:GetOrigin())
-            local dir = connectedPortal:GetForwardVector()
-            -- Teleport from OriginalPortal to Portal but keep velocity and rotation of the entity with offset to keep it from constantly teleporting back and forth
-            ent:SetOrigin(connectedPortal:TransformPointEntityToWorld(localPositionOnPortal + Vector(PORTAL_MAXS.x, 0, 0)))
 
-            -- Rotate Velocity to match the new direction
-            local vel = GetPhysVelocity(ent)
-            local newVel = dir * vel:Length() * 0.95
-
-            ent:ApplyAbsVelocityImpulse(-vel + newVel - dir)
-
-            if PortalManager:Debugging() then
-                DebugDrawLine(self:GetOrigin(), self:GetOrigin() + vel, 255, 0, 0, true, 10)
-                DebugDrawLine(connectedPortal:GetOrigin(), connectedPortal:GetOrigin() + newVel, 0, 255, 0, true, 10)
-                print(Debug.SimpleVector(vel))
-                print(Debug.SimpleVector(newVel))
-                print("___________")
-            end
+            self:TeleportPhysicalEntity(ent, connectedPortal)
 
             if PortalManager.portalGun and PortalManager.portalGun.__pickupEntity == ent then
                 PortalManager.portalGun:DropItem()
             end
         end
 
+    end
+end
+
+function base:TeleportPhysicalEntity(ent, connectedPortal)
+    local localPositionOnPortal = self:TransformPointWorldToEntity(ent:GetAbsOrigin())
+    local dir = connectedPortal:GetForwardVector()
+    -- Teleport from OriginalPortal to Portal but keep velocity and rotation of the entity with offset to keep it from constantly teleporting back and forth
+    ent:SetAbsOrigin(connectedPortal:TransformPointEntityToWorld(localPositionOnPortal + Vector(PORTAL_MAXS.x, 0, 0)))
+
+    -- Rotate Velocity to match the new direction
+    local vel = GetPhysVelocity(ent)
+    local newVel = dir * vel:Length() * 0.95
+
+    ent:ApplyAbsVelocityImpulse(-vel + newVel - dir)
+
+    if PortalManager:Debugging() then
+        DebugDrawLine(self:GetOrigin(), self:GetOrigin() + vel, 255, 0, 0, true, 10)
+        DebugDrawLine(connectedPortal:GetOrigin(), connectedPortal:GetOrigin() + newVel, 0, 255, 0, true, 10)
+        print(Debug.SimpleVector(vel))
+        print(Debug.SimpleVector(newVel))
+        print("___________")
     end
 end
 
