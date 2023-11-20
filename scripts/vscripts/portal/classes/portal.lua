@@ -266,70 +266,21 @@ function base:Teleport(ent)
             if lastPlayerTeleport - GetFrameCount() < 0 and self:CanTeleport(Player) then
                 -- In VR
                 if Player.HMDAvatar ~= nil then
-                --     Player.HMDAvatar:SetAbsOrigin(
-                --         (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30) + (Player.HMDAnchor:GetOrigin() - Player.HMDAvatar:GetOrigin())
-                --     )
 
-                    -- local relative = self:TransformPointWorldToEntity(Player.HMDAvatar:GetAbsOrigin())
-                    -- local newpos = connectedPortal:GetAbsOrigin() + relative
-                    -- -- Player.HMDAvatar:SetAbsOrigin()
-                    -- debugoverlay:Box(Player.HMDAvatar:GetBoundingMins()+newpos, Player.HMDAvatar:GetBoundingMaxs()+newpos, 255,0,0,255,true,5)
+                    local pos = connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30
 
-                    -- local portalMovementVector = Player.HMDAvatar:GetAbsOrigin() - self:GetAbsOrigin()
-                    -- local exitPosition = connectedPortal:GetAbsOrigin() + portalMovementVector
-                    -- local entryToExitRotation = Player.HMD
-
-
-                    local pos = connectedPortal:TransformPointEntityToWorld(Vector())--Vector(PORTAL_MAXS.x+ 48, 0, -PORTAL_MAXS.z)
-                    pos= (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 100)
-                    -- print("POS", pos, connectedPortal.colorName)
-                    -- -- Player:SetAnchorOriginAroundPlayer(Vector(0,0,100))
-                    -- Player.HMDAnchor:SetAbsOrigin(pos)
-
-                    
                     local dir = connectedPortal:GetForwardVector()
                     local forward = Player.HMDAnchor:GetForwardVector()
                     local newForward = dir * forward:Length()
                     newForward = -forward + newForward - dir
                     newForward.z = 0
-                    -- Player:SetAnchorForwardAroundPlayer(newForward)
-                    
+
                     Player.HMDAvatar:SetAbsOrigin(pos)
-
-                    -- Player:SetMovementEnabled(false)
-
-                        -- local oldPos = Player.HMDAvatar:GetAbsOrigin()
-                        -- local relativePos = Player.HMDAnchor:TransformPointWorldToEntity(oldPos)
-                        -- Player.HMDAnchor:SetForwardVector(newForward)
-                        -- local newPos = Player.HMDAnchor:TransformPointEntityToWorld(relativePos)
-                        -- local calcPos = Player.HMDAnchor:GetAbsOrigin() + (oldPos - newPos)
-                        -- Player.HMDAnchor:SetAbsOrigin(calcPos)
-                        Player:SetAnchorForwardAroundPlayer(newForward)
-
-
-                        -- Player.HMDAnchor:SetAbsOrigin(pos + (Player.HMDAnchor:GetAbsOrigin() - calcPos))
-                        -- debugoverlay:Sphere(pos + (Player.HMDAnchor:GetAbsOrigin() - calcPos), 8, 255, 0, 0, 255, true, 40)
-                        -- Player.HMDAnchor:SetAbsOrigin((connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30) + (Player.HMDAnchor:GetOrigin() - Player.HMDAvatar:GetOrigin()))
-                    
-                        -- self.HMDAnchor:SetAbsOrigin(pos + (self.HMDAnchor:GetAbsOrigin() - self:GetAbsOrigin()))
-                    
-                    Player:Delay(function() 
-                        -- Player:SetMovementEnabled(true)
-                    
-                        -- DebugDrawBox(Player:GetOrigin(), Player:GetBoundingMins(), Player:GetBoundingMaxs(), 255, 0, 0, 255, 100)
-                    end)
+                    Player:SetAnchorForwardAroundPlayer(newForward)
 
                     lastPlayerTeleport = GetFrameCount() + 50
                 -- In NOVR
                 else
-                    -- Player:SetOrigin(Player:GetOrigin() + Vector(0, 0, 10))
-                    -- self:Teleport(Player)
-
-                    -- Player:SetAbsOrigin(
-                    --     (connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30)
-                    -- )
-                    -- lastPlayerTeleport = GetFrameCount() + 10
-
                     self:TeleportPhysicalEntity(Player, connectedPortal)
                     local dir = connectedPortal:GetForwardVector()
                     local forward = Player:GetForwardVector()
