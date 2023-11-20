@@ -270,7 +270,7 @@ end
 
 function base:DropItem()
     self.__disablePickupUntilTriggerRelease = true
-    self.__pickupEntity = nil
+    -- self.__pickupEntity = nil
 end
 
 function base:HandlePickupAbility()
