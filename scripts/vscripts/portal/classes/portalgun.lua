@@ -24,7 +24,7 @@ Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code
 Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
 Convars:RegisterConvar("portalgun_pickup_distance", "100", "Object hover distance from the portalgun origin", 0)
 Convars:RegisterConvar("portalgun_pickup_rotate_scale", "0.5", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
-Convars:RegisterConvar("portalgun_projectile_speed", "1200", "Speed of projectile particle", 0)
+Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectile particle", 0)
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
 
