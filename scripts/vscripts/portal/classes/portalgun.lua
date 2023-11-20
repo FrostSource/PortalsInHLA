@@ -325,6 +325,10 @@ function base:HandlePickupAbility()
             StartSoundEvent(SND_USE_LOOP, self)
             self.__pickupEntity = traceTable.enthit
 
+            if Player:IsHolding(traceTable.enthit) then
+                traceTable.enthit:Drop()
+            end
+
             -- Delay between fail sounds
             if self.__timeSinceLastUsed < 0.2 then
                 self.__timeSinceLastUsed = self.__timeSinceLastUsed + 0.1
