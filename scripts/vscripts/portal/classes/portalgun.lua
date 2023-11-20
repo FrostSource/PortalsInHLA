@@ -352,6 +352,7 @@ function base:Think()
             end
             if self.__pickupEntity ~= nil then
                 self.__pickupEntity = nil
+                StopSoundEvent(SND_USE_LOOP, self)
                 StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
             end
             if self.allowedToFire then
