@@ -28,6 +28,8 @@ Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectil
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
 
+Input.AutoStart = true
+
 ---Digital input button used to fire the blue portal.
 base.bluePortalButton = DIGITAL_INPUT_ARM_GRENADE
 ---Digital input button used to fire the orange portal.
@@ -107,9 +109,9 @@ base:PlayerEvent("vr_player_ready", function(self, params)
     if Player:GetVRControllerType() == 2 then
         self.orangePortalButton = 14
     end
-    Input:TrackButton(self.bluePortalButton)
-    Input:TrackButton(self.orangePortalButton)
-    Input:TrackButton(self.pickupButton)
+    -- Input:TrackButton(self.bluePortalButton)
+    -- Input:TrackButton(self.orangePortalButton)
+    -- Input:TrackButton(self.pickupButton)
 
     self.__ptxBarrel = ParticleManager:CreateParticle("particles/portalgun_barrel.vpcf", 1, self)
     self.__ptxLight = ParticleManager:CreateParticle("particles/portalgun_light.vpcf", 1, self)
@@ -157,7 +159,7 @@ end
 ---@param useSecondary? boolean # If true, will attach to secondary hand.
 function base:AttachToHand(useSecondary)
     if not Player.HMDAvatar then
-        print("Warning - Cannot attach portal gun to hand outside of VR! " .. _sourceline())
+        print("Warning - Cannot attach portal gun to hand outside of VR! " .. Debug.GetSourceLine(1))
     end
 
     self:DetachFromHand()
@@ -181,7 +183,8 @@ function base:AttachToHand(useSecondary)
         StartSoundEvent(SND_EQUIP, self)
 
         ---@TODO Move to enabling function
-        self:ResumeThink()
+        -- self:ResumeThink()
+        self:SetupInputs()
     end
 end
 
@@ -349,43 +352,90 @@ function base:HandlePickupAbility()
     end
 end
 
----Main entity think function. Think state is saved between loads
-function base:Think()
+function base:SetupInputs()
 
+    Input:StopListeningByContext(self)
 
-    if self:IsEquipped() then
-
-        if not self.__disablePickupUntilTriggerRelease and Input:Button(self.hand, self.pickupButton) then
-            self:HandlePickupAbility()
-        else
-            if self.__disablePickupUntilTriggerRelease then
-                self.__disablePickupUntilTriggerRelease = false
-            end
-            if self.__pickupEntity ~= nil then
-                self.__pickupEntity = nil
-                StopSoundEvent(SND_USE_LOOP, self)
-                StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
-            end
-            if self.allowedToFire then
-                if Input:Button(self.hand, self.bluePortalButton) then
-                    if self.bluePortalEnabled then
-                        self:TryFirePortal(PortalManager.colors.blue)
-                    end
-                    self.fireButtonIsHeld = true
-                elseif Input:Button(self.hand, self.orangePortalButton) then
-                    if self.orangePortalEnabled then
-                        self:TryFirePortal(PortalManager.colors.orange)
-                    end
-                    self.fireButtonIsHeld = true
-                else
-                    self.fireButtonIsHeld = false
-                end
+    Input:ListenToButton("press", self.hand, self.pickupButton, 1, function (params)
+        if self:IsEquipped() then
+            if not self.__disablePickupUntilTriggerRelease then
+                self:SetContextThink("PortalGunPickupAbility", function()
+                    self:HandlePickupAbility()
+                    return 0
+                end, 0)
             end
         end
-    end
+    end, self)
 
-    return 0
+    Input:ListenToButton("release", self.hand, self.pickupButton, 1, function (params)
+        self:SetContextThink("PortalGunPickupAbility", nil, 0)
+        if self.__disablePickupUntilTriggerRelease then
+            self.__disablePickupUntilTriggerRelease = false
+        end
+        if self.__pickupEntity ~= nil then
+            self.__pickupEntity = nil
+            StopSoundEvent(SND_USE_LOOP, self)
+            StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
+        end
+    end, self)
+
+    Input:ListenToButton("press", self.hand, self.bluePortalButton, 1, function (params)
+        if self:IsEquipped() and self.allowedToFire then
+            if self.bluePortalEnabled then
+                self:TryFirePortal(PortalManager.colors.blue)
+            end
+            self.fireButtonIsHeld = true
+        end
+    end, self)
+
+    Input:ListenToButton("press", self.hand, self.orangePortalButton, 1, function (params)
+        if self:IsEquipped() and self.allowedToFire then
+            if self.orangePortalEnabled then
+                self:TryFirePortal(PortalManager.colors.orange)
+            end
+            self.fireButtonIsHeld = true
+        end
+    end, self)
+
 end
+
+-- ---Main entity think function. Think state is saved between loads
+-- function base:Think()
+
+
+--     if self:IsEquipped() then
+
+--         if not self.__disablePickupUntilTriggerRelease and Input:Button(self.hand, self.pickupButton) then
+--             self:HandlePickupAbility()
+--         else
+--             if self.__disablePickupUntilTriggerRelease then
+--                 self.__disablePickupUntilTriggerRelease = false
+--             end
+--             if self.__pickupEntity ~= nil then
+--                 self.__pickupEntity = nil
+--                 StopSoundEvent(SND_USE_LOOP, self)
+--                 StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
+--             end
+--             if self.allowedToFire then
+--                 if Input:Button(self.hand, self.bluePortalButton) then
+--                     if self.bluePortalEnabled then
+--                         self:TryFirePortal(PortalManager.colors.blue)
+--                     end
+--                     self.fireButtonIsHeld = true
+--                 elseif Input:Button(self.hand, self.orangePortalButton) then
+--                     if self.orangePortalEnabled then
+--                         self:TryFirePortal(PortalManager.colors.orange)
+--                     end
+--                     self.fireButtonIsHeld = true
+--                 else
+--                     self.fireButtonIsHeld = false
+--                 end
+--             end
+--         end
+--     end
+
+--     return 0
+-- end
 
 --Used for classes not attached directly to entities
 return base
