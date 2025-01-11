@@ -63,9 +63,9 @@ local function novrPortalThink()
     return 0
 end
 
-Convars:RegisterConvar("portal_novr_e_fires_portalgun", "0", "", 0)
+Convars:RegisterConvar("portal_novr_e_fires_portalgun", "1", "", 0)
 
 ListenToPlayerEvent("novr_player", function(params)
-    currentPortalColor = PortalManager.colors.blue
+    print("Player is in novr mode...")
     Player:SetContextThink("novr_portal_testing", novrPortalThink, 0.1)
 end)
