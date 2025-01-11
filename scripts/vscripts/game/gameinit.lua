@@ -1,5 +1,5 @@
 if IsServer() then
-    require "core"
+    require "alyxlib.init"
     require "portal.classes.portal"
     require "portal.classes.portalgun"
     require "portal.classes.portal_pair_manager"

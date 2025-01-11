@@ -1,0 +1,70 @@
+// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{
+	shader "vr_monitor.vfx"
+
+	//---- Rendering ----
+	F_DO_NOT_CAST_SHADOWS 1
+
+	//---- Translucent ----
+	F_ADDITIVE_BLEND_OVER_ALPHA 1
+
+	//---- Additive Blend Over Alpha ----
+	g_flAlphaOutputMaximum "0.000"
+	g_flAlphaOutputMinimum "0.000"
+
+	//---- Chromatic Abberation ----
+	g_flBlueShift "0.000"
+	g_flGreenShift "0.000"
+	g_flJitterSpeed "0.000"
+	g_flRedShift "0.000"
+	TextureJitterControl "[0.000000 0.000000 0.000000 0.000000]"
+
+	//---- Contrast ----
+	TextureContrastControl "[0.000000 0.000000 0.000000 0.000000]"
+
+	//---- Display ----
+	g_flFilmGrainStrength "0.000"
+	g_flTexCoordOffsetU "0.000"
+	g_flTexCoordOffsetV "0.000"
+	g_flTintScale "1.150"
+	g_vColorTint "[1.000000 1.000000 1.000000 0.000000]"
+	g_vScanlineTextureOffset "[1.000 1.000]"
+	g_vTexCoordScale "[1.000 1.000]"
+	ScanlineDistortion "[0.501961 0.501961 0.501961 1.000000]"
+	TextureColor "[0.000000 0.000000 0.000000 0.000000]"
+	TextureFilmGrain "[0.000000 0.000000 0.000000 0.000000]"
+	TextureScanlines "[1.000000 1.000000 1.000000 1.000000]"
+	TextureVignette "[1.000000 1.000000 1.000000 1.000000]"
+
+	//---- Specular ----
+	g_flReflectionStrength "0.000"
+	g_fSpecularRoughness "0.000"
+	SpecularDirt "[0.000000 0.000000 0.000000 0.000000]"
+	SpecularDistortion "[0.000000 0.000000 0.000000 0.000000]"
+
+	//---- VSYNC ----
+	g_flVSYNCJumpScale "0.000"
+	VSyncControl "[0.000000 0.000000 0.000000 0.000000]"
+
+	Attributes
+	{
+		all ""
+		blend "0"
+	}
+
+	SystemAttributes
+	{
+		PhysicsSurfaceProperties "no_decal"
+	}
+
+	DynamicParams
+	{
+		g_flAlphaOutputMinimum "blend"
+		g_flTexCoordOffsetU "all.z"
+		g_flTexCoordOffsetV "all.w"
+		g_vColorTint "res = (1-blend);\nreturn float4(res, res, res, res);"
+		g_vTexCoordScale "float2(all.x, all.y)"
+	}
+}

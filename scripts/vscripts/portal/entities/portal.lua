@@ -1,1 +1,0 @@
-local self = inherit("Portal")

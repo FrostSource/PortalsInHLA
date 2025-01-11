@@ -1,3 +1,10 @@
+if thisEntity then
+    -- Inherit this script if attached to entity
+    -- Will also load the script at the same time if needed
+    inherit(GetScriptFile())
+    return
+end
+
 ---@class PortalPairManager : EntityClass
 local base = entity("PortalPairManager")
 
@@ -23,11 +30,12 @@ end
 
 ---Called automatically on activate.
 ---Any self values set here are automatically saved
----@param loaded boolean
-function base:OnReady(loaded)
-    if not loaded then
+---@param readyType OnReadyType
+function base:OnReady(readyType)
+    if readyType ~= READY_GAME_LOAD then
         -- Must wait until player exists to save color table
-        RegisterPlayerEventCallback("player_activate", function (params)
+        -- ListenToPlayerEvent("player_activate", function (params)
+        --     print("PLAYER ACTIVATE")
             local portal1Camera = self:FindInPrefab("portal_1_camera")
             local portal2Camera = self:FindInPrefab("portal_2_camera")
             local portal1Monitor = self:FindInPrefab("portal_1_monitor")
@@ -41,17 +49,17 @@ function base:OnReady(loaded)
             end
 
             -- Rename prefab entities so they can be found by PortalManager
-            portal1Camera:SetEntityName("_PortalCamera" .. self.portal1Name:capitalize(true))
-            portal2Camera:SetEntityName("_PortalCamera" .. self.portal2Name:capitalize(true))
-            portal1Monitor:SetEntityName("_PortalMonitor" .. self.portal1Name:capitalize(true))
-            portal2Monitor:SetEntityName("_PortalMonitor" .. self.portal2Name:capitalize(true))
-            portal1Trigger:SetEntityName("_PortalTrigger" .. self.portal1Name:capitalize(true))
-            portal2Trigger:SetEntityName("_PortalTrigger" .. self.portal2Name:capitalize(true))
+            portal1Camera:SetEntityName("_portalcamera" .. self.portal1Name:lower())
+            portal2Camera:SetEntityName("_portalcamera" .. self.portal2Name:lower())
+            portal1Monitor:SetEntityName("_portalmonitor" .. self.portal1Name:lower())
+            portal2Monitor:SetEntityName("_portalmonitor" .. self.portal2Name:lower())
+            portal1Trigger:SetEntityName("_portaltrigger" .. self.portal1Name:lower())
+            portal2Trigger:SetEntityName("_portaltrigger" .. self.portal2Name:lower())
 
             ---@TODO Consider moving this to Spawn
             PortalManager:AddPortalColor(self.portal1Name, self.portal2Name, self.portal1Color)
             PortalManager:AddPortalColor(self.portal2Name, self.portal1Name, self.portal2Color)
-        end)
+        -- end)
     end
 end
 

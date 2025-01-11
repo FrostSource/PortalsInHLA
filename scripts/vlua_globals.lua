@@ -2,7 +2,7 @@
 ---@diagnostic disable: lowercase-global, deprecated, undefined-doc-name
 
 --[[
-    Version 2.0.11
+    Version 2.1.2
 
     This file helps intellisense in editors like Visual Studio Code by
     introducing definitions of all known VLua functions into the global scope.
@@ -62,6 +62,7 @@ thisEntity = nil
 ---| 0 # SHAKE_START
 ---| 1 # SHAKE_STOP
 
+---Table passed into functions called from Hammer.
 ---@class IOParams
 ---@field activator EntityHandle
 ---@field caller EntityHandle
@@ -77,9 +78,9 @@ thisEntity = nil
 ---@class TraceTableBase
 ---@field startpos Vector # Global vector where to start the trace.
 ---@field endpos Vector # Global vector where to end the trace.
----@field pos Vector # Global vector where the trace hit.
----@field fraction number # Fraction from the start to end where the trace hit.
----@field hit boolean # Whether the trace hit something. Always present.
+---@field pos Vector? # Global vector where the trace hit.
+---@field fraction number? # Fraction from the start to end where the trace hit.
+---@field hit boolean? # Whether the trace hit something. Always present.
 ---@field startsolid boolean? # Whether the trace started inside the entity. This parameter is set to nil if it is false.
 ---@field normal Vector? # Global normal vector of the surface hit.
 
@@ -400,22 +401,31 @@ thisEntity = nil
     ---@field item string
     ---@field item_name string
     ---@field entindex integer
-    ---@field hand_is_primary boolean
+    ---@field hand_is_primary number
     ---@field vr_tip_attachment integer
     ---@field wasparentedto string
 ---@class GAME_EVENT_GRABBITY_GLOVE_CATCH : GAME_EVENT_BASE
     ---@field entindex integer
     ---@field item string
-    ---@field hand_is_primary boolean
+    ---@field hand_is_primary number
     ---@field vr_tip_attachment integer
----@class GAME_EVENT_GRABBITY_HIGHLIGHT_START : GAME_EVENT_BASE
+---@class GAME_EVENT_GRABBITY_GLOVE_HIGHLIGHT_START : GAME_EVENT_BASE
     ---@field entindex integer
-    ---@field hand_is_primary boolean
-    ---@field vr_tip_attachment integer
----@class GAME_EVENT_GRABBITY_HIGHLIGHT_STOP : GAME_EVENT_GRABBITY_HIGHLIGHT_START, GAME_EVENT_BASE
----@class GAME_EVENT_GRABBITY_LOCKED_ON_START : GAME_EVENT_GRABBITY_HIGHLIGHT_START, GAME_EVENT_BASE
----@class GAME_EVENT_GRABBITY_LOCKED_ON_STOP : GAME_EVENT_GRABBITY_HIGHLIGHT_START, GAME_EVENT_BASE
-    ---@field highlight_active boolean
+    ---@field hand_is_primary number
+    ---@field vr_tip_attachment 1|2 # Hand that grabbed, 1 = left, 2 = right (reversed if left handed).
+---@class GAME_EVENT_GRABBITY_GLOVE_HIGHLIGHT_STOP : GAME_EVENT_GRABBITY_GLOVE_HIGHLIGHT_START, GAME_EVENT_BASE
+    ---@field entindex integer
+    ---@field hand_is_primary number
+    ---@field vr_tip_attachment 1|2 # Hand that grabbed, 1 = left, 2 = right (reversed if left handed).
+---@class GAME_EVENT_GRABBITY_GLOVE_LOCKED_ON_START : GAME_EVENT_GRABBITY_GLOVE_HIGHLIGHT_START, GAME_EVENT_BASE
+    ---@field entindex integer
+    ---@field hand_is_primary number
+    ---@field vr_tip_attachment 1|2 # Hand that grabbed, 1 = left, 2 = right (reversed if left handed).
+---@class GAME_EVENT_GRABBITY_GLOVE_LOCKED_ON_STOP : GAME_EVENT_GRABBITY_GLOVE_HIGHLIGHT_START, GAME_EVENT_BASE
+    ---@field entindex integer
+    ---@field hand_is_primary number
+    ---@field vr_tip_attachment 1|2 # Hand that grabbed, 1 = left, 2 = right (reversed if left handed).
+    ---@field highlight_active number
 ---@class GAME_EVENT_PLAYER_GESTURED : GAME_EVENT_BASE
     ---@field item string
 ---@class GAME_EVENT_PLAYER_SHOOT_WEAPON : GAME_EVENT_BASE
@@ -551,7 +561,7 @@ thisEntity = nil
 ---@class GAME_EVENT_TRIPMINE_HACK_STARTED : GAME_EVENT_BASE
 ---@class GAME_EVENT_TRIPMINE_HACKED : GAME_EVENT_BASE
 ---@class GAME_EVENT_PRIMARY_HAND_CHANGED : GAME_EVENT_BASE
-    ---@field is_primary_left boolean
+    ---@field is_primary_left number # 0 = right handed, 1 = left handed
 ---@class GAME_EVENT_CLOSE_TO_BLINDZOMBIE : GAME_EVENT_BASE
 ---@class GAME_EVENT_PLAYER_GRABBED_BY_BARNACLE : GAME_EVENT_BASE
 ---@class GAME_EVENT_PLAYER_RELEASED_BY_BARNACLE : GAME_EVENT_BASE
@@ -603,6 +613,452 @@ thisEntity = nil
 ---@class GAME_EVENT_VR_CONTROLLER_HINT_CREATE : GAME_EVENT_BASE
     ---@field hint_name string # What to name the hint. Referenced against instructor for the proper lesson.
     ---@field hint_dominant_hand boolean # True for dominant hand, false for off hand.
+
+---Send once a server starts 
+---@class GAME_EVENT_SERVER_SPAWN  
+    ---@field hostname string public host name
+    ---@field address string hostame, IP or DNS name
+    ---@field port number server port
+    ---@field game string game dir
+    ---@field mapname string map name
+    ---@field addonname string addon name
+    ---@field maxplayers number max players
+    ---@field os string WIN32, LINUX
+    ---@field dedicated boolean true if dedicated server
+    ---@field password boolean true if password protected
+---Server is about to be shut down 
+---@class GAME_EVENT_SERVER_PRE_SHUTDOWN
+    ---@field reason string reason why server is about to be shut down
+---Server shut down
+---@class GAME_EVENT_SERVER_SHUTDOWN
+    ---@field reason string reason why server was shut down
+---A generic server message
+---@class GAME_EVENT_SERVER_MESSAGE
+    ---@field text string the message text
+---A server console var has changed
+---@class GAME_EVENT_SERVER_CVAR
+    ---@field cvarname string cvar name, eg "mp_roudtime"
+    ---@field cvarvalue string new cvar value
+---
+---@class GAME_EVENT_SERVER_ADDBAN
+    ---@field name string player name
+    ---@field userid number user ID on server
+    ---@field networkid string player network (i.e. steam) id
+    ---@field ip string IP address
+    ---@field duration string length of the ban
+    ---@field by string banned by...
+    ---@field kicked boolean whether the player was also kicked
+---
+---@class GAME_EVENT_SERVER_REMOVEBAN
+    ---@field networkid string player network (i.e. steam) id
+    ---@field ip string IP address
+    ---@field by string removed by...
+---
+---@class GAME_EVENT_PLAYER_ACTIVATE
+    ---@field userid number user ID on server
+---Player has sent final message in the connection sequence
+---@class GAME_EVENT_PLAYER_CONNECT_FULL
+    ---@field userid number user ID on server
+    ---@field index number player slot (entity index-1)
+    ---@field PlayerID number
+---
+---@class GAME_EVENT_PLAYER_SAY
+    ---@field userid number user ID on server
+    ---@field text string the say text
+---
+---@class GAME_EVENT_PLAYER_FULL_UPDATE
+    ---@field userid number user ID on server
+    ---@field count number Number of this full update
+---A new client connected
+---@class GAME_EVENT_PLAYER_CONNECT
+    ---@field name string player name
+    ---@field index number player slot(entity index-1)
+    ---@field userid number user ID on server (unique on server)
+    ---@field networkid string player network (i.e steam) id
+    ---@field address string ip:port
+    ---@field bot boolean
+---A client was disconnected
+---@class GAME_EVENT_PLAYER_DISCONNECT
+    ---@field userid number user ID on server (unique on server)
+    ---@field reason string see networkdisconnect enum protobuf
+    ---@field name string player name
+    ---@field networkid string player network (i.e steam) id
+    ---@field PlayerID number
+---A player changed his name
+---@class GAME_EVENT_PLAYER_INFO
+    ---@field name string player name
+    ---@field index number player slot (entity index-1)
+    ---@field userid number iser ID on server (unique on server)
+    ---@field networkid string player network (i.e steam) id
+    ---@field bot boolean true if player is a AI bot
+---Player spawned in game
+---@class GAME_EVENT_PLAYER_SPAWN
+    ---@field userid number user ID on server
+---Player change his team
+--You can receive this on the client before the local player has updated the team field locally
+---@class GAME_EVENT_PLAYER_TEAM
+    ---@field userid number user ID on server (unique on server)
+    ---@field team number team id
+    ---@field oldteam number old team id
+    ---@field disconnect boolean team change because player disconnects
+    ---@field autoteam boolean true if the player was auto assigned to the team
+    ---@field silent boolean if true wont print the team join messages
+    ---@field name string
+    ---@field isbot boolean
+---Sent only on the client for the local player - happens only after the local players team variable has been updated
+---@class GAME_EVENT_LOCAL_PLAYER_TEAM
+---
+---@class GAME_EVENT_PLAYER_CHANGENAME
+    ---@field userid number user ID on server
+    ---@field oldname string players old (current) name
+    ---@field newname string players new name
+---A player changed his class
+---@class GAME_EVENT_PLAYER_CLASS
+    ---@field userid number user ID on server
+    ---@field class string new player class / model
+---Players scores changed
+---@class GAME_EVENT_PLAYER_SCORE
+    ---@field userid number user ID on server
+    ---@field kills number \# of kills
+    ---@field deaths number \# of deaths
+    ---@field score number total game score
+---
+---@class GAME_EVENT_PLAYER_HURT
+    ---@field userid number player index who was hurt
+    ---@field attacker number player index who attacked
+    ---@field health number remaining health points
+---Player shoot his weapon
+---@class GAME_EVENT_PLAYER_SHOOT
+    ---@field userid number user ID on server
+    ---@field weapon number weapon ID
+    ---@field mode number weapon mode
+---A public player chat
+---@class GAME_EVENT_PLAYER_CHAT
+    ---@field teamonly boolean true if team only chat
+    ---@field userid number chatting player
+    ---@field playerid number chatting player ID
+    ---@field text string chat text
+---Emits a sound to everyone on a team
+---@class GAME_EVENT_TEAMPLAY_BROADCAST_AUDIO
+    ---@field team number unique team id
+    ---@field sound string name of the sound to emit
+---
+---@class GAME_EVENT_FINALE_START
+    ---@field rushes number
+---
+---@class GAME_EVENT_PLAYER_STATS_UPDATED
+    ---@field forceupload boolean
+---Fired when achievements/stats are downloaded from Steam or XBox Live
+---@class GAME_EVENT_USER_DATA_DOWNLOADED
+---
+---@class GAME_EVENT_RAGDOLL_DISSOLVED
+    ---@field entindex number
+---Info about team
+---@class GAME_EVENT_TEAM_INFO
+    ---@field teamid number unique team id
+    ---@field teamname string team name eg "Team Blue"
+---Team score changed
+---@class GAME_EVENT_TEAM_SCORE
+    ---@field teamid number team id
+    ---@field score number total team score
+--[[
+    HLVR specific events
+]]
+---A specitator/player is a cameraman
+---@class GAME_EVENT_HLTV_CAMERAMAN
+    ---@field index number camera man entity index
+---Shot of a single entity
+---@class GAME_EVENT_HLTV_CHASE
+    ---@field target1 number primary traget index
+    ---@field target2 number secondary traget index or 0
+    ---@field distance number camera distance
+    ---@field theta number view angle horizontal
+    ---@field phi number view angle vertical
+    ---@field intertia number camera intertia
+    ---@field ineye number diretcor suggests to show ineye
+---A camera ranking
+---@class GAME_EVENT_HLTV_RANK_CAMERA
+    ---@field index number fixed camera index
+    ---@field rank number ranking, how interesting is this camera view
+    ---@field target number best/closest target entity
+---An entity ranking
+---@class GAME_EVENT_HLTV_RANK_ENTITY
+    ---@field index number entity index
+    ---@field rank number ranking, how interesting is this entity to view
+    ---@field target number best/closest target entity
+---Show from fixed view
+---@class GAME_EVENT_HLTV_FIXED
+    ---@field posx number camera position in world
+    ---@field posy number
+    ---@field posz number
+    ---@field theta number camera angles
+    ---@field offset number
+    ---@field fov number
+    ---@field target number follow this entity or 0
+---A HLTV message send by moderators
+---@class GAME_EVENT_HLTV_MESSAGE
+    ---@field text string
+---General HLTV status
+---@class GAME_EVENT_HLTV_STATUS
+    ---@field clients number number of HLTV spectators
+    ---@field slots number number HLTV slots
+    ---@field proxies number number of HLTV proxies
+    ---@field master string dispatch master IP:port
+---
+---@class GAME_EVENT_HLTV_TITLE
+    ---@field text string
+---A HLTV chat msg sent by spectators
+---@class GAME_EVENT_HLTV_CHAT
+    ---@field text string
+---
+---@class GAME_EVENT_HLTV_VERSIONINFO
+    ---@field version number
+---
+---@class GAME_EVENT_DEMO_START
+    ---@field local unknown
+    ---@field dota_combatlog_list unknown CSVCMsgList_GameEvents that are combat log events
+    ---@field dota_hero_chase_list unknown CSVCMsgList_GameEvents
+    ---@field dota_pick_hero_list unknown CSVCMsgList_GameEvents
+---
+---@class GAME_EVENT_DEMO_STOP
+---
+---@class GAME_EVENT_DEMO_SKIP
+    ---@field local unknown
+    ---@field playback_tick number current playback tick
+    ---@field skipto_tick number tick we're going to
+    ---@field user_message_list unknown CSVCMsgList_UserMessages
+    ---@field dota_hero_chase_list unknown CSVCMsgList_GameEvents
+---
+---@class GAME_EVENT_MAP_SHUTDOWN
+---
+---@class GAME_EVENT_MAP_TRANSITION
+---
+---@class GAME_EVENT_HOSTNAME_CHANGED
+    ---@field hostname string
+---
+---@class GAME_EVENT_DIFFICULTY_CHANGED
+    ---@field newDifficulty number
+    ---@field oldDifficulty number
+    ---@field strDifficulty string new difficulty as string
+---A message send by game logic to everyone
+---@class GAME_EVENT_GAME_MESSAGE
+    ---@field target number 0 = console, 1 = HUD
+    ---@field text string the message text
+---Send when new map is completely loaded
+---@class GAME_EVENT_GAME_NEWMAP
+    ---@field mapname string map name
+    ---@field transition boolean true if this is a transition from one map to another
+---
+---@class GAME_EVENT_ROUND_START
+    ---@field timelimit number round time limit in seconds
+    ---@field fraglimit number frag limit in seconds
+    ---@field objective string round objective
+---
+---@class GAME_EVENT_ROUND_END
+    ---@field winner number winner team/user i
+    ---@field reason number reson why team won
+    ---@field message string end round message
+    ---@field time number
+---
+---@class GAME_EVENT_ROUND_START_PRE_ENTITY
+---
+---@class GAME_EVENT_ROUND_START_POST_NAV
+---
+---@class GAME_EVENT_ROUND_FREEZE_END
+---Round restart
+---@class GAME_EVENT_TEAMPLAY_ROUND_START
+    ---@field full_reset boolean is this a full reset of the map
+---A game event, name may be 32 characters long
+---@class GAME_EVENT_PLAYER_DEATH
+    ---@field userid number user ID who died
+    ---@field attacker number user ID who killed
+---
+---@class GAME_EVENT_PLAYER_FOOTSTEP
+    ---@field userid number
+---
+---@class GAME_EVENT_PLAYER_HINTMESSAGE
+    ---@field hintmessage string localizable string of a hint
+---
+---@class GAME_EVENT_BREAK_BREAKABLE
+    ---@field entindex number
+    ---@field userid number
+    ---@field material number BREAK_GLASS, BREAK_WOOD, etc
+---
+---@class GAME_EVENT_BREAK_DROP
+    ---@field entindex number
+    ---@field userid number
+    ---@field player_held boolean
+    ---@field player_thrown boolean
+    ---@field player_dropped boolean
+---
+---@class GAME_EVENT_ENTITY_KILLED
+    ---@field entindex_killed number
+    ---@field entindex_attacker number
+    ---@field entindex_inflictor number
+    ---@field damagebits number
+---
+---@class GAME_EVENT_DOOR_OPEN
+    ---@field userid  number Who opened the door
+    ---@field checkpoint boolean Is the door a checkpoint door
+    ---@field closed boolean Was the door closed when it started opening?
+---
+---@class GAME_EVENT_DOOR_CLOSE
+    ---@field userid number Who closed the door
+    ---@field checkpoint boolean Is the door a checkpoint door
+---
+---@class GAME_EVENT_DOOR_UNLOCKED
+    ---@field userid number Who opened the door
+    ---@field checkpoint boolean Is the door a checkpoint door
+--[[
+    Client side VoteController talking to HUD
+]]
+---
+---@class GAME_EVENT_VOTE_STARTED
+    ---@field issue string
+    ---@field param1 string
+    ---@field votedata string
+    ---@field team number
+    ---@field initiator number entity id of the player who initiated the vote
+    ---@field reliable 1 this event is reliable
+---
+---@class GAME_EVENT_VOTE_FAILED
+    ---@field team number
+    ---@field reliable 1 this event is reliable
+---
+---@class GAME_EVENT_VOTE_PASSED
+    ---@field details string
+    ---@field param1 string
+    ---@field team number
+    ---@field reliable 1 this event is reliable
+---
+---@class GAME_EVENT_VOTE_CHANGED
+    ---@field yesVotes number
+    ---@field noVotes number
+    ---@field potentialVotes number
+---
+---@class GAME_EVENT_VOTE_CAST_YES
+    ---@field team number
+    ---@field entityid number entity id of the voter
+---
+---@class GAME_EVENT_VOTE_CAST_NO
+    ---@field team number
+    ---@field entityid number entity id of the voter
+---
+---@class GAME_EVENT_ACHIEVEMENT_EVENT
+    ---@field achievement_name string non-localized name of achievement
+    ---@field cur_val number \# of steps toward achievement
+    ---@field max_val number total # of steps in achievement
+---
+---@class GAME_EVENT_ACHIEVEMENT_EARNED
+    ---@field player number entindex of the player
+    ---@field achievement number achievement ID
+---Used for a notification message when an achievement fails to write
+---@class GAME_EVENT_ACHIEVEMENT_WRITE_FAILED
+---
+---@class GAME_EVENT_BONUS_UPDATED
+    ---@field numadvanced number
+    ---@field numbronze number
+    ---@field numsilver number
+    ---@field numgold number
+---
+---@class GAME_EVENT_SPEC_TARGET_UPDATED
+---
+---@class GAME_EVENT_ENTITY_VISIBLE
+    ---@field userid number The player who sees the entity
+    ---@field subject number Entindex of the entity they see
+    ---@field classname string Classname of the entity they see
+    ---@field entityname string name of the entity they see
+---The player pressed use but a use entity wasn't found
+---@class GAME_EVENT_PLAYER_USE_MISS
+    ---@field userid number userid of user
+---
+---@class GAME_EVENT_GAMEINSTRUCTOR_DRAW
+---
+---@class GAME_EVENT_GAMEINSTRUCTOR_NODRAW
+---
+---@class GAME_EVENT_FLARE_IGNITE_NPC
+    ---@field entindex number entity ignited
+---
+---@class GAME_EVENT_HELICOPTER_GRENADE_PUNT_MISS
+---
+---@class GAME_EVENT_PHYSGUN_PICKUP
+    ---@field entindex number entity picked up
+--[[
+    Economy events
+]]
+---
+---@class GAME_EVENT_INVENTORY_UPDATED
+    ---@field itemdef number
+    ---@field itemid number
+---
+---@class GAME_EVENT_CART_UPDATED
+---
+---@class GAME_EVENT_STORE_PRICESHEET_UPDATED
+---
+---@class GAME_EVENT_ITEM_SCHEMA_INITIALIZED
+---
+---@class GAME_EVENT_DROP_RATE_MODIFIED
+---
+---@class GAME_EVENT_EVENT_TICKET_MODIFIED
+---
+---@class GAME_EVENT_GC_CONNECTED
+--[[
+    Instructor / Hint Events
+]]
+---
+---@class GAME_EVENT_INSTRUCTOR_START_LESSON
+    ---@field userid number The player who this lesson is intended for
+    ---@field hint_name string Name of the lesson to start. Must match instructor_lesson.txt
+    ---@field hint_target number entity id that the hint should display at. Leave empty if controller target
+    ---@field vr_movement_type number
+    ---@field vr_single_controller boolean
+    ---@field vr_controller_type number
+---
+---@class GAME_EVENT_INSTRUCTOR_CLOSE_LESSON
+    ---@field userid number The player who this lesson is intended for
+    ---@field hint_name string Name of the lesson to start. Must match instructor_lesson.txt
+---Create a hint using data supplied entirely by the server/map. Intended for hints to smooth playtests before content is ready to make the hint unneccessary. NOT INTENDED AS A SHIPPABLE CRUTCH
+---@class GAME_EVENT_INSTRUCTOR_SERVER_HINT_CREATE
+    ---@field userid number user ID of the player that triggered the hint
+    ---@field hint_entindex number entity id of the env_instructor_hint that fired the event
+    ---@field hint_name string what to name the hint. For referencing it again later (e.g. a kill command for the hint instead of a timeout)
+    ---@field hint_replace_key string type name so that message of the same type will replace each other
+    ---@field hint_target number entity id that the hint should display at
+    ---@field hint_activator_userid number userid id of the activator
+    ---@field hint_timeout number how long in seconds until the hint automatically times out, 0 = never
+    ---@field hint_icon_onscreen string the hint icon to use when the hint is onscreen. e.g. "icon_alert_red"
+    ---@field hint_icon_offscreen string the hint icon to use when the hint is offscreen. e.g. "icon_alert"
+    ---@field hint_caption string the hint caption. e.g. "#ThisIsDangerous"
+    ---@field hint_activator_caption string the hint caption that only the activator sees e.g. "#YouPushedItGood"
+    ---@field hint_color string the hint color in "r,g,b" format where each component is 0-255
+    ---@field hint_icon_offset number how far on the z axis to offset the hint from entity origin
+    ---@field hint_range number range before the hint is culled
+    ---@field hint_flag number hint flags
+    ---@field hint_binding string bindings to use when use_binding is the onscreen icon
+    ---@field hint_allow_nodraw_target boolean if false, the hint will dissappear if the target entity is invisible
+    ---@field hint_nooffscreen boolean if true, the hint will not show when outside the player view
+    ---@field hint_forcecaption boolean if true, the hint caption will show even if the hint is occluded
+    ---@field hint_local_player_only boolean if true, only the local player will see the hint
+    ---@field hint_start_sound string Game sound to play
+    ---@field hint_layoutfile string Path for Panorama layout file
+    ---@field hint_vr_panel_type number Attachment type for the Panorama panel
+    ---@field hint_vr_height_offset number Height offset for attached panels
+    ---@field hint_vr_offset_x number offset for attached panels
+    ---@field hint_vr_offset_y number offset for attached panels
+    ---@field hint_vr_offset_z number offset for attached panels
+---Destroys a server/map created hint
+---@class GAME_EVENT_INSTRUCTOR_SERVER_HINT_STOP
+    ---@field hint_name string The hint to stop. Will stop ALL hints with this name
+    ---@field hint_entindex number entity id of the env_instructor_hint that fired the event
+---
+---@class GAME_EVENT_SET_INSTRUCTOR_GROUP_ENABLED
+    ---@field group string
+    ---@field enabled number
+---
+---@class GAME_EVENT_CLIENTSIDE_LESSON_CLOSED
+    ---@field lesson_name string
+---
+---@class GAME_EVENT_DYNAMIC_SHADOW_LIGHT_CHANGED
 
 
 
@@ -695,7 +1151,7 @@ function AnglesToVector(angle) end
 ---@param axis Vector
 ---@param angle number
 ---@return Quaternion
----@deprecated
+---@deprecated # Quaternions do not exist.
 function AxisAngleToQuaternion(axis, angle) end
 ---Compute the closest point relative to a vector on the OBB of an entity.
 ---@param entity EntityHandle
@@ -757,7 +1213,7 @@ function RotatePosition(rotationOrigin, rotationAngle, vectorToRotate) end
 ---@param axis Vector
 ---@param angle number
 ---@return Quaternion
----@deprecated
+---@deprecated # Quaternions do not exist.
 function RotateQuaternionByAxisAngle(quat, axis, angle) end
 ---Find the delta between two QAngles.
 ---@param src QAngle
@@ -775,7 +1231,7 @@ function RotationDeltaAsAngularVelocity(angle1, angle2) end
 ---@param q1 Quaternion
 ---@param t number
 ---@return Quaternion
----@deprecated
+---@deprecated # Quaternions do not exist.
 function SplineQuaternions(q0, q1, t) end
 ---Very basic interpolation of two vectors over time t on [0,1].
 ---@param vector1 Vector
@@ -1162,8 +1618,8 @@ function PrecacheEntityListFromTable(groupSpawnTables, context) end
 ---@param modelName string
 ---@param context CScriptPrecacheContext
 function PrecacheModel(modelName, context) end
----model_folder|sound|soundfile|particle|particle_folder"
----@param resourceType string|"model_folder"|"sound"|"soundfile"|"particle"|"particle_folder"
+---@alias PrecacheTypes "model_folder"|"sound"|"soundfile"|"particle"|"particle_folder"
+---@param resourceType string|PrecacheTypes
 ---@param resourcePath string
 ---@param context CScriptPrecacheContext
 function PrecacheResource(resourceType, resourcePath, context) end
@@ -1239,9 +1695,8 @@ function TraceLine(parameters) end
 --#region Sound
 
 ---Play named sound for all players.
----Function does not appear to exist.
 ---@param sound string
----@deprecated
+---@deprecated # Function does not appear to exist.
 function EmitGlobalSound(sound) end
 ---Play named sound on Entity.
 ---@param sound string
@@ -1351,11 +1806,10 @@ function GetListenServerHost() end
 ---@return string
 function GetMapName() end
 ---Execute a script file. Included in the current scope by default.
----Doesn't appear to exist, use DoIncludeScript instead.
 ---@param scriptFileName string
 ---@param scope ScriptScope|nil
 ---@return boolean
----@deprecated
+---@deprecated # Doesn't appear to exist, use `DoIncludeScript` instead.
 function IncludeScript(scriptFileName, scope) end
 ---If the given file doesn't exist, creates it with the given contents; does nothing if it exists
 ---Warning: Deprecated
@@ -1381,7 +1835,7 @@ function IsServer() end
 function IsInToolsMode() end
 ---Register as a listener for a game event from script.
 ---@param eventname GAME_EVENTS_ALL
----@param callback function
+---@param callback fun(params: GAME_EVENT_BASE)
 ---@param context nil|table # Context to pass as the first parameter of `callback`.
 ---@return integer # ID used to cancel with StopListeningToGameEvent().
 function ListenToGameEvent(eventname, callback, context) end
@@ -1527,9 +1981,9 @@ function vlua.rawdelete(t, key) end
 ---@return integer
 function vlua.rawin(t, key) end
 ---Implements Squirrel find method for tables and strings. (o, substr, [startidx]) for strings, (o, value) for tables
----@param tbl table
----@param value any|string
----@return any
+---@param tbl table # Table to search.
+---@param value any # Value to search for.
+---@return any # Key associated with `value`.
 ---@overload fun(str: string, substr: string, startIndex: integer?): string|nil
 function vlua.find(tbl, value) end
 ---Implements Squirrel slice method for tables and strings.
@@ -1551,10 +2005,10 @@ function vlua.reverse(t) end
 ---@return table
 function vlua.resize(t, size, fill) end
 ---Implements Squirrel extend method for tables.
----Appears to append array onto o. array must be an ordered table.
----@param o table
----@param array table
----@return table?
+---Extends an ordered table `o` with another ordered table `arr`.
+---@param o table # The array to extend
+---@param array table # The array to add onto `o`
+---@return table? # Returns `o` on success, nil otherwise
 function vlua.extend(o, array) end
 ---Implements Squirrel map method for tables.
 ---Passes values one at a time to function first param. Return a value to be added to resulting table.
@@ -1676,10 +2130,10 @@ function CBaseEntity:GetAngularVelocity() end
 ---Get Base velocity. Only functional on prop_dynamic entities with the Scripted Movement property set.
 ---@return Vector
 function CBaseEntity:GetBaseVelocity() end
----Get a vector containing max bounds, centered on object
+---Get a vector containing max bounds, in local space.
 ---@return Vector
 function CBaseEntity:GetBoundingMaxs() end
----Get a vector containing min bounds, centered on object
+---Get a vector containing min bounds, in local space.
 ---@return Vector
 function CBaseEntity:GetBoundingMins() end
 
@@ -1694,6 +2148,8 @@ function CBaseEntity:GetBounds() end
 ---@return Vector
 function CBaseEntity:GetCenter() end
 ---Get the entities parented to this entity. Including children of children.
+---
+---This function causes a memory leak which will build over time whenever it is called.
 ---@return EntityHandle[]
 function CBaseEntity:GetChildren() end
 ---Looks up a context and returns it if available. May return string, float, or nil (if the context isn't found)
@@ -1751,11 +2207,12 @@ function CBaseEntity:GetRightVector() end
 ---@return EntityHandle
 function CBaseEntity:GetRootMoveParent() end
 ---Returns float duration of the sound.
----Returns 2 for all sounds.
+---
+---**Note:** Returns 2 for all sounds unless `vsnd_duration` property is set on sound event (not all events support this).
+---
 ---@param soundName string
 ---@param actormodelname string|""
 ---@return number
----@deprecated
 function CBaseEntity:GetSoundDuration(soundName, actormodelname) end
 ---Returns the spawn group handle of this entity.
 ---@return integer
@@ -1830,7 +2287,7 @@ function CBaseEntity:SetAngularVelocity(pitch, yaw, roll) end
 function CBaseEntity:SetConstraint(pos) end
 ---Store any key/value pair in this entity's dialog contexts. Value must be a string. Will last for duration (set 0 to mean 'forever').
 ---@param name string
----@param value string
+---@param value? string
 ---@param duration number
 function CBaseEntity:SetContext(name, value, duration) end
 ---Store any key/value pair in this entity's dialog contexts. Value must be a number (int or float). Will last for duration (set 0 to mean 'forever').
@@ -1840,7 +2297,7 @@ function CBaseEntity:SetContext(name, value, duration) end
 function CBaseEntity:SetContextNum(name, value, duration) end
 ---Set a context think function on this entity.
 ---@param thinkName string|nil
----@param thinkFunction function?
+---@param thinkFunction fun():number?|nil
 ---@param initialDelay number
 function CBaseEntity:SetContextThink(thinkName, thinkFunction, initialDelay) end
 ---Set entity targetname
@@ -1875,10 +2332,10 @@ function CBaseEntity:SetMass(mass) end
 ---Set entity max health
 ---@param maxHP integer
 function CBaseEntity:SetMaxHealth(maxHP) end
----	Set entity absolute origin
+---Set entity absolute origin
 ---@param origin Vector
 function CBaseEntity:SetOrigin(origin) end
----	Sets this entity's owner.
+---Sets this entity's owner.
 ---@param owningEntity EntityHandle|nil
 function CBaseEntity:SetOwner(owningEntity) end
 ---Set the parent for this entity. The attachment is optional, pass an empty string to not use it.
@@ -1894,7 +2351,7 @@ function CBaseEntity:SetTeam(team) end
 ---If using a string function name, function must exist in private script scope.
 ---@param thinkFunction function|string # If string, will look up in the calling instance or given `context` to find the function. If binding a local function this must be a direct reference, not a string.
 ---@param thinkName string # Name of the think, used for stopping.
----@param initialDelay number # Initial delay before the function is first called.
+---@param initialDelay number? # Initial delay before the function is first called.
 ---@param context EntityHandle? # If `thinkFunction` is a string, use this context to find the function, otherwise ignored.
 function CBaseEntity:SetThink(thinkFunction, thinkName, initialDelay, context) end
 ---Sets the world space velocity of the entity. Only functional on prop_dynamic entities with the Scripted Movement property set.
@@ -1962,8 +2419,8 @@ function CEntityInstance:DisconnectRedirectedOutput(output, functionName, entity
 function CEntityInstance:entindex() end
 ---Fire an entity output.
 ---@param outputName string
----@param activator EntityHandle
----@param caller EntityHandle
+---@param activator EntityHandle|nil
+---@param caller EntityHandle|nil
 ---@param parameter string|nil # The parameter override to send with the output.
 ---@param delay number
 function CEntityInstance:FireOutput(outputName, activator, caller, parameter, delay) end
@@ -2495,7 +2952,7 @@ function Entities:First() end
 ---@return CHL2_Player
 function Entities:GetLocalPlayer() end
 ---Continue an iteration over the list of entities, providing reference to a previously found entity
----@param startFrom EntityHandle What happens if starting from nil?
+---@param startFrom EntityHandle|nil # If nil, works the same as `Entities:First()`
 ---@return EntityHandle
 function Entities:Next(startFrom) end
 
@@ -2763,7 +3220,7 @@ debugoverlay = {}
 ---@param float_3 number
 ---@param bool_4 boolean
 ---@param float_5 number
----@deprecated
+---@deprecated # Quaternions do not exist.
 function debugoverlay:Axis(Vector_1, Quaternion_2, float_3, bool_4, float_5) end
 ---Draws a world-space axis-aligned wireframe box. Specify bounds in world space.
 ---@param min Vector
@@ -2786,7 +3243,7 @@ function debugoverlay:Box(min, max, red, green, blue, alpha, noDepthTest, second
 ---@param int_8 integer
 ---@param bool_9 boolean
 ---@param float_10 number
----@deprecated
+---@deprecated # Quaternions do not exist.
 function debugoverlay:BoxAngles(Vector_1, Vector_2, Vector_3, Quaternion_4, int_5, int_6, int_7, int_8, bool_9, float_10) end
 ---Draws a capsule. Specify base in world space.
 ---@param Vector_1 Vector
@@ -2799,7 +3256,7 @@ function debugoverlay:BoxAngles(Vector_1, Vector_2, Vector_3, Quaternion_4, int_
 ---@param int_8 integer
 ---@param bool_9 integer
 ---@param float_10 number
----@deprecated
+---@deprecated # Quaternions do not exist.
 function debugoverlay:Capsule(Vector_1, Quaternion_2, float_3, float_4, int_5, int_6, int_7, int_8, bool_9, float_10) end
 ---Draws a circle. Specify center in world space.
 ---@param Vector_1 Vector
@@ -2811,7 +3268,7 @@ function debugoverlay:Capsule(Vector_1, Quaternion_2, float_3, float_4, int_5, i
 ---@param int_7 integer
 ---@param bool_8 boolean
 ---@param float_9 number
----@deprecated
+---@deprecated # Quaternions do not exist.
 function debugoverlay:Circle(Vector_1, Quaternion_2, float_3, int_4, int_5, int_6, int_7, bool_8, float_9) end
 ---Draws a circle oriented to the screen. Specify center in world space.
 ---@param origin Vector
@@ -2865,7 +3322,7 @@ function debugoverlay:Cross3D(origin, radius, red, green, blue, alpha, noDepthTe
 ---@param int_7 integer
 ---@param bool_8 boolean
 ---@param float_9 number
----@deprecated
+---@deprecated # Quaternions do not exist.
 function debugoverlay:Cross3DOriented(Vector_1, Quaternion_2, float_3, int_4, int_5, int_6, int_7, bool_8, float_9) end
 ---Draws a dashed line. Specify endpoint's in world space.
 ---@param startPos Vector
@@ -2923,7 +3380,7 @@ function debugoverlay:EntityText(ehandle, heightOffset, text, red, green, blue, 
 ---@param int_5 integer
 ---@param int_6 integer
 ---@param float_7 number
----@deprecated
+---@deprecated # Vector2D does not exist.
 function debugoverlay:FilledRect2D(Vector2D_1, Vector2D_2, int_3, int_4, int_5, int_6, float_7) end
 ---Draws a horizontal arrow. Specify endpoint's in world space.
 ---@param startPos Vector
@@ -2955,7 +3412,7 @@ function debugoverlay:Line(startPos, endPos, red, green, blue, alpha, noDepthTes
 ---@param int_5 integer
 ---@param int_6 integer
 ---@param float_7 number
----@deprecated
+---@deprecated # Vector2D does not exist.
 function debugoverlay:Line2D(Vector2D_1, Vector2D_2, int_3, int_4, int_5, int_6, float_7) end
 ---Pops the identifier used to group overlays. Overlays marked with this identifier can be deleted in a big batch.
 function debugoverlay:PopDebugOverlayScope() end
@@ -3001,13 +3458,13 @@ function debugoverlay:Sphere(position, radius, red, green, blue, alpha, noDepthT
 ---@param int_8 integer
 ---@param int_9 integer
 ---@param float_10 number
----@deprecated
+---@deprecated # Quaternions do not exist.
 function debugoverlay:SweptBox(Vector_1, Vector_2, Vector_3, Vector_4, Quaternion_5, int_6, int_7, int_8, int_9, float_10) end
 ---Draws 2D text. Specify origin in world space.
 ---@param position Vector
 ---@param heightOffset integer
 ---@param text string
----@param unknown number
+---@param unknown `0`|number
 ---@param red integer
 ---@param green integer
 ---@param blue integer
@@ -3026,7 +3483,7 @@ function debugoverlay:Text(position, heightOffset, text, unknown, red, green, bl
 ---@param Vector2D_8 Vector2D
 ---@param Vector2D_9 Vector2D
 ---@param float_10 number
----@deprecated
+---@deprecated # Vector2D does not exist.
 function debugoverlay:Texture(string_1, Vector2D_2, Vector2D_3, int_4, int_5, int_6, int_7, Vector2D_8, Vector2D_9, float_10) end
 ---Draws a filled triangle in world space for the specific amount of seconds (-1 means forever).
 ---@param point1 Vector
@@ -3051,7 +3508,7 @@ function debugoverlay:UnitTestCycleOverlayRenderType() end
 ---@param int_7 integer
 ---@param bool_8 boolean
 ---@param float_9 number
----@deprecated
+---@deprecated # Quaternions do not exist.
 function debugoverlay:VectorText3D(Vector_1, Quaternion_2, string_3, int_4, int_5, int_6, int_7, bool_8, float_9) end
 ---Draws a vertical arrow. Specify endpoint's in world space.
 ---@param startPos Vector
@@ -3189,7 +3646,7 @@ function CPointTemplate:ForceSpawn() end
 function CPointTemplate:GetSpawnedEntities() end
 ---SetSpawnCallback( hCallbackFunc, hCallbackScope, hCallbackData ) : Set a callback for when the template spawns entities. The spawned entities will be passed in as an array.
 ---@param hCallbackFunc fun(context: table|EntityHandle[], entities: EntityHandle[]|nil)
----@param hCallbackScope handle|nil
+---@param hCallbackScope any
 function CPointTemplate:SetSpawnCallback(hCallbackFunc, hCallbackScope) end
 
 --#endregion
@@ -3489,7 +3946,7 @@ function Convars:GetBool(name) end
 function Convars:GetCommandClient() end
 ---GetFloat(name) : returns the convar as a float. May return nil if no such convar.
 ---@param name string
----@return float|nil
+---@return number|nil
 function Convars:GetFloat(name) end
 ---GetInt(name) : returns the convar as an int. May return nil if no such convar.
 ---@param name string
@@ -3946,6 +4403,7 @@ MAX_PATTACH_TYPES           = 15
 --#region Unknown globals
 
 -- Found through brute force.
+
 BURST   = 5
 EMPTY   = 0
 TAUNT   = 14
@@ -3956,6 +4414,69 @@ ACT_FLY = 25
 ACT_HOP = 30
 ACT_RUN = 10
 ACT_USE = 47
+
+-- CVar flags
+
+---No flags
+FCVAR_NONE                       = 0
+---If this is set, the convar will become anonymous and won't show up in the 'find' results.
+FCVAR_UNREGISTERED               = 1
+---Hidden in released products. Flag is removed automatically if ALLOW_DEVELOPMENT_CVARS is defined.
+FCVAR_DEVELOPMENTONLY            = 2
+---Hidden. Doesn't appear in find or autocomplete. Like DEVELOPMENTONLY, but can't be compiled out.
+FCVAR_HIDDEN                     = 16
+---Makes the ConVar value hidden from all clients ( For example sv_password )
+FCVAR_PROTECTED                  = 32
+---Executing the command or changing the ConVar is only allowed in singleplayer
+FCVAR_SPONLY                     = 64
+---Save the ConVar value into client.vdf
+FCVAR_ARCHIVE                    = 128
+---For serverside ConVars, notifies all players with blue chat text when the value gets changed
+FCVAR_NOTIFY                     = 256
+---For clientside commands, sends the value to the server
+FCVAR_USERINFO                   = 512
+---Forces the ConVar to only have printable characters ( No control characters )
+FCVAR_PRINTABLEONLY              = 1024
+---Don't log the ConVar changes to console/log files/users
+FCVAR_UNLOGGED                   = 2048
+---Tells the engine to never print this variable as a string. This is used for variables which may contain control characters.
+FCVAR_NEVER_AS_STRING            = 4096
+---For serverside ConVars, it will send its value to all clients. The ConVar with the same name must also exist on the client!
+FCVAR_REPLICATED                 = 8192
+---Requires sv_cheats to be enabled to change the ConVar or run the command
+FCVAR_CHEAT                      = 16384
+---Unknown split screen flag
+FCVAR_SS                         = 32768
+---Force the ConVar to be recorded by demo recordings.
+FCVAR_DEMO                       = 65536
+---Opposite of FCVAR_DEMO, ensures the ConVar is not recorded in demos
+FCVAR_DONTRECORD                 = 131072
+---Makes the ConVar not changeable while connected to a server or in singleplayer
+FCVAR_NOT_CONNECTED              = 4194304
+---Unknown
+FCVAR_VCONSOLE_SET_FOCUS         = 1073741824
+
+---@alias CVarFlags
+---|`FCVAR_NONE` # No flags
+---|`FCVAR_UNREGISTERED` # If this is set, the convar will become anonymous and won't show up in the 'find' results.
+---|`FCVAR_DEVELOPMENTONLY` # Hidden in released products. Flag is removed automatically if ALLOW_DEVELOPMENT_CVARS is defined.
+---|`FCVAR_HIDDEN` # Hidden. Doesn't appear in find or autocomplete. Like DEVELOPMENTONLY, but can't be compiled out.
+---|`FCVAR_PROTECTED` # Makes the ConVar value hidden from all clients ( For example sv_password )
+---|`FCVAR_SPONLY` # Executing the command or changing the ConVar is only allowed in singleplayer
+---|`FCVAR_ARCHIVE` # Save the ConVar value into client.vdf
+---|`FCVAR_NOTIFY` # For serverside ConVars, notifies all players with blue chat text when the value gets changed
+---|`FCVAR_USERINFO` # For clientside commands, sends the value to the server
+---|`FCVAR_PRINTABLEONLY` # Forces the ConVar to only have printable characters ( No control characters )
+---|`FCVAR_UNLOGGED` # Don't log the ConVar changes to console/log files/users
+---|`FCVAR_NEVER_AS_STRING` # Tells the engine to never print this variable as a string. This is used for variables which may contain control characters.
+---|`FCVAR_REPLICATED` # For serverside ConVars, it will send its value to all clients. The ConVar with the same name must also exist on the client!
+---|`FCVAR_CHEAT` # Requires sv_cheats to be enabled to change the ConVar or run the command
+---|`FCVAR_SS` # Unknown split screen flag
+---|`FCVAR_DEMO` # Force the ConVar to be recorded by demo recordings.
+---|`FCVAR_DONTRECORD` # Opposite of FCVAR_DEMO, ensures the ConVar is not recorded in demos
+---|`FCVAR_NOT_CONNECTED` # Makes the ConVar not changeable while connected to a server or in singleplayer
+---|`FCVAR_VCONSOLE_SET_FOCUS` # Unknown
+
 
 --#endregion
 

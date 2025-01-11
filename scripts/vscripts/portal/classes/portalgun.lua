@@ -87,27 +87,9 @@ end
 ---Any self values set here are automatically saved
 ---@param loaded boolean
 function base:OnReady(loaded)
-    -- Vive controller uses one button for grenade/reload, so we remap to burst fire
-    RegisterPlayerEventCallback("vr_player_ready", function()
-        if Player:GetVRControllerType() == 2 then
-            self.orangePortalButton = 14
-        end
-        Input:TrackButton(self.bluePortalButton)
-        Input:TrackButton(self.orangePortalButton)
-        Input:TrackButton(self.pickupButton)
-
-        self.__ptxBarrel = ParticleManager:CreateParticle("particles/portalgun_barrel.vpcf", 1, self)
-        self.__ptxLight = ParticleManager:CreateParticle("particles/portalgun_light.vpcf", 1, self)
-        ParticleManager:SetParticleAlwaysSimulate(self.__ptxBarrel)
-        ParticleManager:SetParticleAlwaysSimulate(self.__ptxLight)
-
-        --ParticleManager:SetParticleControl(PortalGun.BarrelParticleIndex, 5,_G.PortalManager.ColorEnts[Colors.Blue]:GetOrigin())
-        ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 0, self, 5, "innerlaser", Vector(0,0,0), true)
-        ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 1, self, 5, "innerlaser_end", Vector(0,0,0), true)
-        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, Vector(0,0.4,1))
-        ParticleManager:SetParticleControlEnt(self.__ptxLight, 0, self, 5, "light", Vector(0,0,0), true)
-        ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
-    end)
+    -- ListenToPlayerEvent("vr_player_ready", function()
+        
+    -- end)
 
     self:RegisterAnimTagListener(function (tagName, status)
         self:AnimGraphListener(tagName, status)
@@ -116,6 +98,31 @@ function base:OnReady(loaded)
     -- Update the global handle
     PortalManager.portalGun = self
 end
+
+---@param params PLAYER_EVENT_VR_PLAYER_READY
+base:PlayerEvent("vr_player_ready", function(self, params)
+    ---@cast self PortalGun
+
+    -- Vive controller uses one button for grenade/reload, so we remap to burst fire
+    if Player:GetVRControllerType() == 2 then
+        self.orangePortalButton = 14
+    end
+    Input:TrackButton(self.bluePortalButton)
+    Input:TrackButton(self.orangePortalButton)
+    Input:TrackButton(self.pickupButton)
+
+    self.__ptxBarrel = ParticleManager:CreateParticle("particles/portalgun_barrel.vpcf", 1, self)
+    self.__ptxLight = ParticleManager:CreateParticle("particles/portalgun_light.vpcf", 1, self)
+    ParticleManager:SetParticleAlwaysSimulate(self.__ptxBarrel)
+    ParticleManager:SetParticleAlwaysSimulate(self.__ptxLight)
+
+    --ParticleManager:SetParticleControl(PortalGun.BarrelParticleIndex, 5,_G.PortalManager.ColorEnts[Colors.Blue]:GetOrigin())
+    ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 0, self, 5, "innerlaser", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 1, self, 5, "innerlaser_end", Vector(0,0,0), true)
+    ParticleManager:SetParticleControl(self.__ptxBarrel, 5, Vector(0,0.4,1))
+    ParticleManager:SetParticleControlEnt(self.__ptxLight, 0, self, 5, "light", Vector(0,0,0), true)
+    ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
+end)
 
 function base:AnimGraphListener(tagName, status)
     if tagName == "Fired" and status == 2 then

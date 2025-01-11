@@ -1,6 +1,6 @@
 /*
 	v1.2.1
-	https://github.com/FrostSource/hla_extravaganza
+	https://github.com/FrostSource/alyxlib
 */
 {
     "Lua.completion.autoRequire": false,
@@ -24,12 +24,15 @@
     },
     "Lua.semantic.keyword": false,
     "Lua.hover.expandAlias": false,
-    "Lua.hover.previewFields": 1,
     "Lua.type.weakUnionCheck": true,
     "Lua.type.weakNilCheck": true,
     "files.exclude": {
         "**/__pycache__": true,
         "**/_bakeresourcecache": true,
-        "**/*.bak": true
+        "**/*.bak": true,
+        "/release/": true
     },
+    "Lua.diagnostics.disable": [
+        "inject-field"
+    ],
 }

@@ -7,13 +7,6 @@ Layer0
 	//---- Rendering ----
 	F_DO_NOT_CAST_SHADOWS 1
 
-	//---- Translucent ----
-	F_ADDITIVE_BLEND_OVER_ALPHA 1
-
-	//---- Additive Blend Over Alpha ----
-	g_flAlphaOutputMaximum "1.000"
-	g_flAlphaOutputMinimum "0.000"
-
 	//---- Chromatic Abberation ----
 	g_flBlueShift "0.000"
 	g_flGreenShift "0.000"

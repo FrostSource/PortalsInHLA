@@ -250,7 +250,7 @@ function PortalManager:CreatePortalAt(position, normal, color)
 
     local newPortal = SpawnEntityFromTableSynchronous("logic_script", {
         targetname = PORTAL_NAME_TEMPLATE:format(color.name),
-        vscripts = "portal/entities/portal",
+        vscripts = "portal/classes/portal",
     })--[[@as Portal]]
 
     -- Portal handles its own opening/connection logic
@@ -365,7 +365,7 @@ function PortalManager:SetAllowPortalsOnlyOnPrefixedEntities(allow)
 end
 
 -- Loading values
-RegisterPlayerEventCallback("player_activate", function (params)
+ListenToPlayerEvent("player_activate", function (params)
     PortalManager.PortalableSurfaceNamePrefix = Player:LoadString("PortalableSurfaceNamePrefix", PortalManager.PortalableSurfaceNamePrefix)
     PortalManager.AllowPortalsOnlyOnPrefixedEntities = Player:LoadBoolean("AllowPortalsOnlyOnPrefixedEntities", PortalManager.AllowPortalsOnlyOnPrefixedEntities)
     PortalManager.colors = Player:LoadTable("PortalColors", PortalManager.colors)
