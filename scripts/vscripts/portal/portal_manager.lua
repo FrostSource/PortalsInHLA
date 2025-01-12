@@ -78,6 +78,19 @@ function PortalManager:Debugging()
     return Convars:GetBool("portal_debugging_is_on")
 end
 
+Convars:RegisterCommand("portal_disable_all_portals", function(_)
+    for k, v in pairs(PortalManager.colors) do
+        local portal = PortalManager:GetPortal(v)
+        if portal then
+            portal.trigger:Disable()
+        end
+    end
+end, "", 0)
+
+Convars:RegisterCommand("portal_close_all_portals", function (_, ...)
+    PortalManager:CloseAllPortals()
+end, "", 0)
+
 ---Add a portal color
 ---@param name string
 ---@param connection string
