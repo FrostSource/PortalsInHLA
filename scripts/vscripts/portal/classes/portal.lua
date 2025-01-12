@@ -155,6 +155,7 @@ function base:Open(position, normal, color)
         origin = self.aimat:GetOrigin() + normal * 50,
         target = "!player",
         teleport_parented_entities = "1",
+        spawnflags = "4",
     })
 
     self.camera = PortalManager:GetPortalCamera(color)
@@ -430,13 +431,14 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 	local dirVelocity = transformDirection(self, connectedPortal, velocity:Normalized())
 	local dirAngVelocity = transformDirection(self, connectedPortal, angularVelocity:Normalized())
 
-	ent:SetOrigin(dirPosition-dirOffset)
-    DebugDrawSphere(dirPosition-dirOffset, Vector(0,255,0), 255, 32, true, 100)
+	-- ent:SetOrigin(dirPosition-dirOffset)
+    -- DebugDrawSphere(dirPosition-dirOffset, Vector(0,255,0), 255, 16, true, 100)
     -- ent:EntFire("DisableMotion")
 	--self:SetForwardVector(dirForward)
 	
 	if not ent:IsPlayer() then
 		-- Not Player
+        ent:SetOrigin(dirPosition-dirOffset)
 		ent:ApplyAbsVelocityImpulse(-velocity)
 
 		ent:SetAngles(dirAngle.x, dirAngle.y, dirAngle.z)
@@ -445,8 +447,24 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 		SetPhysAngularVelocity(ent, dirAngVelocity*angularVelocity:Length())
 	else
 		-- Player
-		ent:SetAngles(dirAngle.x, dirAngle.y, 0)
-        ent:SetOrigin(ent:GetOrigin() + AnglesToVector(dirAngle)*4)
+        self.teleport:SetOrigin((dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4)
+        self.teleport:SetQAngle(dirAngle)
+        -- DebugDrawSphere(self.teleport:GetOrigin(), Vector(255,255,0), 255, 16, true, 8)
+        -- print(self.teleport:GetName())
+        Player:SetMovementEnabled(false)
+        self:Delay(function()
+            self.teleport:EntFire("TeleportToCurrentPos")
+            -- Player:SetMovementEnabled(true)
+            Player:EntFire("EnableTeleport", "1", 0.01)
+        end, 0)
+
+        -- ent:SetAnchorOriginAroundPlayer(dirPosition-dirOffset)
+        -- ent.HMDAnchor:SetOrigin((dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4)
+        -- DebugDrawSphere(ent.HMDAnchor:GetOrigin(), Vector(255,255,255), 255, 16, true, 100)
+		-- ent:SetAngles(dirAngle.x, dirAngle.y, 0)
+        -- Player:SetAnchorForwardAroundPlayer(dirAngle:Forward())
+        -- Player:SetAnchorAngleAroundPlayer(dirAngle)
+        -- ent:SetAnchorOriginAroundPlayer(ent:GetOrigin() + AnglesToVector(dirAngle)*4)
 	end
 end
 
