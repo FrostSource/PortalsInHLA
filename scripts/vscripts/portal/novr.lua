@@ -32,7 +32,9 @@ local function novrPortalThink()
                     end
 
                     if not result.surfaceIsPortalable then
-                        -- createFailedPortalEffect(result.pos, result.normal, color.color)
+                        print("Novr bad portal surface")
+                        -- PortalManager:CreateFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
+                        PortalManager:CreateFailedPortalEffect(result.pos, result.normal, portalIsBlue and "blue" or "orange")
                         return 0
                     end
 

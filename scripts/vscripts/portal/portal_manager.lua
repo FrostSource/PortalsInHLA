@@ -377,6 +377,33 @@ function PortalManager:SetAllowPortalsOnlyOnPrefixedEntities(allow)
     Player:SaveBoolean("AllowPortalsOnlyOnPrefixedEntities", self.AllowPortalsOnlyOnPrefixedEntities)
 end
 
+---Create a failed portal opening effect.
+---@param pos Vector
+---@param dir Vector
+---@param color "blue"|"orange" # Must specify blue or orange until particle is fixed
+-----@param color Vector
+function PortalManager:CreateFailedPortalEffect(pos, dir, color)
+    StartSoundEventFromPositionReliable("PortalGun.Shoot.Fail", pos)
+
+    -- orange is used for other colors
+    local ppath = "particles/portal_projectile/portal_2_badsurface.vpcf"
+
+    if color == "blue" then
+        ppath = "particles/portal_projectile/portal_1_badsurface.vpcf"
+    elseif color == "orange" then
+        ppath = "particles/portal_projectile/portal_2_badsurface.vpcf"
+    end
+
+    local pindex = ParticleManager:CreateParticle(ppath, 0, Player)
+    ParticleManager:SetParticleControl(pindex, 0, pos + dir)
+
+    -- For color changing particle (broken)
+    -- local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, Player)
+    -- ParticleManager:SetParticleControl(pindex, 0, pos + dir)
+    -- ParticleManager:SetParticleControl(pindex, 2, color)
+    SendToConsole("cl_particles_dumplist")
+end
+
 -- Loading values
 ListenToPlayerEvent("player_activate", function (params)
     PortalManager.PortalableSurfaceNamePrefix = Player:LoadString("PortalableSurfaceNamePrefix", PortalManager.PortalableSurfaceNamePrefix)

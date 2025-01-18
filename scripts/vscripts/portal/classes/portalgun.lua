@@ -188,17 +188,6 @@ function base:AttachToHand(useSecondary)
     end
 end
 
----Create a failed portal opening effect.
----@param pos Vector
----@param dir Vector
----@param color Vector
-function base:CreateFailedPortalEffect(pos, dir, color)
-    StartSoundEventFromPositionReliable("PortalGun.Shoot.Fail", pos)
-    local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, Player)
-    ParticleManager:SetParticleControl(pindex, 0, pos + dir)
-    ParticleManager:SetParticleControl(pindex, 2, color)
-end
-
 ---Try to fire a portal in the gun's current direction.
 ---@param color PortalColor
 ---@return boolean
@@ -255,7 +244,8 @@ function base:TryFirePortal(color)
             end
 
             if not result.surfaceIsPortalable then
-                self:CreateFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
+                -- PortalManager:CreateFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
+                PortalManager:CreateFailedPortalEffect(result.pos, result.normal, portalIsBlue and "blue" or "orange")
                 return false
             end
 
