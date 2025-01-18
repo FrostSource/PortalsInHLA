@@ -330,6 +330,8 @@ function base:HandlePickupAbility()
                 traceTable.enthit:Drop()
             end
 
+            ---@TODO Modulate hover distance based on object size
+        else
             -- Delay between fail sounds
             if self.__timeSinceLastUsed < 0.2 then
                 self.__timeSinceLastUsed = self.__timeSinceLastUsed + 0.1
@@ -337,8 +339,6 @@ function base:HandlePickupAbility()
                 StartSoundEventFromPositionReliable(SND_USE_FAILED, self:GetAbsOrigin())
                 self.__timeSinceLastUsed = 0
             end
-
-            ---@TODO Modulate hover distance based on object size
         end
     end
 end

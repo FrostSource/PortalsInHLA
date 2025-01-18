@@ -80,15 +80,17 @@ local function HandlePickupAbility()
             --     traceTable.enthit:Drop()
             -- end
 
+            
+
+            ---@TODO Modulate hover distance based on object size
+        else
             -- Delay between fail sounds
-            if __timeSinceLastUsed < 0.2 then
+            if __timeSinceLastUsed < 1 then
                 __timeSinceLastUsed = __timeSinceLastUsed + 0.1
             else
                 StartSoundEventFromPositionReliable(SND_USE_FAILED, Player:GetAbsOrigin())
                 __timeSinceLastUsed = 0
             end
-
-            ---@TODO Modulate hover distance based on object size
         end
     end
 end
