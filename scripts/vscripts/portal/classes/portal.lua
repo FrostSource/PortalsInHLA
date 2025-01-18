@@ -476,6 +476,8 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
             ent:ApplyAbsVelocityImpulse(dirVelocity*velocity:Length())
             SetPhysAngularVelocity(ent, dirAngVelocity*angularVelocity:Length())
         end
+
+        StartSoundEvent(SND_TELEPORT_ENTER, Player)
 	end
 end
 
