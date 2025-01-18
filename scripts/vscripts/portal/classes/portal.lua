@@ -435,7 +435,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
     -- DebugDrawSphere(dirPosition-dirOffset, Vector(0,255,0), 255, 16, true, 100)
     -- ent:EntFire("DisableMotion")
 	--self:SetForwardVector(dirForward)
-	
+
 	if not ent:IsPlayer() then
 		-- Not Player
         ent:SetOrigin(dirPosition-dirOffset)
@@ -447,24 +447,35 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 		SetPhysAngularVelocity(ent, dirAngVelocity*angularVelocity:Length())
 	else
 		-- Player
-        self.teleport:SetOrigin((dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4)
-        self.teleport:SetQAngle(dirAngle)
-        -- DebugDrawSphere(self.teleport:GetOrigin(), Vector(255,255,0), 255, 16, true, 8)
-        -- print(self.teleport:GetName())
-        Player:SetMovementEnabled(false)
-        self:Delay(function()
-            self.teleport:EntFire("TeleportToCurrentPos")
-            -- Player:SetMovementEnabled(true)
-            Player:EntFire("EnableTeleport", "1", 0.01)
-        end, 0)
+        local newPos = (dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4
 
-        -- ent:SetAnchorOriginAroundPlayer(dirPosition-dirOffset)
-        -- ent.HMDAnchor:SetOrigin((dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4)
-        -- DebugDrawSphere(ent.HMDAnchor:GetOrigin(), Vector(255,255,255), 255, 16, true, 100)
-		-- ent:SetAngles(dirAngle.x, dirAngle.y, 0)
-        -- Player:SetAnchorForwardAroundPlayer(dirAngle:Forward())
-        -- Player:SetAnchorAngleAroundPlayer(dirAngle)
-        -- ent:SetAnchorOriginAroundPlayer(ent:GetOrigin() + AnglesToVector(dirAngle)*4)
+        -- Adjust position for ceiling portals to stop player standing on ceiling
+        if connectedPortal:GetForwardVector().z < 0 then
+            local biggestBound = ent:GetBiggestBounding()
+            local downFactor = -connectedPortal:GetForwardVector().z
+            local distanceAdjustment = biggestBound * downFactor
+            newPos = newPos + AnglesToVector(dirAngle) * distanceAdjustment
+        end
+
+        -- DebugDrawSphere(newPos, Vector(255,255,0), 255, 16, true, 15)
+
+        if IsVREnabled() then
+            self.teleport:SetOrigin(newPos)
+            self.teleport:SetQAngle(dirAngle)
+
+            Player:SetMovementEnabled(false)
+            self:Delay(function()
+                self.teleport:EntFire("TeleportToCurrentPos")
+                Player:EntFire("EnableTeleport", "1", 0.01)
+            end, 0)
+        else
+            ent:SetOrigin(newPos)
+            ent:ApplyAbsVelocityImpulse(-velocity)
+            -- ent:SetAngles(dirAngle.x, dirAngle.y, dirAngle.z)
+            ent:SetForwardVector(dirAngle:Forward())
+            ent:ApplyAbsVelocityImpulse(dirVelocity*velocity:Length())
+            SetPhysAngularVelocity(ent, dirAngVelocity*angularVelocity:Length())
+        end
 	end
 end
 
