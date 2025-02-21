@@ -343,6 +343,14 @@ function PortalManager:GetPortalTrigger(color)
     return Entities:FindByName(nil, "_PortalTrigger" .. color.name)
 end
 
+---Get the trigger_multiple associated with a portal color.
+---@param color PortalColor|string
+---@return PortalTeleport?
+function PortalManager:GetPortalTeleport(color)
+    color = resolveColor(color)
+    return Entities:FindByName(nil, "_PortalTeleport" .. color.name)--[[@as PortalTeleport]]
+end
+
 ---Get the currently opened portal connected to a specified color.
 ---@param color PortalColors|PortalColor|string # Color table or name of color.
 ---@return Portal?

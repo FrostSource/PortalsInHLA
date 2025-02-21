@@ -56,6 +56,10 @@ function base:OnReady(readyType)
             portal1Trigger:SetEntityName("_portaltrigger" .. self.portal1Name:lower())
             portal2Trigger:SetEntityName("_portaltrigger" .. self.portal2Name:lower())
 
+            -- test teleport
+            self:FindInPrefab("portal_1_teleport"):SetEntityName("_portalteleport" .. self.portal1Name:lower())
+            self:FindInPrefab("portal_2_teleport"):SetEntityName("_portalteleport" .. self.portal2Name:lower())
+
             ---@TODO Consider moving this to Spawn
             PortalManager:AddPortalColor(self.portal1Name, self.portal2Name, self.portal1Color)
             PortalManager:AddPortalColor(self.portal2Name, self.portal1Name, self.portal2Color)

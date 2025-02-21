@@ -56,6 +56,8 @@ base.portalModel = nil
 base.camera = nil
 base.monitor = nil
 base.trigger = nil
+---@type PortalTeleport
+base.teleport = nil
 
 ---@type string
 base.colorName = ""
@@ -150,18 +152,22 @@ function base:Open(position, normal, color)
     ---@TODO Can move this into construction?
     self.portalModel:SetOrigin(position + normal)
 
-    self.teleport = SpawnEntityFromTableSynchronous("point_teleport", {
-        targetname = color.name .. "Portal_teleport",
-        origin = self.aimat:GetOrigin() + normal * 50,
-        target = "!player",
-        teleport_parented_entities = "1",
-        spawnflags = "4",
-    })
+    -- self.teleport = SpawnEntityFromTableSynchronous("point_teleport", {
+    --     targetname = color.name .. "Portal_teleport",
+    --     origin = self.aimat:GetOrigin() + normal * 50,
+    --     target = "!player",
+    --     teleport_parented_entities = "1",
+    --     spawnflags = "4",
+    -- })
 
     self.camera = PortalManager:GetPortalCamera(color)
     self.monitor = PortalManager:GetPortalMonitor(color)
     self.trigger = PortalManager:GetPortalTrigger(color)
     self.trigger:RedirectOutput("OnStartTouch", "OnTriggerTouch", self)
+
+    --testing new teleport
+    self.teleport = PortalManager:GetPortalTeleport(color)
+    print("Found teleport", self.teleport)
 
     self:UpdateEffects()
 
@@ -270,7 +276,7 @@ function base:Teleport(ent)
 
         local connectedPortal = self:GetConnectedPortal()--[[@as Portal]]
 
-        devprints(self:GetName(), "teleporting", ent:GetClassname(), "to", connectedPortal.colorName)
+        
 
         -- if ent:IsPlayer() then
         --     -- Teleport player
@@ -418,7 +424,10 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
     local timeDiff = Time() - ent:Attribute_GetFloatValue("ent_teleport_time", 0)
 
     print(timeDiff)
-	if timeDiff < 0.25 and timeDiff >= 0 then return end
+    local MAX_TIME = 0.25
+	if timeDiff < MAX_TIME and timeDiff >= 0 then return end
+
+    devprints(self:GetName(), "teleporting", ent:GetClassname(), "to", connectedPortal.colorName)
 
 	local offset = Vector(0,0,0)
 	local velocity = GetPhysVelocity(ent)
@@ -449,25 +458,39 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 		-- Player
         local newPos = (dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4
 
+        local distanceAdjustment = 0
+
         -- Adjust position for ceiling portals to stop player standing on ceiling
         if connectedPortal:GetForwardVector().z < 0 then
             local biggestBound = ent:GetBiggestBounding()
             local downFactor = -connectedPortal:GetForwardVector().z
-            local distanceAdjustment = biggestBound * downFactor
+            distanceAdjustment = biggestBound * downFactor
             newPos = newPos + AnglesToVector(dirAngle) * distanceAdjustment
         end
 
         -- DebugDrawSphere(newPos, Vector(255,255,0), 255, 16, true, 15)
 
         if IsVREnabled() then
-            self.teleport:SetOrigin(newPos)
-            self.teleport:SetQAngle(dirAngle)
+            -- self.teleport:SetOrigin(newPos)
+            -- self.teleport:SetQAngle(dirAngle)
 
-            Player:SetMovementEnabled(false)
-            self:Delay(function()
-                self.teleport:EntFire("TeleportToCurrentPos")
-                Player:EntFire("EnableTeleport", "1", 0.01)
-            end, 0)
+            -- Player:SetMovementEnabled(false)
+            -- self:Delay(function()
+            --     self.teleport:EntFire("TeleportToCurrentPos")
+            --     Player:EntFire("EnableTeleport", "1", 0.01)
+            -- end, 0)
+
+            -- Trying new trigger_teleport method
+            -- self.teleport:Enable()
+            -- local plrangle = dirAngle:Forward()
+            -- plrangle.z = 0
+            -- plrangle = plrangle:Normalized()
+            -- -- Player:SetAnchorForwardAroundPlayer(plrangle)
+            -- Player:SetForwardVector(plrangle)
+            -- self.teleport:Delay(function()
+            --     self.teleport:Disable()
+            -- end, 0.1)
+            self.teleport:Teleport(distanceAdjustment)
         else
             ent:SetOrigin(newPos)
             ent:ApplyAbsVelocityImpulse(-velocity)
