@@ -83,7 +83,7 @@ function base:CleanupAndDestroy()
     if self.glowLight then self.glowLight:Kill() end
     if self.aimat then self.aimat:Kill() end
     if self.particleSystem then self.particleSystem:Kill() end
-    if self.teleport then self.teleport:Kill() end
+    -- if self.teleport then self.teleport:Kill() end
     if self.portalModel then self.portalModel:Kill() end
     if self.__ptxEffect ~= -1 then
         ParticleManager:DestroyParticle(self.__ptxEffect, true)
