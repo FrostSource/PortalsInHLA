@@ -418,6 +418,7 @@ function base:DisableNamePickup(name)
     if not vlua.find(self.disabledPickupNames) then
         table.insert(self.disabledPickupNames, name)
     end
+    self:Save("disabledPickupNames")
     -- Drop the current entity if it has the same name
     if self.__pickupEntity ~= nil and self.__pickupEntity:GetName() == name then
         self:DropItem()
@@ -431,6 +432,7 @@ function base:EnableNamePickup(name)
     if index then
         table.remove(self.disabledPickupNames, index)
     end
+    self:Save("disabledPickupNames")
 end
 
 ---Disables the portal gun from picking up this named entity
