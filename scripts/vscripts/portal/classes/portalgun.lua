@@ -451,6 +451,30 @@ function CEntityInstance:EnablePortalgunPickup()
     end
 end
 
+function base:EnableBluePortalGun()
+    self.bluePortalEnabled = true
+end
+
+function base:DisableBluePortalGun()
+    self.bluePortalEnabled = false
+end
+
+function base:EnableOrangePortalGun()
+    self.orangePortalEnabled = true
+end
+
+function base:DisableOrangePortalGun()
+    self.orangePortalEnabled = false
+end
+
+function base:DeactivatePortalGun()
+    self.allowedToFire = false
+end
+
+function base:ActivatePortalGun()
+    self.allowedToFire = true
+end
+
 -- ---Main entity think function. Think state is saved between loads
 -- function base:Think()
 
