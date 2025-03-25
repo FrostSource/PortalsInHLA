@@ -406,7 +406,7 @@ function base:SetupInputs()
     end, self)
 
     Input:ListenToButton("press", self.hand, self.bluePortalButton, 1, function (params)
-        if self:IsEquipped() and self.allowedToFire then
+        if self:IsEquipped() and self.allowedToFire and self.__pickupEntity == nil then
             if self.bluePortalEnabled then
                 self:TryFirePortal(PortalManager.colors.blue)
             end
@@ -415,7 +415,7 @@ function base:SetupInputs()
     end, self)
 
     Input:ListenToButton("press", self.hand, self.orangePortalButton, 1, function (params)
-        if self:IsEquipped() and self.allowedToFire then
+        if self:IsEquipped() and self.allowedToFire and self.__pickupEntity == nil then
             if self.orangePortalEnabled then
                 self:TryFirePortal(PortalManager.colors.orange)
             end
