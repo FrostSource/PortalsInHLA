@@ -112,7 +112,7 @@
 		volume = "1"
 		vsnd_files = 
 		[
-			"sounds/vrportal/gun/object_use_lp_1.vsnd",
+			"sounds/vrportal/gun/object_use_lp_01.vsnd",
 		]
 	}
 	"PortalGun.Shoot.Orange" =
