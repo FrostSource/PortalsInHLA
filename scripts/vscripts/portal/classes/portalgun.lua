@@ -107,6 +107,10 @@ function base:OnReady(loaded)
 
     -- Update the global handle
     PortalManager.portalGun = self
+
+    if self.hand ~= nil then
+        self:SetupInputs()
+    end
 end
 
 ---@param params PLAYER_EVENT_VR_PLAYER_READY
