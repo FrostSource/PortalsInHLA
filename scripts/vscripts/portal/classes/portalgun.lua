@@ -59,7 +59,7 @@ base.__ptxBarrel = -1
 base.__ptxLight = -1
 
 base.__timeSinceLastFire = 0
-base.__timeSinceLastUsed = 0
+base.__lastUsedTime = 0
 
 ---The hand that this gun is attached to.
 ---@type CPropVRHand
@@ -280,10 +280,15 @@ function base:TryFirePortal(color)
     return false
 end
 
+---Drops the currently held item.
+---
+---If this is called within the think you must also return nil from the think or an error will occur.
 function base:DropItem()
     self.__pickupEntity = nil
     self.__disablePickupUntilTriggerRelease = true
     -- self.__pickupEntity = nil
+    self:SetContextThink("PortalGunPickupAbility", nil, 0)
+    StopSoundEvent(SND_USE_LOOP, self)
 end
 
 function base:HandlePickupAbility()
@@ -350,13 +355,9 @@ function base:HandlePickupAbility()
 
             ---@TODO Modulate hover distance based on object size
         else
-            -- Delay between fail sounds
-            if self.__timeSinceLastUsed < 0.2 then
-                self.__timeSinceLastUsed = self.__timeSinceLastUsed + 0.1
-            else
-                StartSoundEventFromPositionReliable(SND_USE_FAILED, self:GetAbsOrigin())
-                self.__timeSinceLastUsed = 0
-            end
+            StartSoundEventFromPositionReliable(SND_USE_FAILED, self:GetAbsOrigin())
+            self:DropItem()
+            return -1
         end
     end
 end
@@ -369,7 +370,10 @@ function base:SetupInputs()
         if self:IsEquipped() then
             if not self.__disablePickupUntilTriggerRelease then
                 self:SetContextThink("PortalGunPickupAbility", function()
-                    self:HandlePickupAbility()
+                    local result = self:HandlePickupAbility()
+                    if result ~= nil and result < 0 then
+                        return nil
+                    end
                     return 0
                 end, 0)
             end
