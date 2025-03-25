@@ -75,6 +75,9 @@ base.pickupEnabled = true
 ---@type string[]
 base.disabledPickupNames = {}
 
+---If the item is allowed to be dropped
+base.itemDropEnabled = true
+
 ---@param context CScriptPrecacheContext
 function base:Precache(context)
     devprint("PortalGun precaching")
@@ -284,6 +287,11 @@ end
 ---
 ---If this is called within the think you must also return nil from the think or an error will occur.
 function base:DropItem()
+    -- Only drop the item if it's enabled
+    if not self.itemDropEnabled then
+        return
+    end
+
     self.__pickupEntity = nil
     self.__disablePickupUntilTriggerRelease = true
     -- self.__pickupEntity = nil
@@ -381,6 +389,11 @@ function base:SetupInputs()
     end, self)
 
     Input:ListenToButton("release", self.hand, self.pickupButton, 1, function (params)
+        -- Do not drop item if disabled
+        if not self.itemDropEnabled then
+            return
+        end
+
         self:SetContextThink("PortalGunPickupAbility", nil, 0)
         if self.__disablePickupUntilTriggerRelease then
             self.__disablePickupUntilTriggerRelease = false
@@ -456,6 +469,22 @@ end
 function CEntityInstance:EnablePortalgunPickup()
     if PortalManager.portalGun then
         PortalManager.portalGun:EnableNamePickup(self:GetName())
+    end
+end
+
+---Stops the portal gun from dropping its currently held item
+function base:DisableItemDrop()
+    self.itemDropEnabled = false
+end
+
+---Allows the portal gun to drop its currently held item
+function base:EnableItemDrop()
+    self.itemDropEnabled = true
+
+    -- Automatically drop the current item if the trigger is released
+    -- This can be disabled if you want the item to stay held until the trigger is pressed again
+    if not Player:IsDigitalActionOnForHand(self.hand:GetLiteralHandType(), self.pickupButton) then
+        self:DropItem()
     end
 end
 
