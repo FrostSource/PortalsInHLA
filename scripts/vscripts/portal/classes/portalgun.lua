@@ -5,6 +5,7 @@ local SND_USE = "PortalGun.Use"
 local SND_USE_LOOP = "PortalGun.UseLoop"
 local SND_USE_FAILED = "PortalGun.UseFailed"
 local SND_USE_FINISHED = "PortalGun.UseStop"
+local SND_TOGGLEEQUIP = "Inventory.Select"
 
 local PTX_PROJECTILE_BLUE = "particles/portal_projectile/portal_1_projectile_stream.vpcf"
 local PTX_PROJECTILE_ORANGE = "particles/portal_projectile/portal_2_projectile_stream.vpcf"
@@ -37,6 +38,8 @@ base.bluePortalButton = DIGITAL_INPUT_EJECT_MAGAZINE
 base.orangePortalButton = DIGITAL_INPUT_SLIDE_RELEASE
 ---Digital button used to pickup objects.
 base.pickupButton = DIGITAL_INPUT_FIRE
+---Digital button used to equip/unequip the gun.
+base.equipButton = DIGITAL_INPUT_SHOW_INVENTORY
 
 ---If the portal gun is allowed to fire any portals.
 base.allowedToFire = true
@@ -128,6 +131,11 @@ base:PlayerEvent("vr_player_ready", function(self, params)
     -- Input:TrackButton(self.orangePortalButton)
     -- Input:TrackButton(self.pickupButton)
 
+    self:CreateGunParticles()
+end)
+
+---@TODO Set color based on last shot portal
+function base:CreateGunParticles()
     self.__ptxBarrel = ParticleManager:CreateParticle("particles/portalgun_barrel.vpcf", 1, self)
     self.__ptxLight = ParticleManager:CreateParticle("particles/portalgun_light.vpcf", 1, self)
     ParticleManager:SetParticleAlwaysSimulate(self.__ptxBarrel)
@@ -139,7 +147,12 @@ base:PlayerEvent("vr_player_ready", function(self, params)
     ParticleManager:SetParticleControl(self.__ptxBarrel, 5, Vector(0,0.4,1))
     ParticleManager:SetParticleControlEnt(self.__ptxLight, 0, self, 5, "light", Vector(0,0,0), true)
     ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
-end)
+end
+
+function  base:DestroyGunParticles()
+    ParticleManager:DestroyParticle(self.__ptxBarrel, true)
+    ParticleManager:DestroyParticle(self.__ptxLight, true)
+end
 
 function base:AnimGraphListener(tagName, status)
     if tagName == "Fired" and status == 2 then
@@ -160,6 +173,7 @@ function base:DetachFromHand()
         if parent:GetClassname() == "hlvr_prop_renderable_glove" then
             parent:SetRenderAlpha(255)
         end
+        self:DropItem()
         self.hand = nil
         self:SetParent(nil, "")
         self:SetOrigin(Vector())
@@ -199,6 +213,7 @@ function base:AttachToHand(useSecondary)
 
         ---@TODO Move to enabling function
         -- self:ResumeThink()
+
         self:SetupInputs()
     end
 end
@@ -396,7 +411,7 @@ function base:SetupInputs()
 
     Input:StopListeningByContext(self)
 
-    Input:ListenToButton("press", self.hand, self.pickupButton, 1, function (params)
+    Input:ListenToButton("press", self.hand, self.pickupButton, 1, function (_, params)
         if self:IsEquipped() then
             if not self.__disablePickupUntilTriggerRelease then
                 self:SetContextThink("PortalGunPickupAbility", function()
@@ -410,7 +425,7 @@ function base:SetupInputs()
         end
     end, self)
 
-    Input:ListenToButton("release", self.hand, self.pickupButton, 1, function (params)
+    Input:ListenToButton("release", self.hand, self.pickupButton, 1, function (_, params)
         -- Do not drop item if disabled
         if not self.itemDropEnabled then
             return
@@ -427,7 +442,7 @@ function base:SetupInputs()
         end
     end, self)
 
-    Input:ListenToButton("press", self.hand, self.bluePortalButton, 1, function (params)
+    Input:ListenToButton("press", self.hand, self.bluePortalButton, 1, function (_, params)
         if self:IsEquipped() and self.allowedToFire and self.__pickupEntity == nil then
             if self.bluePortalEnabled then
                 self:TryFirePortal(PortalManager.colors.blue)
@@ -436,12 +451,25 @@ function base:SetupInputs()
         end
     end, self)
 
-    Input:ListenToButton("press", self.hand, self.orangePortalButton, 1, function (params)
+    Input:ListenToButton("press", self.hand, self.orangePortalButton, 1, function (_, params)
         if self:IsEquipped() and self.allowedToFire and self.__pickupEntity == nil then
             if self.orangePortalEnabled then
                 self:TryFirePortal(PortalManager.colors.orange)
             end
             self.fireButtonIsHeld = true
+        end
+    end, self)
+
+    Input:ListenToButton("press", self.hand, self.equipButton, 1, function (_, params)
+        StartSoundEvent(SND_TOGGLEEQUIP, self)
+        if self:IsEquipped() then
+            self:DetachFromHand()
+            self:SetRenderingEnabled(false)
+            self:DestroyGunParticles()
+        else
+            self:AttachToHand()
+            self:SetRenderingEnabled(true)
+            self:CreateGunParticles()
         end
     end, self)
 
