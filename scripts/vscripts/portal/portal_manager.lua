@@ -117,7 +117,7 @@ function PortalManager:TraceDirection(position, dir)
         endpos = position + dir,
         ignore = Player,
     }
-    TraceLine(traceTable)
+    TraceLineIgnorePhysics(traceTable)
     if self:Debugging() then
         if traceTable.hit then
             DebugDrawLine(traceTable.startpos, traceTable.endpos, 255, 0, 0, true, 3)
@@ -130,6 +130,23 @@ end
 
 ---@class TraceLinePortalable : TraceTableLine
 ---@field surfaceIsPortalable boolean
+
+---Trace line while ignoring physics objects
+---@param traceTable TraceTableLine
+function TraceLineIgnorePhysics(traceTable)
+    local ignore = traceTable.ignore
+    TraceLine(traceTable)
+    if traceTable.hit
+    -- ignore physics objects
+    and (IsPhysicsObject(traceTable.enthit)
+    -- ignore the original ignored entity
+    or (ignore ~= nil and traceTable.enthit == ignore)) then
+        traceTable.hit = false
+        traceTable.ignore = traceTable.enthit
+        TraceLine(traceTable)
+    end
+
+end
 
 ---Trace in a direction and get the resulting surface properties to check if a surface is portalable.
 ---@param startpos Vector
@@ -145,7 +162,8 @@ function PortalManager:TracePortalableSurface(startpos, forward, ignore)
         surfaceIsPortalable = false,
     }
 
-    TraceLine(traceTable)
+    -- TraceLine(traceTable)
+    TraceLineIgnorePhysics(traceTable)
     if traceTable.hit then
 
         local surfaceIsPortalable = true
