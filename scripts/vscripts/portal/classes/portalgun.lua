@@ -355,7 +355,7 @@ function base:HandlePickupAbility()
             StartSoundEvent(SND_USE_LOOP, self)
             self.__pickupEntity = traceTable.enthit
 
-            traceTable.enthit:FireOutput("OnPlayerPickup", self, self, nil, 0)
+            traceTable.enthit:FireOutput("OnPhysGunOnlyPickup", self, self, nil, 0)
 
             if Player:IsHolding(traceTable.enthit) then
                 traceTable.enthit:Drop()
