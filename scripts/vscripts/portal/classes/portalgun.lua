@@ -244,12 +244,26 @@ function base:TryFirePortal(color)
         local mover = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
             origin = muzzleOrigin,
             model = "models/effects/cube_empty.vmdl",
-            ScriptedMovement = "1",
+            -- ScriptedMovement = "1",
         })
-        mover:SetVelocity(muzzleForward * Convars:GetFloat("portalgun_projectile_speed"))
+        -- mover:SetVelocity(muzzleForward * Convars:GetFloat("portalgun_projectile_speed"))
         local pindex = ParticleManager:CreateParticle(portalIsBlue and PTX_PROJECTILE_BLUE or PTX_PROJECTILE_ORANGE, 1, mover)
-        ParticleManager:SetParticleControl(pindex, 2, color.color:ToVector())
-        mover:EntFire("Kill", nil, (result.hit and 5000 or VectorDistance(muzzleOrigin, result.pos)) / mover:GetVelocity():Length())
+        -- ParticleManager:SetParticleControl(pindex, 2, color.color:ToVector())
+        -- mover:EntFire("Kill", nil, (result.hit and VectorDistance(muzzleOrigin, result.pos) or 5000) / mover:GetVelocity():Length()  )
+
+        ---@TODO Move this into a script?
+        local startTime = Time()
+        local secondsToReachTarget = 0.2
+        mover:SetContextThink("MoveProjectile", function()
+            local pos = LerpVectors(muzzleOrigin, result.pos, (Time() - startTime) / secondsToReachTarget)
+            if Time() - startTime > secondsToReachTarget then
+                mover:EntFire("Kill", nil, 2)
+                ParticleManager:DestroyParticle(pindex, false)
+                return nil
+            end
+            mover:SetOrigin(pos)
+            return 0
+        end, 0)
 
         if result.hit then
 
