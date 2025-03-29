@@ -34,7 +34,7 @@ Input.AutoStart = true
 ---Digital input button used to fire the blue portal.
 base.bluePortalButton = DIGITAL_INPUT_ARM_GRENADE
 ---Digital input button used to fire the orange portal.
-base.orangePortalButton = DIGITAL_INPUT_RELOAD
+base.orangePortalButton = DIGITAL_INPUT_EJECT_MAGAZINE
 ---Digital button used to pickup objects.
 base.pickupButton = DIGITAL_INPUT_FIRE
 
