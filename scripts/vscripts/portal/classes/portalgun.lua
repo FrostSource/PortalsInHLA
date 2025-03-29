@@ -22,7 +22,7 @@ Convars:RegisterConvar("portalgun_fire_delay", "0.2", "Min seconds between each 
 Convars:RegisterConvar("portalgun_held_button_fire_fire_delay", "0.5", "Min seconds between each portal fire held.", 0)
 Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code for holding objects", 0)
 Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
-Convars:RegisterConvar("portalgun_pickup_distance", "100", "Object hover distance from the portalgun origin", 0)
+Convars:RegisterConvar("portalgun_pickup_distance", "10", " Base object hover distance from the portalgun origin", 0)
 Convars:RegisterConvar("portalgun_pickup_rotate_scale", "0.5", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
 Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectile particle", 0)
 Convars:RegisterConvar("portalgun_pickup_damping", "1", "Damping to apply to pickup speed, lower is slower", 0)
@@ -299,6 +299,9 @@ function base:DropItem()
     StopSoundEvent(SND_USE_LOOP, self)
 end
 
+local modPickupDistance = 0
+local modPickupOffset = Vector()
+
 function base:HandlePickupAbility()
     if not self.pickupEnabled then
         return
@@ -312,7 +315,10 @@ function base:HandlePickupAbility()
         end
         local ent = self.__pickupEntity
 
-        local desiredPosition = self:GetOrigin() + self:GetForwardVector() * Convars:GetFloat("portalgun_pickup_distance")
+        local desiredPosition = self:GetOrigin()
+            + (self:GetForwardVector() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance")))
+            - modPickupOffset
+        -- debugoverlay:Sphere(desiredPosition, 1, 255, 0, 0, 255, true, 0)
         if Convars:GetBool("portalgun_use_old_pickup_method") then
             local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
             local amount = min(amountBy, 2)
@@ -362,6 +368,8 @@ function base:HandlePickupAbility()
             end
 
             ---@TODO Modulate hover distance based on object size
+            modPickupDistance = self.__pickupEntity:GetBiggestBounding()
+            modPickupOffset = self.__pickupEntity:GetCenter() - self.__pickupEntity:GetOrigin()
         else
             StartSoundEventFromPositionReliable(SND_USE_FAILED, self:GetAbsOrigin())
             self:DropItem()
