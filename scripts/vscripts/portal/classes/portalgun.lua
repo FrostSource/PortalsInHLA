@@ -326,10 +326,37 @@ function base:DropItem()
     -- self.__pickupEntity = nil
     self:SetContextThink("PortalGunPickupAbility", nil, 0)
     StopSoundEvent(SND_USE_LOOP, self)
+    self:EnablePlayerCollisions()
 end
 
 local modPickupDistance = 0
 local modPickupOffset = Vector()
+
+---Disable player collision with an entity.
+---@param entity EntityHandle
+function base:DisablePlayerCollisionWith(entity)
+    local collisionPair = Entities:FindByName(nil, "_portalgun_collision_pair")
+    if not collisionPair then
+        collisionPair = SpawnEntityFromTableSynchronous("logic_collision_pair", {
+            targetname = "_portalgun_collision_pair",
+            attach1 = "!player"
+        })
+    end
+
+    ---@TODO Reset name afterwards?
+    if entity:GetName() == "" then
+        entity:SetEntityName(DoUniqueString("entity"))
+    end
+    collisionPair:EntFire("DisableCollisionsWith", entity:GetName())
+end
+
+---Enable all player collisions.
+function base:EnablePlayerCollisions()
+    local collisionPair = Entities:FindByName(nil, "_portalgun_collision_pair")
+    if collisionPair then
+        collisionPair:EntFire("EnableCollisions")
+    end
+end
 
 function base:HandlePickupAbility()
     if not self.pickupEnabled then
@@ -391,6 +418,7 @@ function base:HandlePickupAbility()
             self.__pickupEntity = traceTable.enthit
 
             traceTable.enthit:FireOutput("OnPhysGunOnlyPickup", self, self, nil, 0)
+            self:DisablePlayerCollisionWith(self.__pickupEntity)
 
             if Player:IsHolding(traceTable.enthit) then
                 traceTable.enthit:Drop()
@@ -439,6 +467,7 @@ function base:SetupInputs()
             self.__pickupEntity = nil
             StopSoundEvent(SND_USE_LOOP, self)
             StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
+            self:EnablePlayerCollisions()
         end
     end, self)
 
