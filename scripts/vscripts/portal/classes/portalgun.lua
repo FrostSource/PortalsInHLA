@@ -48,7 +48,7 @@ base.allowedToFire = true
 base.pickupRange = 100
 ---Entity handle of the currently picked up entity.
 ---@type EntityHandle
-base.__pickupEntity = nil
+base.pickupEntity = nil
 
 ---Stops the pickup ability until trigger is released.
 base.__disablePickupUntilTriggerRelease = false
@@ -72,7 +72,7 @@ base.hand = nil
 base.fireButtonIsHeld = false
 
 ---If the pickup ability is enabled
-base.pickupEnabled = true
+base.itemPickupEnabled = true
 
 ---Entity targetnames that are not allowed to be picked up
 ---@type string[]
@@ -80,6 +80,13 @@ base.disabledPickupNames = {}
 
 ---If the item is allowed to be dropped
 base.itemDropEnabled = true
+
+
+
+local highlightPtfx = nil
+
+---@type EntityHandle?
+local lastNearestPickupEnt = nil
 
 ---@param context CScriptPrecacheContext
 function base:Precache(context)
@@ -125,11 +132,8 @@ base:PlayerEvent("vr_player_ready", function(self, params)
 
     -- Vive controller uses one button for grenade/reload, so we remap to burst fire
     if Player:GetVRControllerType() == 2 then
-        self.orangePortalButton = 14
+        self.orangePortalButton = DIGITAL_INPUT_TOGGLE_BURST_FIRE
     end
-    -- Input:TrackButton(self.bluePortalButton)
-    -- Input:TrackButton(self.orangePortalButton)
-    -- Input:TrackButton(self.pickupButton)
 
     self:CreateGunParticles()
 end)
@@ -173,7 +177,7 @@ function base:DetachFromHand()
         if parent:GetClassname() == "hlvr_prop_renderable_glove" then
             parent:SetRenderAlpha(255)
         end
-        self:DropItem()
+        self:DropEntity()
         self.hand = nil
         self:SetParent(nil, "")
         self:SetOrigin(Vector())
@@ -188,7 +192,7 @@ end
 ---@param useSecondary? boolean # If true, will attach to secondary hand.
 function base:AttachToHand(useSecondary)
     if not Player.HMDAvatar then
-        print("Warning - Cannot attach portal gun to hand outside of VR! " .. Debug.GetSourceLine(1))
+        warn("Warning - Cannot attach portal gun to hand outside of VR! " .. Debug.GetSourceLine(1))
     end
 
     self:DetachFromHand()
@@ -215,6 +219,7 @@ function base:AttachToHand(useSecondary)
         -- self:ResumeThink()
 
         self:SetupInputs()
+        self:ResumeThink()
     end
 end
 
@@ -312,23 +317,6 @@ function base:TryFirePortal(color)
     return false
 end
 
----Drops the currently held item.
----
----If this is called within the think you must also return nil from the think or an error will occur.
-function base:DropItem()
-    -- Only drop the item if it's enabled
-    if not self.itemDropEnabled then
-        return
-    end
-
-    self.__pickupEntity = nil
-    self.__disablePickupUntilTriggerRelease = true
-    -- self.__pickupEntity = nil
-    self:SetContextThink("PortalGunPickupAbility", nil, 0)
-    StopSoundEvent(SND_USE_LOOP, self)
-    self:EnablePlayerCollisions()
-end
-
 local modPickupDistance = 0
 local modPickupOffset = Vector()
 
@@ -358,81 +346,106 @@ function base:EnablePlayerCollisions()
     end
 end
 
-function base:HandlePickupAbility()
-    if not self.pickupEnabled then
+---Updates the position of the currently held item
+function base:UpdatePickupItemPosition()
+    local ent = self.pickupEntity
+
+    if not self.itemPickupEnabled or ent == nil then
         return
     end
 
-    if self.__pickupEntity ~= nil then
-        -- Manipulate current pickup entity
-        if not IsValidEntity(self.__pickupEntity) then
-            self.__pickupEntity = nil
-            return
-        end
-        local ent = self.__pickupEntity
+    if not IsValidEntity(ent) then
+        self.pickupEntity = nil
+        return
+    end
 
-        local desiredPosition = self:GetOrigin()
-            + (self:GetForwardVector() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance")))
-            - modPickupOffset
-        -- debugoverlay:Sphere(desiredPosition, 1, 255, 0, 0, 255, true, 0)
-        if Convars:GetBool("portalgun_use_old_pickup_method") then
-            local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
-            local amount = min(amountBy, 2)
-            if VectorDistance(desiredPosition, ent:GetOrigin()) < 25 then
-                ent:ApplyAbsVelocityImpulse(-GetPhysVelocity(ent) / 2)
-            else
-                ent:ApplyAbsVelocityImpulse( ((desiredPosition - ent:GetOrigin()) * amount) - (GetPhysVelocity(ent) / 2) )
-            end
+    -- Manipulate current pickup entity
+
+    local desiredPosition = self:GetOrigin()
+        + (self:GetForwardVector() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance")))
+        - modPickupOffset
+
+    -- debugoverlay:Sphere(desiredPosition, 1, 255, 0, 0, 255, true, 0)
+
+    if Convars:GetBool("portalgun_use_old_pickup_method") then
+        local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
+        local amount = min(amountBy, 2)
+        if VectorDistance(desiredPosition, ent:GetOrigin()) < 25 then
+            ent:ApplyAbsVelocityImpulse(-GetPhysVelocity(ent) / 2)
         else
-            local velocity = (desiredPosition - ent:GetOrigin()) / Convars:GetFloat("portalgun_pickup_attenuation")
-            velocity = velocity - GetPhysVelocity(ent)
-            ent:ApplyAbsVelocityImpulse(velocity * Convars:GetFloat("portalgun_pickup_damping"))
-
-            local aimAt = nil
-            -- Example of special rotation entities
-            if ent:GetName() == "@Wheatly" then
-                aimAt = (Player:EyePosition() - ent:GetOrigin()):Normalized()
-            else
-                -- Default face portalgun
-                ---@TODO Capture angles when picked up to maintain original angle
-                aimAt = (self:GetOrigin() - ent:GetOrigin()):Normalized()
-            end
-            local newAim = ent:GetForwardVector():Slerp(aimAt, Convars:GetFloat("portalgun_pickup_rotate_scale")--[[@as number]])
-            ent:SetForwardVector(newAim)
+            ent:ApplyAbsVelocityImpulse( ((desiredPosition - ent:GetOrigin()) * amount) - (GetPhysVelocity(ent) / 2) )
         end
     else
-        -- Find new pickup entity
-        local muzzleIndex = self:ScriptLookupAttachment(MUZZLE_ATTACHMENT)
-        local muzzleOrigin = self:GetAttachmentOrigin(muzzleIndex)
-        local muzzleForward = self:GetAttachmentForward(muzzleIndex)
-        ---@type TraceTableLine
-        local traceTable = {
-            startpos = muzzleOrigin,
-            endpos = muzzleOrigin + muzzleForward * self.pickupRange,
-            ignore = self,
-        }
-        TraceLine(traceTable)
-        if traceTable.hit and not vlua.find(self.disabledPickupNames, traceTable.enthit:GetName()) and vlua.find(PICKUP_CLASS_WHITELIST, traceTable.enthit:GetClassname()) then
-            StartSoundEventFromPositionReliable(SND_USE, self:GetAbsOrigin())
-            StartSoundEvent(SND_USE_LOOP, self)
-            self.__pickupEntity = traceTable.enthit
+        local velocity = (desiredPosition - ent:GetOrigin()) / Convars:GetFloat("portalgun_pickup_attenuation")
+        velocity = velocity - GetPhysVelocity(ent)
+        ent:ApplyAbsVelocityImpulse(velocity * Convars:GetFloat("portalgun_pickup_damping"))
 
-            traceTable.enthit:FireOutput("OnPhysGunOnlyPickup", self, self, nil, 0)
-            self:DisablePlayerCollisionWith(self.__pickupEntity)
-
-            if Player:IsHolding(traceTable.enthit) then
-                traceTable.enthit:Drop()
-            end
-
-            ---@TODO Modulate hover distance based on object size
-            modPickupDistance = self.__pickupEntity:GetBiggestBounding()
-            modPickupOffset = self.__pickupEntity:GetCenter() - self.__pickupEntity:GetOrigin()
+        local aimAt = nil
+        -- Example of special rotation entities
+        if ent:GetName() == "@Wheatly" then
+            aimAt = (Player:EyePosition() - ent:GetOrigin()):Normalized()
         else
-            StartSoundEventFromPositionReliable(SND_USE_FAILED, self:GetAbsOrigin())
-            self:DropItem()
-            return -1
+            -- Default face portalgun
+            ---@TODO Capture angles when picked up to maintain original angle?
+            aimAt = (self:GetOrigin() - ent:GetOrigin()):Normalized()
         end
+        local newAim = ent:GetForwardVector():Slerp(aimAt, Convars:GetFloat("portalgun_pickup_rotate_scale")--[[@as number]])
+        ent:SetForwardVector(newAim)
     end
+end
+
+---Forces the gun to pick up an entity
+---@param entity EntityHandle|nil # Pass nil as a failed pickup
+function base:PickupEntity(entity)
+    if entity == nil then
+        StartSoundEventFromPositionReliable(SND_USE_FAILED, self:GetAbsOrigin())
+        return
+    end
+
+    if not IsValidEntity(entity) then
+        warn("Portal gun attempted to pick up invalid entity " .. Debug.EntStr(entity))
+        return
+    end
+
+    self.pickupEntity = entity
+
+    StartSoundEventFromPositionReliable(SND_USE, self:GetAbsOrigin())
+    StartSoundEvent(SND_USE_LOOP, self)
+
+    -- Fire output for hammer use
+    entity:FireOutput("OnPhysGunOnlyPickup", self, self, nil, 0)
+
+    -- Disable player collisions to avoid cheat flying
+    self:DisablePlayerCollisionWith(entity)
+
+    -- Destroy old highlight
+    self:DestroyHighlight()
+
+    -- Drop the item from the player's hands
+    if Player:IsHolding(entity) then
+        entity:Drop()
+    end
+
+    -- Adjust the pickup distance based on the size of the entity
+    modPickupDistance = self.pickupEntity:GetBiggestBounding()
+    modPickupOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
+end
+
+---Drops the currently held item.
+---
+---If this is called within the think you must also return nil from the think or an error will occur.
+function base:DropEntity()
+    -- Only drop the item if it's enabled
+    if not self.itemDropEnabled then
+        return
+    end
+
+    self.pickupEntity = nil
+    lastNearestPickupEnt = nil
+    -- self.__pickupEntity = nil
+    self:SetContextThink("PortalGunPickupAbility", nil, 0)
+    StopSoundEvent(SND_USE_LOOP, self)
+    self:EnablePlayerCollisions()
 end
 
 function base:SetupInputs()
@@ -440,15 +453,9 @@ function base:SetupInputs()
     Input:StopListeningByContext(self)
 
     Input:ListenToButton("press", self.hand, self.pickupButton, 1, function (_, params)
-        if self:IsEquipped() then
+        if self:IsEquipped() and self.itemPickupEnabled then
             if not self.__disablePickupUntilTriggerRelease then
-                self:SetContextThink("PortalGunPickupAbility", function()
-                    local result = self:HandlePickupAbility()
-                    if result ~= nil and result < 0 then
-                        return nil
-                    end
-                    return 0
-                end, 0)
+                self:PickupEntity(lastNearestPickupEnt)
             end
         end
     end, self)
@@ -459,20 +466,18 @@ function base:SetupInputs()
             return
         end
 
-        self:SetContextThink("PortalGunPickupAbility", nil, 0)
         if self.__disablePickupUntilTriggerRelease then
             self.__disablePickupUntilTriggerRelease = false
         end
-        if self.__pickupEntity ~= nil then
-            self.__pickupEntity = nil
-            StopSoundEvent(SND_USE_LOOP, self)
+
+        if self.pickupEntity ~= nil then
+            self:DropEntity()
             StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
-            self:EnablePlayerCollisions()
         end
     end, self)
 
     Input:ListenToButton("press", self.hand, self.bluePortalButton, 1, function (_, params)
-        if self:IsEquipped() and self.allowedToFire and self.__pickupEntity == nil then
+        if self:IsEquipped() and self.allowedToFire and self.pickupEntity == nil then
             if self.bluePortalEnabled then
                 self:TryFirePortal(PortalManager.colors.blue)
             end
@@ -481,7 +486,7 @@ function base:SetupInputs()
     end, self)
 
     Input:ListenToButton("press", self.hand, self.orangePortalButton, 1, function (_, params)
-        if self:IsEquipped() and self.allowedToFire and self.__pickupEntity == nil then
+        if self:IsEquipped() and self.allowedToFire and self.pickupEntity == nil then
             if self.orangePortalEnabled then
                 self:TryFirePortal(PortalManager.colors.orange)
             end
@@ -504,14 +509,89 @@ function base:SetupInputs()
 
 end
 
+---Get the nearest entity that can be picked up by the gun.
+---@return EntityHandle?
+function base:GetNearestPickupEntity()
+    local muzzleIndex = self:ScriptLookupAttachment(MUZZLE_ATTACHMENT)
+    local muzzleOrigin = self:GetAttachmentOrigin(muzzleIndex)
+    local muzzleForward = self:GetAttachmentForward(muzzleIndex)
+    ---@type TraceTableLine
+    local traceTable = {
+        startpos = muzzleOrigin,
+        endpos = muzzleOrigin + muzzleForward * self.pickupRange,
+        ignore = self,
+    }
+
+    TraceLine(traceTable)
+
+    if traceTable.hit
+    and not vlua.find(self.disabledPickupNames, traceTable.enthit:GetName())
+    and vlua.find(PICKUP_CLASS_WHITELIST, traceTable.enthit:GetClassname()) then
+        return traceTable.enthit
+    end
+
+    return nil
+end
+
+---Highlights a new entity.
+---@param entityToHighlight any
+function base:CreateHighlight(entityToHighlight)
+    local scale = entityToHighlight:GetAbsScale()
+    local bounds = entityToHighlight:GetBounds()
+    local height = (bounds.Maxs.z - bounds.Mins.z) * scale
+    local width = math.max(bounds.Maxs.x - bounds.Mins.x, bounds.Maxs.y - bounds.Mins.y) * scale
+    local zoffset = bounds.Mins.z * scale
+
+    self:DestroyHighlight()
+    highlightPtfx = ParticleManager:CreateParticle("particles/portalgun_target_modelglow.vpcf", 0, self)
+    ParticleManager:SetParticleControlEnt(highlightPtfx, 0, entityToHighlight, 5, nil, Vector(0,0,128), true)
+    ParticleManager:SetParticleControl(highlightPtfx, 1, Vector(width, zoffset, height))
+    ParticleManager:SetParticleControl(highlightPtfx, 4, Vector(scale, scale, scale))
+end
+
+---Destroys the highlight particle if it exists.
+---@param immediately? boolean
+function base:DestroyHighlight(immediately)
+    if highlightPtfx ~= nil then
+        ParticleManager:DestroyParticle(highlightPtfx, immediately == true)
+        highlightPtfx = nil
+    end
+end
+
+function base:Think()
+
+    if self.pickupEntity ~= nil then
+        self:UpdatePickupItemPosition()
+    elseif self.itemPickupEnabled then
+        local nearestPickupEnt = self:GetNearestPickupEntity()
+        if nearestPickupEnt then
+            -- New nearest entity
+            if nearestPickupEnt ~= lastNearestPickupEnt then
+                lastNearestPickupEnt = nearestPickupEnt
+                -- Display pickup effects
+                self:SetGraphParameterBool("bTargeting", true)
+                self:CreateHighlight(nearestPickupEnt)
+            end
+        else
+            if lastNearestPickupEnt then
+                lastNearestPickupEnt = nil
+                self:DestroyHighlight()
+                self:SetGraphParameterBool("bTargeting", false)
+            end
+        end
+    end
+
+    return 0
+end
+
 ---Stops the gun from being able to pick up items
 function base:DisableItemPickup()
-    self.pickupEnabled = false
+    self.itemPickupEnabled = false
 end
 
 ---Allows the gun to pick up items
 function base:EnableItemPickup()
-    self.pickupEnabled = true
+    self.itemPickupEnabled = true
 end
 
 ---Disables the ability to pick up an entity by name
@@ -522,8 +602,8 @@ function base:DisableNamePickup(name)
     end
     self:Save("disabledPickupNames")
     -- Drop the current entity if it has the same name
-    if self.__pickupEntity ~= nil and self.__pickupEntity:GetName() == name then
-        self:DropItem()
+    if self.pickupEntity ~= nil and self.pickupEntity:GetName() == name then
+        self:DropEntity()
     end
 end
 
@@ -563,8 +643,15 @@ function base:EnableItemDrop()
     -- Automatically drop the current item if the trigger is released
     -- This can be disabled if you want the item to stay held until the trigger is pressed again
     if not Player:IsDigitalActionOnForHand(self.hand:GetLiteralHandType(), self.pickupButton) then
-        self:DropItem()
+        self:DropEntity()
     end
+end
+
+---Forces the portal gun to drop its currently held item (Hammer input)
+function base:ForceDropItem()
+    self:DropEntity()
+    -- Require the trigger to be released before picking up again
+    self.__disablePickupUntilTriggerRelease = true
 end
 
 function base:EnableBluePortalGun()

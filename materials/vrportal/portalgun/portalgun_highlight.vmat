@@ -1,0 +1,23 @@
+// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{
+	shader "ghost_glove.vfx"
+
+	//---- No Depth ----
+	F_NODEPTH 1
+
+	//---- Color ----
+	g_vTintColor "[1.000000 1.000000 1.000000 1.000000]"
+
+	//---- Fog ----
+	g_bFogEnabled "1"
+
+	//---- Power ----
+	g_flFallOff "0.843"
+
+	Attributes
+	{
+		wipe "1"
+	}
+}
