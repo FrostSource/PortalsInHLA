@@ -131,26 +131,27 @@ function base:Open(position, normal, color)
 
     local normalRotated = RotateOrientation(normalAngles, QAngle(90, 0, 0))
 
-    ---@TODO Why is this created in two different ways?
+    ---This exists simply as a parent entity for particles created in base:UpdateEffects
     self.particleSystem = SpawnEntityFromTableSynchronous("info_particle_target", {
         -- effect_name = PTX_PORTAL_EFFECT,
         targetname = color.name .. "Portal_particles",
         -- cpoint5 = PortalManager:GetColorEntityName(color),
-        origin = position + normal * 2.25,
+        origin = position + (normal / 2),
         angles = normalRotated,
     })
+
     -- local particles = ParticleManager:CreateParticleForPlayer(PTX_PORTAL_EFFECT, 1, self.particleSystem, Player)
     -- ParticleManager:SetParticleControl(particles, 5, color.color)
 
-    self.portalModel = SpawnEntityFromTableSynchronous("prop_dynamic", {
-        targetname = color.name .. "Portalview",
-        angles = normalRotated,
-        ---@TODO Update material to use dynamic expressions (2023-11-10 don't remember why expressions were wanted)
-        skin = color.name,
-        model = "models/vrportal/portalshape.vmdl",
-    })
-    ---@TODO Can move this into construction?
-    self.portalModel:SetOrigin(position + normal)
+    -- self.portalModel = SpawnEntityFromTableSynchronous("prop_dynamic", {
+    --     targetname = color.name .. "Portalview",
+    --     angles = normalRotated,
+    --     ---@TODO Update material to use dynamic expressions (2023-11-10 don't remember why expressions were wanted)
+    --     skin = color.name,
+    --     model = "models/vrportal/portalshape.vmdl",
+    -- })
+    -- ---@TODO Can move this into construction?
+    -- self.portalModel:SetOrigin(position + normal)
 
     -- self.teleport = SpawnEntityFromTableSynchronous("point_teleport", {
     --     targetname = color.name .. "Portal_teleport",
@@ -209,7 +210,8 @@ function base:UpdateConnection()
         local ents = {self, connectedPortal}
 
         for _, portal in ipairs(ents) do
-            portal.monitor:SetOrigin(portal.aimat:GetOrigin() + portal.aimat:GetForwardVector() * 2)
+            ---@TODO Monitor was pushed out 2 units, was there a specific reason for this?
+            portal.monitor:SetOrigin(portal.aimat:GetOrigin() + portal.aimat:GetForwardVector() * 0.1)
             local angles = VectorToAngles(portal.aimat:GetForwardVector())
             portal.monitor:SetAngles(angles.x, angles.y, angles.z)
 
@@ -311,8 +313,8 @@ function base:Teleport(ent)
             self:TeleportPhysicalEntity(ent, connectedPortal)
 
             if not ent:IsPlayer() then
-                if PortalManager.portalGun and PortalManager.portalGun.__pickupEntity == ent then
-                    PortalManager.portalGun:DropItem()
+                if PortalManager.portalGun and PortalManager.portalGun.pickupEntity == ent then
+                    PortalManager.portalGun:DropEntity()
                 else
                     -- drop from player hand
                     ent:Drop()

@@ -174,6 +174,21 @@ function PortalManager:TracePortalableSurface(startpos, forward, ignore)
             end
         end
 
+        -- Try to push the portal up against the wall instead of the portalable func
+        if surfaceIsPortalable then
+            ---@type TraceTableLine
+            local traceTableAlign = {
+                startpos = traceTable.pos,
+                endpos = traceTable.pos + (-traceTable.normal) * 10,
+                ignore = traceTable.enthit,
+            }
+            Debug.PrintTable(traceTableAlign)
+            if traceTableAlign.hit then
+                traceTable.pos = traceTableAlign.pos
+                traceTable.normal = traceTableAlign.normal
+            end
+        end
+
         if self:Debugging() then
             DebugDrawLine(traceTable.startpos, traceTable.endpos, surfaceIsPortalable and 0 or 255, surfaceIsPortalable and 255 or 0, 0, false, 1)
             DebugDrawLine(traceTable.pos, traceTable.pos + traceTable.normal * 10, 0, 0, 255, false, 1)
