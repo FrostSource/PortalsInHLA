@@ -1165,5 +1165,8 @@
 
 "HLVR_Lesson_ShotgunUpgradeGrenadeFire"			"Hold to pickup objects"
 
+// Jump/speak hint
+"HLVR_Lesson_Continuous_Jump"					"Push to bring up speak indicator\nand release to speak"
+
 } 
 }
