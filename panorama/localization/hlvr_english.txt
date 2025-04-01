@@ -1158,7 +1158,11 @@
 "HLVR_Lesson_ArmGrenade"						"Press to fire the Blue Portal"
 // currently used
 "HLVR_Lesson_ReloadSingleController"			"Press to fire the Blue Portal"
+
 "HLVR_Lesson_ChamberRound"						"Press to fire the Orange Portal"
+// Orange hint for Vive
+"HLVR_Lesson_ToggleBurstFire"					"Tap button twice to fire the Orange Portal"
+
 "HLVR_Lesson_ShotgunUpgradeGrenadeFire"			"Hold to pickup objects"
 
 } 
