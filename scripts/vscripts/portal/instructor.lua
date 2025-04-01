@@ -6,10 +6,13 @@
 
 local this = thisEntity
 
+local userLanguage = Convars:GetStr("cl_language")
+
 ---
 ---Show the hint for firing the blue portal.
 ---
 function this:ShowBluePortalHint()
+    this:EnableHints()
 
     -- Reset because grenade hint only shows twice
     SendToConsole("gameinstructor_reset_counts")
@@ -30,13 +33,22 @@ end
 ---Show the hint for firing the orange portal.
 ---
 function this:ShowOrangePortalHint()
-    SendToConsole("gameinstructor_teach_lesson \"Lesson - Teach Chamber Round\"")
+    this:EnableHints()
+
+    -- Vive is remapped to burst fire
+    if Player:GetVRControllerType() == 2 then
+        SendToConsole("gameinstructor_teach_lesson \"Lesson - Teach Toggle Burst Fire\"")
+    else
+        SendToConsole("gameinstructor_teach_lesson \"Lesson - Teach Chamber Round\"")
+    end
 end
 
 ---
 ---Show the hint for picking up items with the portal gun.
 ---
 function this:ShowPortalGunPickupHint()
+    this:EnableHints()
+
     -- Has a 5s timeout, unsure how to work around
     -- this:SetContextThink("keephint", function ()
         SendToConsole("gameinstructor_teach_lesson \"Lesson - Shotgun Upgrade Grenade Teach Fire\"")
@@ -50,14 +62,16 @@ end
 ---
 function this:DisableHints()
     Convars:SetBool("gameinstructor_enable", false)
-    this:SetContextThink("keephint", nil, 0)
 end
 
 ---
 ---Enable all instructor hints.
 ---
 function this:EnableHints()
+    userLanguage = Convars:GetStr("cl_language")
     Convars:SetBool("gameinstructor_enable", true)
+    -- This is required to show custom hint text
+    SendToConsole("set_vgui_language " .. userLanguage)
 end
 
 ---
@@ -68,5 +82,4 @@ function this:HideHints()
         Convars:SetBool("gameinstructor_enable", false)
         Convars:SetBool("gameinstructor_enable", true)
     end
-    this:SetContextThink("keephint", nil, 0)
 end
