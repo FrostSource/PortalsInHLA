@@ -21,7 +21,8 @@ function base:OnSpawn(spawnkeys)
 
     self.target = Entities:FindByName(nil, targetName)
     self.landmark = Entities:FindByName(nil, landmarkName)
-    print(self.target, self.landmark)
+
+    debugprint_portals("Portal Teleport Spawn:", self.target, self.landmark)
 end
 
 ---Called automatically after OnActivate, when EasyConvars and Player have initialized.

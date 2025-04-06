@@ -61,21 +61,23 @@ PortalManager.AllowPortalsOnlyOnPrefixedEntities = false
 ---The prefix part that must be on portalable surface entities.
 PortalManager.PortalableSurfaceNamePrefix = ""
 
-Convars:RegisterConvar("portal_debugging_is_on", _G.Debugging and "1" or "0", "", 0)
-Convars:RegisterCommand("portal_debugging", function (_, on)
-    if on == nil or on == "" then
-        on = not _G.Debugging
-    elseif on == false or on == "0" or on == "false" or on == "off" then
-        on = false
-    else
-        on = true
-    end
-    _G.Debugging = on
-end, "Toggle portal debugging", 0)
 
-function PortalManager:Debugging()
-    -- return Convars:GetInt("developer") > 0 or Convars:GetBool("portal_debugging_is_on")
-    return Convars:GetBool("portal_debugging_is_on")
+Convars:RegisterConvar("portal_debug_portals", "0", "Shows debugging visuals for portals", 0)
+Convars:RegisterConvar("portal_debug_portalgun", "0", "Shows debugging visuals for the portalgun", 0)
+Convars:RegisterConvar("portal_debug_portal_rendering", "1", "Shows debugging visuals for portal rendering", 0)
+
+---@diagnostic disable-next-line: lowercase-global
+function debugprint_portalgun(...)
+    if Convars:GetInt("portal_debug_portalgun") > 0 then
+        print(...)
+    end
+end
+
+---@diagnostic disable-next-line: lowercase-global
+function debugprint_portals(...)
+    if Convars:GetInt("portal_debug_portals") > 0 then
+        print(...)
+    end
 end
 
 Convars:RegisterCommand("portal_disable_all_portals", function(_)
@@ -118,13 +120,13 @@ function PortalManager:TraceDirection(position, dir)
         ignore = Player,
     }
     TraceLineIgnorePhysics(traceTable)
-    if self:Debugging() then
-        if traceTable.hit then
-            DebugDrawLine(traceTable.startpos, traceTable.endpos, 255, 0, 0, true, 3)
-        else
-            DebugDrawLine(traceTable.startpos, traceTable.endpos, 0, 255, 0, true, 3)
-        end
-    end
+    -- if self:Debugging() then
+    --     if traceTable.hit then
+    --         DebugDrawLine(traceTable.startpos, traceTable.endpos, 255, 0, 0, true, 3)
+    --     else
+    --         DebugDrawLine(traceTable.startpos, traceTable.endpos, 0, 255, 0, true, 3)
+    --     end
+    -- end
     return traceTable
 end
 
@@ -191,14 +193,14 @@ function PortalManager:TracePortalableSurface(startpos, forward, ignore)
                 endpos = traceTable.pos + (-traceTable.normal) * 10,
                 ignore = traceTable.enthit,
             }
-            Debug.PrintTable(traceTableAlign)
+
             if traceTableAlign.hit then
                 traceTable.pos = traceTableAlign.pos
                 traceTable.normal = traceTableAlign.normal
             end
         end
 
-        if self:Debugging() then
+        if Convars:GetInt("portal_debug_portalgun") >= 2 then
             DebugDrawLine(traceTable.startpos, traceTable.endpos, surfaceIsPortalable and 0 or 255, surfaceIsPortalable and 255 or 0, 0, false, 1)
             DebugDrawLine(traceTable.pos, traceTable.pos + traceTable.normal * 10, 0, 0, 255, false, 1)
         end
@@ -231,6 +233,77 @@ function PortalManager:ReorientPortalPerpendicular(normal, forward)
     return normalAngles
 end
 
+---@param position Vector
+---@param normalAngles QAngle
+---@param maxAttempts number
+---@return Vector|nil # Adjusted position or nil if failed
+function PortalManager:TestPortalPositionAdjust(position, normalAngles, maxAttempts)
+
+    local startingPosition = position
+    position = position + normalAngles:Forward() * 1
+
+    local stepSize = 1
+
+    local hitUp, hitDown, hitLeft, hitRight
+
+    ---Trace in a direction
+    ---@param direction Vector # Direction and distance
+    ---@return boolean # If the trace hit or empty space behind
+    local function trace(direction)
+        local tr = self:TraceDirection(position, direction)
+        if tr.hit then return true end
+        tr = self:TraceDirection(position + direction, -normalAngles:Forward() * 30)
+        if not tr.hit then return true end
+        return false
+    end
+
+    for i = 1, maxAttempts do
+        hitUp = trace(normalAngles:Up() * PORTAL_SIZE_Z / 2)
+        hitDown = trace((-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
+        hitLeft = trace(normalAngles:Left() * PORTAL_SIZE_Y / 2)
+        hitRight = trace((-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
+        -- local UpTrace = self:TraceDirection(position, normalAngles:Up())
+        -- if not UpTrace.hit then
+        --     UpTrace = self:TraceDirection(position + normalAngles:Up() * PORTAL_SIZE_Z / 2, -normalAngles:Forward() * 30)
+        --     if not UpTrace.hit then hitUp = true end
+        -- else hitUp = true end
+
+        -- local DownTrace = self:TraceDirection(position, (-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
+        -- local hitDown = DownTrace.hit
+        -- local LeftTrace = self:TraceDirection(position, normalAngles:Left() * PORTAL_SIZE_Y / 2)
+        -- local hitLeft = LeftTrace.hit
+        -- local RightTrace = self:TraceDirection(position, (-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
+        -- local hitRight = RightTrace.hit
+
+        if not hitUp and not hitDown and not hitLeft and not hitRight then
+            if Convars:GetInt("portal_debug_portals") >= 1 then
+                debugoverlay:Sphere(startingPosition, 0.75, 255, 0, 0, 255, true, 5)
+                debugoverlay:HorzArrow(startingPosition, position, 1.5, 255, 0, 0, 255, true, 5)
+                debugoverlay:VertArrow(startingPosition, position, 1.5, 255, 0, 0, 255, true, 5)
+            end
+            return position - normalAngles:Forward() * 1
+        end
+
+        local moveX = 0
+        local moveY = 0
+
+        if hitUp then moveY = -stepSize end
+        if hitDown then moveY = stepSize end
+        if hitLeft then moveX = -stepSize end
+        if hitRight then moveX = stepSize end
+
+        local newPosition = position + (normalAngles:Left() * moveX) + (normalAngles:Up() * moveY)
+
+        position = newPosition
+    end
+
+    if Convars:GetInt("portal_debug_portalgun") >= 1 then
+        debugoverlay:Text(startingPosition, 0, "Failed to find position for portal", 0, 255, 0, 0, 255, 5)
+    end
+
+    return nil
+end
+
 ---Try to open a portal at a given `position`, checking to make sure it can fit.
 ---@param position Vector # World position to open the portal at.
 ---@param normal Vector # Normalized direction the portal should face.
@@ -240,40 +313,46 @@ function PortalManager:TryCreatePortalAt(position, normal, color)
     color = resolveColor(color)
     local normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
 
-    local UpTrace = self:TraceDirection(position + normalAngles:Forward() * 10, normalAngles:Up() * PORTAL_SIZE_Z / 2)
-    if not UpTrace.hit then
-        UpTrace = self:TraceDirection(UpTrace.endpos, -normalAngles:Forward() * 30)
-        if not UpTrace.hit then
-            return false
-        end
-    else
-        return false
-    end
-    local DownTrace = self:TraceDirection(position+normalAngles:Forward() * 10, (-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
-    if not DownTrace.hit then
-        DownTrace = self:TraceDirection(DownTrace.endpos, -normalAngles:Forward() * 30)
-        if not DownTrace.hit then
-            return false
-        end
-    else
-        return false
-    end
-    local LeftTrace = self:TraceDirection(position + normalAngles:Forward() * 10, normalAngles:Left() * PORTAL_SIZE_Y / 2)
-    if not LeftTrace.hit then
-        LeftTrace = self:TraceDirection(LeftTrace.endpos, -normalAngles:Forward() * 30)
-        if not LeftTrace.hit then
-            return false
-        end
-    else
-        return false
-    end
-    local RightTrace = self:TraceDirection(position+normalAngles:Forward() * 10, (-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
-    if not RightTrace.hit then
-        RightTrace = self:TraceDirection(RightTrace.endpos, -normalAngles:Forward() * 30)
-        if not RightTrace.hit then
-            return false
-        end
-    else
+    -- local UpTrace = self:TraceDirection(position + normalAngles:Forward() * 10, normalAngles:Up() * PORTAL_SIZE_Z / 2)
+    -- if not UpTrace.hit then
+    --     UpTrace = self:TraceDirection(UpTrace.endpos, -normalAngles:Forward() * 30)
+    --     if not UpTrace.hit then
+    --         return false
+    --     end
+    -- else
+    --     return false
+    -- end
+    -- local DownTrace = self:TraceDirection(position+normalAngles:Forward() * 10, (-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
+    -- if not DownTrace.hit then
+    --     DownTrace = self:TraceDirection(DownTrace.endpos, -normalAngles:Forward() * 30)
+    --     if not DownTrace.hit then
+    --         return false
+    --     end
+    -- else
+    --     return false
+    -- end
+    -- local LeftTrace = self:TraceDirection(position + normalAngles:Forward() * 10, normalAngles:Left() * PORTAL_SIZE_Y / 2)
+    -- if not LeftTrace.hit then
+    --     LeftTrace = self:TraceDirection(LeftTrace.endpos, -normalAngles:Forward() * 30)
+    --     if not LeftTrace.hit then
+    --         return false
+    --     end
+    -- else
+    --     return false
+    -- end
+    -- local RightTrace = self:TraceDirection(position+normalAngles:Forward() * 10, (-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
+    -- if not RightTrace.hit then
+    --     RightTrace = self:TraceDirection(RightTrace.endpos, -normalAngles:Forward() * 30)
+    --     if not RightTrace.hit then
+    --         return false
+    --     end
+    -- else
+    --     return false
+    -- end
+
+    position = self:TestPortalPositionAdjust(position, normalAngles, PORTAL_SIZE_Y)
+
+    if position == nil then
         return false
     end
 

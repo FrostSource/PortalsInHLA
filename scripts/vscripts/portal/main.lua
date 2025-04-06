@@ -12,7 +12,8 @@ function Spawn(spawnkeys)
         return
     end
     PortalManager.PortalableSurfaceNamePrefix = string.gsub(prefix,".*_","",0)
-    devprints("PortalableSurfaceNamePrefix:", PortalManager.PortalableSurfaceNamePrefix)
+
+    debugprint_portals("PortalableSurfaceNamePrefix:", PortalManager.PortalableSurfaceNamePrefix)
 end
 
 ---Open the blue portal at the caller.

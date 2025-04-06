@@ -107,7 +107,9 @@ end
 ---@param color PortalColor
 ---@overload fun()
 function base:Open(position, normal, color)
-    devprints("Opening portal", Debug.SimpleVector(position), Debug.SimpleVector(normal), color.name, Debug.SimpleVector(color.color:ToVector()))
+    if Convars:GetInt("portal_debug_portals") >= 1 then
+        devprints("Opening portal", Debug.SimpleVector(position), Debug.SimpleVector(normal), color.name, Debug.SimpleVector(color.color:ToVector()))
+    end
 
     self.colorName = color.name
     local normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
@@ -168,7 +170,6 @@ function base:Open(position, normal, color)
 
     --testing new teleport
     self.teleport = PortalManager:GetPortalTeleport(color)
-    print("Found teleport", self.teleport)
 
     self:UpdateEffects()
 
@@ -425,7 +426,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 
     local timeDiff = Time() - ent:Attribute_GetFloatValue("ent_teleport_time", 0)
 
-    print(timeDiff)
+    -- print(timeDiff)
     local MAX_TIME = 0.25
 	if timeDiff < MAX_TIME and timeDiff >= 0 then return end
 

@@ -96,7 +96,8 @@ local lastNearestPickupEnt = nil
 
 ---@param context CScriptPrecacheContext
 function base:Precache(context)
-    devprint("PortalGun precaching")
+
+    debugprint_portalgun("PortalGun precaching")
     PrecacheResource("particle", "particles/portalgun_barrel.vpcf", context)
     PrecacheResource("particle", "particles/portalgun_light.vpcf", context)
     PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
@@ -258,9 +259,7 @@ function base:TryFirePortal(color)
         ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color.color:ToDecimalVector())
         ParticleManager:SetParticleControl(self.__ptxLight, 5, color.color:ToDecimalVector())
 
-        if PortalManager:Debugging() then
-            print("Trying to fire portal", color)
-        end
+        debugprint_portalgun("Portal gun trying to fire portal", color)
 
         local portalIsBlue = color == PortalManager.colors.blue
 

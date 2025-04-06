@@ -25,7 +25,7 @@ function base:OnSpawn(spawnkeys)
     self.portal2Name = spawnkeys:GetValue("Group02") or DoUniqueString("color2")
     self.portal2Color = Util.VectorFromString(spawnkeys:GetValue("Group03"))
 
-    devprints("Portal Pair Spawn:", self.portal1Name, Debug.SimpleVector(self.portal1Color), " - ", self.portal2Name, Debug.SimpleVector(self.portal2Color))
+    debugprint_portals("Portal Pair Spawn:", self.portal1Name, Debug.SimpleVector(self.portal1Color), " - ", self.portal2Name, Debug.SimpleVector(self.portal2Color))
 end
 
 ---Called automatically on activate.

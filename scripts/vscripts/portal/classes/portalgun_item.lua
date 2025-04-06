@@ -18,7 +18,6 @@ base.Precache = PortalGunClass.Precache
 
 ---@param params GameEventItemPickup
 base:GameEvent("item_pickup", function (self, params)
-    Debug.PrintTable(params)
     ---@cast self PortalGunItem
     if params.item == "hlvr_weapon_generic_pistol" then
         local weapon = Player.PrimaryHand:GetHandAttachment()
