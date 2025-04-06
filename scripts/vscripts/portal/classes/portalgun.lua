@@ -387,6 +387,12 @@ function base:UpdatePickupItemPosition()
 
     -- debugoverlay:Sphere(desiredPosition, 1, 255, 0, 0, 255, true, 0)
 
+    if VectorDistance(desiredPosition, ent:GetOrigin()) > 512 then
+        ent:SetOrigin(desiredPosition)
+        ---@TODO Does angle need to be set?
+        return
+    end
+
     if Convars:GetBool("portalgun_use_old_pickup_method") then
         local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
         local amount = min(amountBy, 2)
