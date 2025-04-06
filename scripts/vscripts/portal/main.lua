@@ -11,6 +11,7 @@ function Spawn(spawnkeys)
     if prefix == nil then
         return
     end
+    -- Player doesn't exist yet so we can't use the set function
     PortalManager.PortalableSurfaceNamePrefix = string.gsub(prefix,".*_","",0)
 
     debugprint_portals("PortalableSurfaceNamePrefix:", PortalManager.PortalableSurfaceNamePrefix)

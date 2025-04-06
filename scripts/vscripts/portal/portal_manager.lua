@@ -508,22 +508,22 @@ end
 ---@param prefix string
 function PortalManager:SetPortalableSurfaceNamePrefix(prefix)
     self.PortalableSurfaceNamePrefix = prefix or ""
-    if not Player then
-        Warning("PortalManager cannot save PortalableSurfaceNamePrefix because player doesn't exist\n")
+    if not Entities:GetLocalPlayer() then
+        warn("PortalManager cannot save PortalableSurfaceNamePrefix because player doesn't exist")
         return
     end
-    Player:SaveString("PortalableSurfaceNamePrefix", self.PortalableSurfaceNamePrefix)
+    Entities:GetLocalPlayer():SaveString("PortalableSurfaceNamePrefix", self.PortalableSurfaceNamePrefix)
 end
 
 ---Sets if portals can only be placed on name prefixed entities or if they can be placed anywhere.
 ---@param allow boolean
 function PortalManager:SetAllowPortalsOnlyOnPrefixedEntities(allow)
     self.AllowPortalsOnlyOnPrefixedEntities = truthy(allow)
-    if not Player then
+    if not Entities:GetLocalPlayer() then
         Warning("PortalManager cannot save AllowPortalsOnlyOnPrefixedEntities because player doesn't exist\n")
         return
     end
-    Player:SaveBoolean("AllowPortalsOnlyOnPrefixedEntities", self.AllowPortalsOnlyOnPrefixedEntities)
+    Entities:GetLocalPlayer():SaveBoolean("AllowPortalsOnlyOnPrefixedEntities", self.AllowPortalsOnlyOnPrefixedEntities)
 end
 
 ---Create a failed portal opening effect.
@@ -559,6 +559,12 @@ ListenToPlayerEvent("player_activate", function (params)
     PortalManager.AllowPortalsOnlyOnPrefixedEntities = Player:LoadBoolean("AllowPortalsOnlyOnPrefixedEntities", PortalManager.AllowPortalsOnlyOnPrefixedEntities)
     PortalManager.colors = Player:LoadTable("PortalColors", PortalManager.colors)
 end)
+
+-- Hack to save portalable values
+ListenToGameEvent("player_spawn", function()
+    PortalManager:SetPortalableSurfaceNamePrefix(PortalManager.PortalableSurfaceNamePrefix)
+    PortalManager:SetAllowPortalsOnlyOnPrefixedEntities(PortalManager.AllowPortalsOnlyOnPrefixedEntities)
+end, nil)
 
 Convars:RegisterCommand("portalgun_give", function (_, ...)
     local portalgun = Entities:FindByName(nil, "@PortalGun")--[[@as PortalGun]]
