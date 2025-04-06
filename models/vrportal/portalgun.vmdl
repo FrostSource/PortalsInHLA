@@ -107,6 +107,26 @@
 						framerate = -1.0
 						reverse = false
 					},
+					{
+						_class = "AnimFile"
+						name = "target_pose"
+						activity_name = ""
+						activity_weight = 1
+						weight_list_name = ""
+						fade_in_time = 0.0
+						fade_out_time = 0.0
+						looping = false
+						delta = false
+						worldSpace = false
+						hidden = false
+						anim_markup_ordered = false
+						disable_compression = false
+						source_filename = "models/vrportal/anims/fire.dmx"
+						start_frame = 11
+						end_frame = 11
+						framerate = -1.0
+						reverse = false
+					},
 				]
 				default_root_bone_name = ""
 			},
@@ -149,6 +169,131 @@
 						relative_angles = [ 0.0, 0.0, 0.0 ]
 						weight = 1.0
 						ignore_rotation = false
+					},
+					{
+						_class = "Attachment"
+						name = "vr_controller_held_right"
+						disabled = true
+						parent_bone = "root"
+						relative_origin = [ 3.704286, 0.0, -8.529645 ]
+						relative_angles = [ 0.0, 0.0, 0.0 ]
+						weight = 1.0
+						ignore_rotation = false
+					},
+					{
+						_class = "Attachment"
+						name = "vr_controller_root"
+						parent_bone = "root"
+						relative_origin = [ 4.9, 0.0, -5.5 ]
+						relative_angles = [ -90.0, 0.0, 180.0 ]
+						weight = 1.0
+						ignore_rotation = false
+					},
+				]
+			},
+			{
+				_class = "PhysicsShapeList"
+				children = 
+				[
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "root"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 3.5
+						point0 = [ 5.009174, 0.0, 2.110708 ]
+						point1 = [ 5.001873, 0.0, 8.860292 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "root"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 3.8
+						point0 = [ 5.800148, 0.0, -7.737854 ]
+						point1 = [ 5.793269, 0.0, -2.062033 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "upperarm"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 2.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "upperarm_1"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 3.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "upperarm_2"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 1.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "rightarm"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 2.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "rightarm_1"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 3.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "rightarm_2"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 1.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "leftarm"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 2.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						name = "_"
+						parent_bone = "leftarm_1"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 3.5, 0.0, 0.0 ]
+					},
+					{
+						_class = "PhysicsShapeCapsule"
+						parent_bone = "leftarm_2"
+						surface_prop = "default"
+						collision_prop = "default"
+						radius = 0.5
+						point0 = [ 0.0, 0.0, 0.0 ]
+						point1 = [ 1.5, 0.0, 0.0 ]
 					},
 				]
 			},

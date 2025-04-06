@@ -27,8 +27,14 @@ Convars:RegisterConvar("portalgun_pickup_distance", "10", " Base object hover di
 Convars:RegisterConvar("portalgun_pickup_rotate_scale", "0.5", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
 Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectile particle", 0)
 Convars:RegisterConvar("portalgun_pickup_damping", "1", "Damping to apply to pickup speed, lower is slower", 0)
+
+Convars:RegisterConvar("portalgun_is_physical", "1", "Portal gun is a physical weapon as opposed to furniture", 0)
+
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
+
+---The PortalGun class (not the entity)
+PortalGunClass = base
 
 Input.AutoStart = true
 
@@ -121,22 +127,18 @@ function base:OnReady(loaded)
     -- Update the global handle
     PortalManager.portalGun = self
 
-    if self.hand ~= nil then
+    if Convars:GetBool("portalgun_is_physical") then
+        -- Used to stop the player from shooting
+        if not Entities:FindByName(nil, "_PortalGunPlayerProxy") then
+            SpawnEntityFromTableSynchronous("logic_playerproxy", { targetname = "_PortalGunPlayerProxy"})
+        end
+    end
+
+    -- if self.hand ~= nil then
+    if self:IsEquipped() then
         self:SetupInputs()
     end
 end
-
----@param params PLAYER_EVENT_VR_PLAYER_READY
-base:PlayerEvent("vr_player_ready", function(self, params)
-    ---@cast self PortalGun
-
-    -- Vive controller uses one button for grenade/reload, so we remap to burst fire
-    if Player:GetVRControllerType() == 2 then
-        self.orangePortalButton = DIGITAL_INPUT_TOGGLE_BURST_FIRE
-    end
-
-    self:CreateGunParticles()
-end)
 
 ---@TODO Set color based on last shot portal
 function base:CreateGunParticles()
@@ -167,7 +169,11 @@ end
 ---Get if the portal gun is currently equipped in a hand.
 ---@return boolean
 function base:IsEquipped()
-    return self.hand ~= nil
+    if Convars:GetBool("portalgun_is_physical") then
+        return Player:GetWeapon() == self
+    else
+        return self.hand ~= nil
+    end
 end
 
 ---Detaches the gun from the currently attached hand glove.
@@ -195,31 +201,46 @@ function base:AttachToHand(useSecondary)
         warn("Warning - Cannot attach portal gun to hand outside of VR! " .. Debug.GetSourceLine(1))
     end
 
-    self:DetachFromHand()
-
     local hand = useSecondary and Player.SecondaryHand or Player.PrimaryHand
-    local glove = hand:GetGlove()
 
-    if glove then
-        -- these don't exist do they..
-        -- local attachment = primary and "hand_r" or "hand_l"
+    if Convars:GetBool("portalgun_is_physical") then
+        -- This should only be used to force the gun into the hand
+        -- Equipping is done through standard Alyx inventory
 
-        self.hand = hand
-        self:SetParent(glove, "")
-        -- self:SetLocalOrigin(Vector(-7.5, -1, -2.2))
-        -- self:SetLocalAngles(0,180,0)
-        self:SetLocalOrigin(Vector(5.5, 0, -1))
-        self:SetLocalAngles(0,0,0)
-        self:SetOwner(Player)
-        glove:SetRenderAlpha(0)
+        ---@TODO Check for already attached?
+        hand:AddHandAttachment(self)
 
         StartSoundEvent(SND_EQUIP, self)
 
-        ---@TODO Move to enabling function
-        -- self:ResumeThink()
-
         self:SetupInputs()
         self:ResumeThink()
+    else
+
+        self:DetachFromHand()
+
+        local glove = hand:GetGlove()
+
+        if glove then
+            -- these don't exist do they..
+            -- local attachment = primary and "hand_r" or "hand_l"
+
+            self.hand = hand
+            self:SetParent(glove, "")
+            -- self:SetLocalOrigin(Vector(-7.5, -1, -2.2))
+            -- self:SetLocalAngles(0,180,0)
+            self:SetLocalOrigin(Vector(5.5, 0, -1))
+            self:SetLocalAngles(0,0,0)
+            self:SetOwner(Player)
+            glove:SetRenderAlpha(0)
+
+            StartSoundEvent(SND_EQUIP, self)
+
+            ---@TODO Move to enabling function
+            -- self:ResumeThink()
+
+            self:SetupInputs()
+            self:ResumeThink()
+        end
     end
 end
 
@@ -448,9 +469,20 @@ function base:DropEntity()
     self:EnablePlayerCollisions()
 end
 
+local weaponSwitchListener = -1
+
 function base:SetupInputs()
 
     Input:StopListeningByContext(self)
+
+    -- Vive controller uses one button for grenade/reload, so we remap to burst fire
+    if Player:GetVRControllerType() == 2 then
+        self.orangePortalButton = DIGITAL_INPUT_TOGGLE_BURST_FIRE
+    end
+
+    if Convars:GetBool("portalgun_is_physical") then
+        self.hand = Player.PrimaryHand
+    end
 
     Input:ListenToButton("press", self.hand, self.pickupButton, 1, function (_, params)
         if self:IsEquipped() and self.itemPickupEnabled then
@@ -494,18 +526,43 @@ function base:SetupInputs()
         end
     end, self)
 
-    Input:ListenToButton("press", self.hand, self.equipButton, 1, function (_, params)
-        StartSoundEvent(SND_TOGGLEEQUIP, self)
-        if self:IsEquipped() then
-            self:DetachFromHand()
-            self:SetRenderingEnabled(false)
-            self:DestroyGunParticles()
-        else
-            self:AttachToHand()
-            self:SetRenderingEnabled(true)
-            self:CreateGunParticles()
-        end
-    end, self)
+
+    StopListeningToPlayerEvent(weaponSwitchListener)
+
+    -- Physical gun uses standard Alyx inventory so this isn't needed
+    if Convars:GetBool("portalgun_is_physical") then
+        ---@param params PlayerEventWeaponSwitch
+        weaponSwitchListener = ListenToPlayerEvent("weapon_switch", function (params)
+            if params.item == self then
+                self:ResumeThink()
+                self:CreateGunParticles()
+                EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackDisable")
+            else
+                -- Only cleanup if the gun is being unequipped
+                if self:IsEquipped() then
+                    self:DestroyGunParticles()
+                    self:PauseThink()
+                    EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackEnable")
+                end
+            end
+        end)
+    else
+        Input:ListenToButton("press", self.hand, self.equipButton, 1, function (_, params)
+            StartSoundEvent(SND_TOGGLEEQUIP, self)
+            if self:IsEquipped() then
+                self:DetachFromHand()
+                self:SetRenderingEnabled(false)
+                self:DestroyGunParticles()
+            else
+                self:AttachToHand()
+                self:SetRenderingEnabled(true)
+                self:CreateGunParticles()
+            end
+        end, self)
+    end
+
+    -- Assume setting up inputs means gun is equipped
+    self:ResumeThink()
 
 end
 

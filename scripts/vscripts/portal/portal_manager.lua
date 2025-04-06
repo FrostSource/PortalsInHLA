@@ -131,6 +131,15 @@ end
 ---@class TraceLinePortalable : TraceTableLine
 ---@field surfaceIsPortalable boolean
 
+---@param entity EntityHandle
+function IsPortalIgnorableEntity(entity)
+    return
+        entity == Player
+        or entity:GetOwner() == Player
+        or entity == PortalManager.portalGun
+        or IsPhysicsObject(entity)
+end
+
 ---Trace line while ignoring physics objects
 ---@param traceTable TraceTableLine
 function TraceLineIgnorePhysics(traceTable)
@@ -138,7 +147,7 @@ function TraceLineIgnorePhysics(traceTable)
     TraceLine(traceTable)
     if traceTable.hit
     -- ignore physics objects
-    and (IsPhysicsObject(traceTable.enthit)
+    and (IsPortalIgnorableEntity(traceTable.enthit)
     -- ignore the original ignored entity
     or (ignore ~= nil and traceTable.enthit == ignore)) then
         traceTable.hit = false
@@ -268,6 +277,7 @@ function PortalManager:TryCreatePortalAt(position, normal, color)
         return false
     end
 
+    ---@TODO This only checks the connected portal, it should check all portals
     local otherPortal = PortalManager:GetConnectedPortal(color)
     if otherPortal ~= nil then
         local localPosition = otherPortal:TransformPointWorldToEntity(position)
@@ -454,14 +464,81 @@ end)
 
 Convars:RegisterCommand("portalgun_give", function (_, ...)
     local portalgun = Entities:FindByName(nil, "@PortalGun")--[[@as PortalGun]]
-    if portalgun == nil then
-        portalgun = SpawnEntityFromTableSynchronous("npc_furniture", {
-            targetname = "@PortalGun",
-            model = "models/vrportal/portalgun.vmdl",
-            vscripts = "portal/entities/portalgun",
-        })--[[@as PortalGun]]
+
+    if Convars:GetBool("portalgun_is_physical") then
+        if portalgun == nil then
+            -- portalgun = SpawnEntityFromTableAsynchronous("item_hlvr_weapon_generic_pistol", {
+            --     targetname = "@PortalGun",
+
+            --     -- Required to attach script to gun in hand
+            --     vscripts = "portal/classes/portalgun_item",
+
+            --     origin = Player:GetOrigin() + Vector(0, 0, 10),
+
+            --     inventory_name = "portalgun",
+            --     inventory_model = "models/vrportal/portalgun.vmdl",
+            --     model = "models/vrportal/portalgun.vmdl",
+            --     model_right_handed = "models/vrportal/portalgun.vmdl",
+            --     model_left_handed = "models/vrportal/portalgun.vmdl",
+
+            --     inventory_position = "1",
+
+            --     set_spawn_ammo = "-1",
+            --     ammo_per_clip = "0",
+            --     damage = "0",
+            --     attack_interval = "0.175",
+            --     clip_grab_dist = "8.0",
+            --     bullet_count_anim_rate = "1.0",
+            --     slide_interact_min_dist = "6.0",
+            --     slide_interact_max_dist = "6.0",
+            --     bottom_grip_min_dist = "4.0",
+            --     bottom_grip_max_dist = "4.5",
+            --     bottom_grip_disengage_dist = "5.0",
+
+            --     -- Unsure if these need null assets
+            --     -- or can just be completely omitted
+            --     slide_model_right_handed = "",
+            --     slide_model_left_handed = "",
+            --     clip_model_right_handed = "",
+            --     clip_model_left_handed = "",
+            --     single_bullet_model = "",
+            --     eject_shell_model = "",
+            --     shoot_sound = "",
+            --     no_ammo_sound = "",
+            --     last_shot_chambered = "",
+            --     slide_lock_sound = "",
+            --     slide_back_sound = "",
+            --     slide_close_sound = "",
+            --     clip_insert_sound = "",
+            --     clip_release_sound = "",
+            --     muzzle_flash_effect = "",
+            --     tracer_effect = "",
+            --     eject_shell_smoke_effect = "",
+            --     glow_effect = "",
+            --     barrel_smoke_effect = "",
+            --     clip_glow_effect = "",
+            -- }, function(gun)
+            --     print("gun spawned")
+            --     Player:SetWeapon("hand_use_controller")
+            --     portalgun:Grab(Player.PrimaryHand)
+            --     portalgun:EntFire("Use", "1", 0, Player, Player)
+            -- end, {})
+            warn("Could not find a portalgun item! Make sure the prefab was placed in the map!")
+            return
+        end
+        Player:SetWeapon("hand_use_controller")
+        portalgun:Grab(Player.PrimaryHand)
+        -- portalgun:EntFire("Use", "1", 0, Player, Player)
+    else
+        if portalgun == nil then
+            portalgun = SpawnEntityFromTableSynchronous("npc_furniture", {
+                targetname = "@PortalGun",
+                model = "models/vrportal/portalgun.vmdl",
+                vscripts = "portal/entities/portalgun",
+            })--[[@as PortalGun]]
+        end
+        portalgun:AttachToHand()
     end
-    portalgun:AttachToHand()
 end, "", 0)
 
 Convars:RegisterCommand("close_all_portals", function (_, ...)

@@ -601,4 +601,48 @@ function IsClassEntity(ent)
     return type(name) == "string" and EntityClassNameMap[name] ~= nil
 end
 
+---@type {script:string, entity:EntityHandle}[]
+local attachedClasses = {
+
+}
+
+---Helper script for attaching script to entity and calling its Activate.
+---@param entity EntityHandle
+---@param script string
+---@param activateType? 0|1|2
+local function doClassAttach(entity, script, activateType)
+    local scope = entity:GetOrCreatePrivateScriptScope()
+    inherit(script, scope)
+    if activateType then
+        scope.Activate(activateType)
+    end
+end
+
+-- This is custom stuff for Portal 2
+
+---
+---Dynamically attach a class script to an entity after it has already been created.
+---The entity will automatically have the class attached when the game is loaded.
+---
+---@param entity EntityHandle
+---@param script string
+function AttachClassToEntity(entity, script)
+    table.insert(attachedClasses, {
+        script = script,
+        entity = entity
+    })
+    Storage.SaveTable(Player, "attachedClassesList", attachedClasses)
+    doClassAttach(entity, script, 0)
+end
+
+---@param params PlayerEventPlayerActivate
+ListenToPlayerEvent("player_activate", function (params)
+    if params.type == "load" then
+        attachedClasses = Storage.LoadTable(Player, "attachedClassesList", attachedClasses)
+        for _, attachedClass in ipairs(attachedClasses) do
+            doClassAttach(attachedClass.entity, attachedClass.script)
+        end
+    end
+end)
+
 return version
