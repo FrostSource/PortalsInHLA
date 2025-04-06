@@ -1,11 +1,11 @@
 --[[
-    v1.1.0
+    v1.2.0
     https://github.com/FrostSource/alyxlib
 ]]
 
 ---@class WristAttachments
 WristAttachments = {}
-WristAttachments.version = "v1.1.0"
+WristAttachments.version = "v1.2.0"
 
 ---@alias WristAttachmentHandType "left"|"right"|"primary"|"secondary"
 
@@ -160,7 +160,7 @@ function WristAttachments:Update()
     end
 end
 
----@param params PLAYER_EVENT_PRIMARY_HAND_CHANGED
+---@param params PlayerEventPrimaryHandChanged
 ListenToPlayerEvent("primary_hand_changed", function (params)
     WristAttachments:Update()
 end)

@@ -1,3 +1,9 @@
+--[[
+    v1.0.0
+    https://github.com/FrostSource/alyxlib
+
+    Profiler allows for easy profiling of functions.
+]]
 local __enable_ffi = 0x666ULL
 
 local ffi = require("ffi")
@@ -16,24 +22,27 @@ local kernal32 = ffi.load("kernel32")
 local freq = ffi.new("LARGE_INTEGER")
 kernal32.QueryPerformanceFrequency(freq)
 
+---
+---Profiler class
+---
 ---@class Profiler
 local profiler = {
 
-    ---Minimum elapsed time in seconds.
+    ---Minimum elapsed time in seconds
     ---@type number
     min = 0,
-    ---Maximum elapsed time in seconds.
+    ---Maximum elapsed time in seconds
     ---@type number
     max = 0,
 
-    ---Maximum measurements that can be tracked in `useRunningTotal` mode.
+    ---Maximum measurements that can be tracked in `useRunningTotal` mode
     maxMeasurements = 10,
 
-    ---Time from the last called `Profile` method.
+    ---Time from the last called `Profile` method
     previousTime = 0,
 
-    ---If the profiler should track running values or all values.
-    ---Use `true` if profiling a think or long running function.
+    ---If the profiler should track running values or all values
+    ---Use `true` if profiling a long think or function
     useRunningTotal = false,
 }
 profiler.__index = profiler
@@ -65,10 +74,15 @@ profiler.numMeasurements = 0
 ---@private
 profiler.runningSumSquares = 0
 
-
+---
 ---Profile a single function.
----@param func function # The function to profile.
----@return any # Returns the result of `func`.
+---
+---If profiling a single function, use `profiler.totalTime` to get the total time the function took to run.
+---
+---If profiling a think, use [profiler:GetMean()](lua://Profiler.GetMean) and other methods.
+---
+---@param func function # The function to profile
+---@return any # Returns the result of `func`
 function profiler:Profile(func)
     kernal32.QueryPerformanceCounter(self.start)
     local result = func()
@@ -93,13 +107,17 @@ function profiler:Profile(func)
     return result
 end
 
----Get the mean/average profiled time in seconds.
+---
+---Get the mean (average) profiled time in seconds.
+---
 ---@return number
 function profiler:GetMean()
     return self.totalTime / self.numMeasurements
 end
 
+---
 ---Get the median profiled time in seconds.
+---
 ---@return number
 function profiler:GetMedian()
     if self.numMeasurements == 0 then
@@ -117,8 +135,15 @@ function profiler:GetMedian()
     end
 end
 
+---
 ---Calculate the standard deviation of the measurements.
----@return number # The calculated standard deviation.
+---
+---The standard deviation is used to determine how spread out the measurements are.
+---The higher the value, the more the measurements deviate from the mean, indicating greater variability.
+---A lower value means the measurements are closer to the mean, indicating more consistency.
+---A result of 0 means there is no variability (either because all measurements are the same, or there are no measurements).
+---
+---@return number
 function profiler:GetStandardDeviation()
     local mean = self:GetMean()
     if self.useRunningTotal then
@@ -138,12 +163,10 @@ function profiler:GetStandardDeviation()
     end
 end
 
-function profiler:GetMin()
-
-end
-
----Create a new profiler instance.
----@param useRunningTotal? boolean # If the profiler should keep a running total instead of keeping all profiled times in memory.
+---
+---Creates a new profiler instance.
+---
+---@param useRunningTotal? boolean # If the profiler should keep a running total instead of keeping all profiled times in memory (use this if you run out of memory profiling)
 ---@return Profiler
 function Profiler(useRunningTotal)
     return setmetatable({

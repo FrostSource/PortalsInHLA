@@ -1,5 +1,5 @@
 --[[
-    v2.5.0
+    v2.6.1
     https://github.com/FrostSource/alyxlib
 
     Provides base entity extension methods.
@@ -9,7 +9,7 @@
     require "alyxlib.extensions.entity"
 ]]
 
-local version = "v2.5.0"
+local version = "v2.6.1"
 
 ---
 ---Get the entities parented to this entity. Including children of children.
@@ -395,11 +395,18 @@ function CBaseEntity:SetCastShadow(shadowEnabled)
     if shadowEnabled then
         self:RemoveEffects(0x010)
     else
-        self:AddEffects(0x020)
+        self:AddEffects(0x010)
     end
 end
 
-function CEntityInstance:RedirOutput(output, func, entity)
+---
+---Adds an I/O connection that will call the function on the passed entity when the specified output fires.
+---This means the redirection is persistent after game loads.
+---
+---@param output string # The name of the output to redirect.
+---@param func function # The function to redirect to.
+---@param entity? EntityHandle # The entity to redirect to, defaults to this entity.
+function CEntityInstance:RedirectOutputFunc(output, func, entity)
     entity = entity or self
 
     local name = DoUniqueString(tostring(func))
@@ -407,6 +414,33 @@ function CEntityInstance:RedirOutput(output, func, entity)
     entity:RedirectOutput(output, name, entity)
 
     return name
+end
+
+---
+---Gets the position in front of the entity's eyes at the specified position.
+---
+---@param distance number
+---@return Vector
+function CBaseEntity:DistanceFromEyes(distance)
+    return self:EyePosition() + self:EyeAngles():Forward() * distance
+end
+
+---
+---Gets the origin of a named attachment.
+---
+---@param name string
+---@return Vector
+function CBaseAnimating:GetAttachmentNameOrigin(name)
+    return self:GetAttachmentOrigin(self:ScriptLookupAttachment(name))
+end
+
+---
+---Gets the angles of a named attachment.
+---
+---@param name string
+---@return Vector
+function CBaseAnimating:GetAttachmentNameAngles(name)
+    return self:GetAttachmentAngles(self:ScriptLookupAttachment(name))
 end
 
 return version

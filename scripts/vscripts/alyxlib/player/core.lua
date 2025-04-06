@@ -1,5 +1,5 @@
 --[[
-    v4.1.2
+    v4.2.0
     https://github.com/FrostSource/alyxlib
 
     Player script allows for more advanced player manipulation and easier
@@ -100,7 +100,7 @@ require "alyxlib.globals"
 require "alyxlib.extensions.entity"
 require "alyxlib.storage"
 
-local version = "v4.1.2"
+local version = "v4.2.0"
 
 -----------------------------
 -- Class extension members --
@@ -113,7 +113,7 @@ Player = nil
 ---@type CPropHMDAvatar
 CBasePlayer.HMDAvatar = nil
 ---**The entity handle of the VR anchor (if in VR mode).**
----@type CEntityInstance
+---@type CBaseEntity
 CBasePlayer.HMDAnchor = nil
 ---**1 = Left hand, 2 = Right hand.**
 ---@type CPropVRHand[]
@@ -178,10 +178,14 @@ PLAYER_WEAPON_GENERIC_PISTOL = "hlvr_weapon_generic_pistol"
 
 ---@alias PlayerWeaponUpgrades PlayerPistolUpgrades|PlayerRapidfireUpgrades|PlayerShotgunUpgrades
 
----**The classname of the weapon/item attached to hand.
+---
+---The classname of the weapon/item attached to the primary hand.
+---
 ---@type string|PLAYER_WEAPON_HAND|PLAYER_WEAPON_ENERGYGUN|PLAYER_WEAPON_RAPIDFIRE|PLAYER_WEAPON_SHOTGUN|PLAYER_WEAPON_MULTITOOL|PLAYER_WEAPON_GENERIC_PISTOL
 CBasePlayer.CurrentlyEquipped = PLAYER_WEAPON_HAND
----**The classname of the weapon/item previously attached to hand.
+---
+---The classname of the weapon/item previously attached to the primary hand.
+---
 ---@type string|PLAYER_WEAPON_HAND|PLAYER_WEAPON_ENERGYGUN|PLAYER_WEAPON_RAPIDFIRE|PLAYER_WEAPON_SHOTGUN|PLAYER_WEAPON_MULTITOOL|PLAYER_WEAPON_GENERIC_PISTOL
 CBasePlayer.PreviouslyEquipped = PLAYER_WEAPON_HAND
 
@@ -206,6 +210,25 @@ CBasePlayer.Items = {
         shotgun = 0,
         ---Ammo for the generic pistol. This is number of magazines, not bullets.
         generic_pistol = 0,
+    },
+
+    ---Weapons in the inventory
+    weapons = {
+        ---The hlvr_weapon_energygun
+        ---@type EntityHandle
+        energygun = nil,
+        ---The hlvr_weapon_rapidfire
+        ---@type EntityHandle
+        rapidfire = nil,
+        ---The hlvr_weapon_shotgun
+        ---@type EntityHandle
+        shotgun = nil,
+        ---The hlvr_multitool
+        ---@type EntityHandle
+        multitool = nil,
+        ---List of generic pistols the player has
+        ---@type EntityHandle[]
+        genericpistols = {},
     },
 
     ---Crafting currency the player has.
@@ -331,26 +354,26 @@ function CBasePlayer:GrabActivator(data)
 end
 Expose(CBasePlayer.GrabActivator, "GrabActivator", CBasePlayer)
 
----@enum PLAYER_MOVETYPE
-PLAYER_MOVETYPE = {
-    TELEPORT_BLINK = 0,
-    TELEPORT_SHIFT = 1,
-    CONTINUOUS_HEAD = 2,
-    CONTINUOUS_HAND = 3,
+---@enum PlayerMoveType
+PlayerMoveType = {
+    TeleportBlink = 0,
+    TeleportShift = 1,
+    ContinuousHead = 2,
+    ContinuousHand = 3,
 }
 
 ---
 ---Get VR movement type.
 ---
----@return PLAYER_MOVETYPE
+---@return PlayerMoveType
 function CBasePlayer:GetMoveType()
-    return Convars:GetInt('hlvr_movetype_default') --[[@as PLAYER_MOVETYPE]]
+    return Convars:GetInt('hlvr_movetype_default') --[[@as PlayerMoveType]]
 end
 
 ---
 ---Sets the VR movement type.
 ---
----@param movetype PLAYER_MOVETYPE
+---@param movetype PlayerMoveType
 function CBasePlayer:SetMoveType(movetype)
     Convars:SetInt("vr_movetype_set", movetype)
 end
@@ -576,10 +599,24 @@ function CBasePlayer:HasWeaponEquipped()
         or self.CurrentlyEquipped == PLAYER_WEAPON_GENERIC_PISTOL
 end
 
+---
 ---Get the amount of ammo stored in the backpack for the currently equipped weapon.
----@return number # The amount of ammo, or 0 if no weapon equipped.
+---
+---This is not accurate if ammo was given through special means like info_hlvr_equip_player.
+---
+---@return number # The amount of ammo, or 0 if no weapon equipped
 function CBasePlayer:GetCurrentWeaponReserves()
-    return self.Items.ammo[self.CurrentlyEquipped] or 0
+    local currentlyEquipped = self.CurrentlyEquipped
+    if currentlyEquipped == PLAYER_WEAPON_ENERGYGUN then
+        return self.Items.ammo.energygun or 0
+    elseif currentlyEquipped == PLAYER_WEAPON_SHOTGUN then
+        return self.Items.ammo.shotgun or 0
+    elseif currentlyEquipped == PLAYER_WEAPON_RAPIDFIRE then
+        return self.Items.ammo.rapidfire or 0
+    elseif currentlyEquipped == PLAYER_WEAPON_GENERIC_PISTOL then
+        return self.Items.ammo.generic_pistol or 0
+    end
+    return 0
 end
 
 ---Player has item holder equipped.
@@ -655,15 +692,15 @@ end
 ---@return EntityHandle|nil
 function CBasePlayer:GetWeapon()
     if self.CurrentlyEquipped == PLAYER_WEAPON_ENERGYGUN then
-        return Entities:FindByClassnameNearest("hlvr_weapon_energygun", self.PrimaryHand:GetOrigin(), 128)--[[@as EntityHandle]]
+        return Entities:FindByClassnameNearest("hlvr_weapon_energygun", self.PrimaryHand:GetPalmPosition(), 128)--[[@as EntityHandle]]
     elseif self.CurrentlyEquipped == PLAYER_WEAPON_RAPIDFIRE then
-        return Entities:FindByClassnameNearest("hlvr_weapon_rapidfire", self.PrimaryHand:GetOrigin(), 128)--[[@as EntityHandle]]
+        return Entities:FindByClassnameNearest("hlvr_weapon_rapidfire", self.PrimaryHand:GetPalmPosition(), 128)--[[@as EntityHandle]]
     elseif self.CurrentlyEquipped == PLAYER_WEAPON_SHOTGUN then
-        return Entities:FindByClassnameNearest("hlvr_weapon_shotgun", self.PrimaryHand:GetOrigin(), 128)--[[@as EntityHandle]]
+        return Entities:FindByClassnameNearest("hlvr_weapon_shotgun", self.PrimaryHand:GetPalmPosition(), 128)--[[@as EntityHandle]]
     elseif self.CurrentlyEquipped == PLAYER_WEAPON_GENERIC_PISTOL then
-        return Entities:FindByClassnameNearest("hlvr_weapon_generic_pistol", self.PrimaryHand:GetOrigin(), 128)--[[@as EntityHandle]]
+        return Entities:FindByClassnameNearest("hlvr_weapon_generic_pistol", self.PrimaryHand:GetPalmPosition(), 128)--[[@as EntityHandle]]
     elseif self.CurrentlyEquipped == PLAYER_WEAPON_MULTITOOL then
-        return Entities:FindByClassnameNearest("hlvr_multitool", self.PrimaryHand:GetOrigin(), 128)--[[@as EntityHandle]]
+        return Entities:FindByClassnameNearest("hlvr_multitool", self.PrimaryHand:GetPalmPosition(), 128)--[[@as EntityHandle]]
     else
         return nil
     end
@@ -676,7 +713,7 @@ end
 ---@return PlayerPistolUpgrades[]
 ---@overload fun(self: CBasePlayer): PlayerPistolUpgrades[]
 function CBasePlayer:GetPistolUpgrades(weapon)
-    local pistol = weapon or self:GetWeapons().hlvr_weapon_energygun
+    local pistol = weapon or self.Items.weapons.energygun
 
     if not pistol then
         return {}
@@ -706,7 +743,7 @@ end
 ---@return PlayerRapidfireUpgrades[]
 ---@overload fun(self: CBasePlayer): PlayerRapidfireUpgrades[]
 function CBasePlayer:GetRapidfireUpgrades(weapon)
-    local rapidfire = weapon or self:GetWeapons().hlvr_weapon_rapidfire
+    local rapidfire = weapon or self.Items.weapons.rapidfire
 
     if not rapidfire then
         return {}
@@ -733,10 +770,10 @@ end
 ---**This will NOT return "shotgun_upgrade_quick_fire" because there is no known way to detect this!**
 ---
 ---@param weapon? EntityHandle # Optional weapon to check instead of the player's weapon.
----@return PlayerRapidfireUpgrades[]
+---@return PlayerShotgunUpgrades[]
 ---@overload fun(self: CBasePlayer): PlayerShotgunUpgrades[]
 function CBasePlayer:GetShotgunUpgrades(weapon)
-    local shotgun = weapon or self:GetWeapons().hlvr_weapon_shotgun
+    local shotgun = weapon or self.Items.weapons.shotgun
 
     if not shotgun then
         return {}
@@ -763,12 +800,11 @@ end
 ---@param upgrade PlayerPistolUpgrades|PlayerRapidfireUpgrades|PlayerShotgunUpgrades
 ---@return boolean
 function CBasePlayer:HasWeaponUpgrade(upgrade)
-    local weapons = self:GetWeapons()
-    if vlua.find(self:GetPistolUpgrades(weapons.hlvr_weapon_energygun), upgrade) then
+    if vlua.find(self:GetPistolUpgrades(), upgrade) then
         return true
-    elseif vlua.find(self:GetRapidfireUpgrades(weapons.hlvr_weapon_generic_pistol), upgrade) then
+    elseif vlua.find(self:GetRapidfireUpgrades(), upgrade) then
         return true
-    elseif vlua.find(self:GetShotgunUpgrades(weapons.hlvr_weapon_shotgun), upgrade) then
+    elseif vlua.find(self:GetShotgunUpgrades(), upgrade) then
         return true
     end
     return false
@@ -885,74 +921,63 @@ local weaponClasses = {
 }
 
 ---
----Gets all EntityHandles for weapons/items attached to the player hand even if not currently equipped.
+---Updates the existence of weapons in [Player.Items.weapons](lua://Player.Items.weapons) by checking weapon switch entities.
 ---
----@return {hlvr_weapon_energygun:EntityHandle?,hlvr_weapon_rapidfire:EntityHandle?,hlvr_weapon_shotgun:EntityHandle?,hlvr_weapon_generic_pistol:EntityHandle?,hlvr_multitool:EntityHandle?}
+---This is called automatically whenever the weapon_switch event fires.
+---
+function CBasePlayer:UpdateWeaponsExistence()
+
+    local weapons = Player.Items.weapons
+
+    if weapons.energygun then
+        local swt = Entities:FindByName(nil, "wpnswitch_hlvr_weapon_energygun")
+        if not swt then
+            weapons.energygun = nil
+        end
+    end
+
+    if weapons.shotgun then
+        local swt = Entities:FindByName(nil, "wpnswitch_hlvr_weapon_shotgun")
+        if not swt then
+            weapons.shotgun = nil
+        end
+    end
+
+    if weapons.rapidfire then
+        local swt = Entities:FindByName(nil, "wpnswitch_hlvr_weapon_rapidfire")
+        if not swt then
+            weapons.rapidfire = nil
+        end
+    end
+
+    if weapons.multitool then
+        local swt = Entities:FindByName(nil, "wpnswitch_hlvr_multitool")
+        if not swt then
+            weapons.multitool = nil
+        end
+    end
+
+    for i = #weapons.genericpistols, 1, -1 do
+        local generic = weapons.genericpistols[i]
+        local swt = Entities:FindByName(nil, "wpnswitch_" .. generic:GetName())
+        if not swt then
+            table.remove(weapons.genericpistols, i)
+        end
+    end
+end
+
+---
+---Returns [Player.Items.weapons](lua://CBasePlayer.Items) flattened into a single array.
+---
+---@return EntityHandle[]
 function CBasePlayer:GetWeapons()
-    local hand = self.PrimaryHand
 
-    local foundWeapons = {}
-
-    local specialAttachmentsFound = {}
-    local attachments = {}
-    local attachment = hand:GetHandAttachment()
-    local currentAttachment = nil
-    local CurrentlyEquipped = self.CurrentlyEquipped
-
-    while attachment ~= nil do
-        if vlua.find(weaponClasses, attachment:GetClassname()) then
-            foundWeapons[attachment:GetClassname()] = attachment
-        end
-
-        -- Do not track multiple versions of the same entity
-        if not vlua.find(attachments, attachment) and not vlua.find(specialAttachmentsFound, attachment) then
-            -- Special attachments are handled separately
-            if vlua.find(specialAttachmentsOrder, attachment:GetClassname()) then
-                specialAttachmentsFound[attachment:GetClassname()] = attachment
-            else
-                table.insert(attachments, attachment)
-            end
-            if attachment:GetClassname() == CurrentlyEquipped then
-                currentAttachment = attachment
-            end
-        end
-
-        print(attachment:GetClassname())
-        hand:RemoveHandAttachmentByHandle(attachment)
-        -- Get next current attachment
-        attachment = hand:GetHandAttachment()
-    end
-    print()
-
-    -- Add special attachments back first to avoid crash
-    for _, specialName in ipairs(specialAttachmentsOrder) do
-        local specialAttachment = specialAttachmentsFound[specialName]
-        print("adding special", specialAttachment:GetClassname())
-        if specialAttachment then
-            hand:AddHandAttachment(specialAttachment)
-        end
-    end
-
-    -- Add back all other attachments
-    for _, removedAttachment in ipairs(attachments) do
-    -- for i = #attachments, 1, -1 do
-        -- local removedAttachment = attachments[i]
-        print("adding", removedAttachment:GetClassname())
-        hand:AddHandAttachment(removedAttachment)
-    end
-
-    -- Add back the attachment to be set last
-    if currentAttachment ~= nil then
-        print('current', currentAttachment:GetClassname())
-        hand:AddHandAttachment(currentAttachment)
-        -- Multitool needs to be added twice
-        -- Hand needs to be added twice to let some props work (syringe)
-        if currentAttachment:GetClassname() == "hlvr_multitool" or currentAttachment:GetClassname() == "hand_use_controller" then
-            hand:AddHandAttachment(currentAttachment)
-        end
-    end
-
-    print()
+    local weapons = Player.Items.weapons
+    local foundWeapons = vlua.clone(weapons.genericpistols)
+    table.insert(foundWeapons, weapons.energygun)
+    table.insert(foundWeapons, weapons.rapidfire)
+    table.insert(foundWeapons, weapons.shotgun)
+    table.insert(foundWeapons, weapons.multitool)
 
     return foundWeapons
 end
@@ -970,10 +995,17 @@ end
 ---Enable or disable player movement. Including teleport movement.
 ---
 ---@param enabled boolean # True if movement should be enabled.
-function CBasePlayer:SetMovementEnabled(enabled)
-    Player:EntFire("EnableTeleport", enabled and "1" or "0")
+---@param delay? number # Optional delay for movement state will be changed
+function CBasePlayer:SetMovementEnabled(enabled, delay)
+    Player:EntFire("EnableTeleport", enabled and "1" or "0", delay or 0)
 end
 
+---
+---Sets the forward vector of the HMD anchor while keeping the position the same relative to the player.
+---
+---Normally if the player is off-center when changing the forward vector the player may appear to move too.
+---
+---@param forward Vector # Normalized forward vector
 function CBasePlayer:SetAnchorForwardAroundPlayer(forward)
     local oldPos = self:GetAbsOrigin()
     local relativePos = self.HMDAnchor:TransformPointWorldToEntity(oldPos)
@@ -982,6 +1014,26 @@ function CBasePlayer:SetAnchorForwardAroundPlayer(forward)
     self.HMDAnchor:SetAbsOrigin(self.HMDAnchor:GetAbsOrigin() + (oldPos - newPos))
 end
 
+---
+---Sets the angle of the HMD anchor while keeping the position the same relative to the player.
+---
+---Normally if the player is off-center when changing the angle the player may appear to move too.
+---
+---@param angles QAngle # New angle of the anchor
+function CBasePlayer:SetAnchorAnglesAroundPlayer(angles)
+    local oldPos = self:GetAbsOrigin()
+    local relativePos = self.HMDAnchor:TransformPointWorldToEntity(oldPos)
+    self.HMDAnchor:SetQAngle(angles)
+    local newPos = self.HMDAnchor:TransformPointEntityToWorld(relativePos)
+    self.HMDAnchor:SetAbsOrigin(self.HMDAnchor:GetAbsOrigin() + (oldPos - newPos))
+end
+
+---
+---Sets the origin of the HMD anchor while keeping the position the same relative to the player.
+---
+---This essentially moves the player by moving the anchor and can be used in instances where setting the player origin does not work.
+---
+---@param pos Vector
 function CBasePlayer:SetAnchorOriginAroundPlayer(pos)
     self.HMDAnchor:SetAbsOrigin(pos + (self.HMDAnchor:GetAbsOrigin() - self:GetAbsOrigin()))
 end

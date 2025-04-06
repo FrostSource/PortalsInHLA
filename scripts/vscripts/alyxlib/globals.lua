@@ -1,5 +1,5 @@
 --[[
-    v2.4.0
+    v2.6.0
     https://github.com/FrostSource/alyxlib
 
     Provides common global functions used throughout extravaganza libraries.
@@ -14,15 +14,19 @@
 -- These are expected by globals
 require 'alyxlib.utils.common'
 
-local _version = "v2.4.0"
+local _version = "v2.6.0"
 
+---
+---A registered AlyxLib addon.
+---
 ---@class AlyxLibAddon
----@field name string # Full name of the addon, e.g. My New Addon
----@field version string # SemVer version string of the addon, e.g. v1.2.3
----@field shortName string # Short unique name of the addon without spaces, e.g. myaddon
+---@field name string # Full display name of the addon, e.g. My "New Addon"
+---@field version string # SemVer version string of the addon, e.g. "v1.2.3"
+---@field shortName string # Short unique name of the addon without spaces, e.g. "myaddon"
 ---@field minAlyxLibVersion string # Minimum AlyxLib version that this addon works with
 ---@field maxAlyxLibVersion string # Maximum AlyxLib version that this addon works with 
 ---@field workshopID string? # The ID of the addon on the Steam workshop
+---@field diagnosticFunction fun():boolean,(string|string[])? # Diagnostic function to check if the addon is working, and any diagnostic messages
 
 ---
 ---List of registered addons using AlyxLib.
@@ -35,6 +39,13 @@ AlyxLibAddons = {}
 ---
 ---Registers an addon with AlyxLib.
 ---
+---@param name string # Full display name of the addon, e.g. "My New Addon"
+---@param version string # SemVer version string of the addon, e.g. "v1.2.3"
+---@param workshopID? string # The ID of the addon on the Steam workshop
+---@param shortName? string # Short unique name of the addon without spaces, e.g. "myaddon". Defaults to `name` without spaces and converted to lowercase\
+---@param minAlyxLibVersion? string # Minimum AlyxLib version that this addon works with, defaults to "v1.0.0"
+---@param maxAlyxLibVersion? string # Maximum AlyxLib version that this addon works with, defaults to `ALYXLIB_VERSION`
+---@return integer # The index of the addon for use in other AlyxLib functions
 function RegisterAlyxLibAddon(name, version, workshopID, shortName, minAlyxLibVersion, maxAlyxLibVersion)
     local newAddon = {
         name = name,
@@ -51,6 +62,24 @@ function RegisterAlyxLibAddon(name, version, workshopID, shortName, minAlyxLibVe
     elseif CompareVersions(ALYXLIB_VERSION, newAddon.maxAlyxLibVersion) > 0 then
         warn("Current AlyxLib version ("..ALYXLIB_VERSION..") is newer than the maximum version "..name.." requires ("..newAddon.maxAlyxLibVersion..") and may not work as expected!")
     end
+
+    return #AlyxLibAddons
+end
+
+---
+---Registers a diagnostic function for an addon to help users describe issues back to the developer.
+---
+---The diagnostic function should return two values:
+---  - `true` if the addon is working as expected, `false` otherwise
+---  - An array of strings or a string containing diagnostic messages
+---
+---Common AlyxLib and game information will be printed alongside the diagnostic messages for users to copy.
+---
+---@param addonIndex integer # The index of the addon for use in other AlyxLib functions
+---@param func fun():boolean,(string|string[])? # Diagnostic function to check if the addon is working, and any diagnostic messages
+function RegisterAlyxLibDiagnostic(addonIndex, func)
+    local addon = AlyxLibAddons[addonIndex]
+    addon.diagnosticFunction = func
 end
 
 ---
@@ -105,6 +134,20 @@ function GetScriptFile(sep, level)
 
     src = table.concat(split, sep)
     return src
+end
+
+---
+---Get the list of enabled addons from the `default_enabled_addons_list` Convar.
+---
+---@return string[]
+function GetEnabledAddons()
+    local addons = {}
+    ---@type string
+    local addonList = Convars:GetStr("default_enabled_addons_list")
+    for workshopID in addonList:gmatch("[^,]+") do
+        table.insert(addons, workshopID)
+    end
+    return addons
 end
 
 ---
@@ -176,7 +219,7 @@ end
 ---
 ---Then runs the given callback function.
 ---
----If the module fails to load then the callback is not executed and no error is thrown.
+---If the module fails to load then the callback is not executed and no error is thrown, but a warning is displayed in the console.
 ---
 ---@param modname string
 ---@param callback fun(mod_result: unknown)?
@@ -186,7 +229,10 @@ function ifrequire(modname, callback)
     ---@TODO: Consider using module_exists
     local success, result = pcall(require, modname)
     if not success then
-        devwarn("ifrequire("..modname..") "..tostring(result).."\n")
+        -- Only warn if the error is not failing to find the module
+        if not result:find(modname .. "\']Failed to find") then
+            devwarn("ifrequire("..modname..") "..tostring(result).."\n")
+        end
         return nil
     end
 
@@ -213,6 +259,14 @@ end
 ---@return boolean
 function IsVREnabled()
     return GlobalSys:CommandLineCheck('-vr')
+end
+
+---
+---Gets if the game was started with `+vr_enable_fake_vr 1`.
+---
+---@return boolean
+function IsFakeVREnabled()
+    return GlobalSys:CommandLineInt("+vr_enable_fake_vr", 0) == 1
 end
 
 ---
@@ -327,12 +381,12 @@ end
 
 ---
 ---Prints a warning in the console, along with a vscript print if inside tools mode.
----But only if convar "developer" is greater than 1.
+---But only if convar "developer" is greater than 0.
 ---
 ---@param ... any
 ---@diagnostic disable-next-line: lowercase-global
 function devwarn(...)
-    if Convars:GetInt("developer") > 1 then
+    if Convars:GetInt("developer") > 0 then
         local str = table.concat({...}, " ")
         Warning(str .. "\n")
         if IsInToolsMode() then
@@ -448,7 +502,7 @@ end
 ---
 ---Searches for `value` in `tbl` and sets the associated key to `nil`, returning the key if found.
 ---
----If working with arrays you should use `ArrayRemove` instead.
+---If your table is an array you should use `ArrayRemove` instead.
 ---
 ---@param tbl table
 ---@param value any
@@ -518,6 +572,7 @@ end
 ---@param tbl table # The table to count.
 ---@return number # The size of the table.
 function TableSize(tbl)
+    if tbl == nil then return 0 end
     local size = 0
     for _, l in pairs(tbl) do
         size = size + 1
@@ -555,7 +610,7 @@ end
 ---
 ---Remove an item from an array at a given position.
 ---
----This is significantly faster than `table.remove`.
+---This is exponentially faster than `table.remove` for large arrays.
 ---
 ---@generic T
 ---@param array T # The array to remove from.
@@ -565,7 +620,35 @@ function ArrayRemove(array, pos)
     local j, n = 1, #array
 
     for i = 1,n do
-        if i == pos then
+        if i ~= pos then
+            -- Move i's kept value to j's position, if it's not already there.
+            if i ~= j then
+                array[j] = array[i]
+                array[i] = nil
+            end
+            j = j + 1 -- Increment position of where we'll place the next kept value.
+        else
+            array[i] = nil
+        end
+    end
+
+    return array
+end
+
+---
+---Remove a value from an array.
+---
+---This is exponentially faster than `table.remove` for large arrays.
+---
+---@generic T
+---@param array T # The array to remove from
+---@param value any # The value to remove
+---@return T # The same array passed in
+function ArrayRemoveVal(array, value)
+    local j, n = 1, #array
+
+    for i = 1,n do
+        if array[i] ~= value then
             -- Move i's kept value to j's position, if it's not already there.
             if i ~= j then
                 array[j] = array[i]
@@ -969,7 +1052,9 @@ function CreateToggleBehavior(on, off)
     end
 end
 
+---
 ---Compute the closest corner relative to a vector on the AABB of an entity.
+---
 ---@param entity EntityHandle
 ---@param position Vector
 function CalcClosestCornerOnEntityAABB(entity, position)
