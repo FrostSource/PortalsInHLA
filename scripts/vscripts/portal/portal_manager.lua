@@ -182,6 +182,7 @@ function PortalManager:TracePortalableSurface(startpos, forward, ignore)
         endpos = startpos + forward * MAX_TRACE_DISTANCE,
         ignore = ignore,
         surfaceIsPortalable = false,
+        mask = 4096 -- for transparency (glass)
     }
 
     -- TraceLine(traceTable)
