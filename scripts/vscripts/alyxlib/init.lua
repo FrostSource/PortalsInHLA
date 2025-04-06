@@ -16,7 +16,7 @@ local version = "v1.2.1"
 ---ID of AlyxLib in the Steam workshop
 ALYXLIB_WORKSHOP_ID = "3329679071"
 ---The current version of AlyxLib as a whole
-ALYXLIB_VERSION = "v1.3.1"
+ALYXLIB_VERSION = "v1.3.1 (CUSTOM FOR PORTAL2)"
 
 print("Initializing AlyxLib system ".. ALYXLIB_VERSION .." ...")
 
@@ -29,7 +29,7 @@ local function print_version(name, lib_version)
             name = name:sub(9)
         end
         name = name:gsub("%.", "/")
-        devprint(string.format("\t%-26s %s", name, lib_version))
+        devprint2(string.format("\t%-26s %s", name, lib_version))
     end
 end
 
