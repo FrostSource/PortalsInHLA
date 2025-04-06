@@ -62,6 +62,9 @@ base.teleport = nil
 ---@type string
 base.colorName = ""
 
+---@type EntityHandle
+base.debugCamera = nil
+
 ---Called automatically on spawn
 ---@param spawnkeys CScriptKeyValues
 function base:OnSpawn(spawnkeys)
@@ -167,6 +170,9 @@ function base:Open(position, normal, color)
     self.monitor = PortalManager:GetPortalMonitor(color)
     self.trigger = PortalManager:GetPortalTrigger(color)
     self.trigger:RedirectOutput("OnStartTouch", "OnTriggerTouch", self)
+
+    self.debugCamera = PortalManager:GetPortalDebugCamera(color)
+    self.debugCamera:SetRenderingEnabled(false)
 
     --testing new teleport
     self.teleport = PortalManager:GetPortalTeleport(color)
@@ -558,7 +564,17 @@ function base:CreateCamera()
 
 	DoEntFireByInstanceHandle(self.monitor, "SetCamera", keyvals.targetname, 0, self.camera, self.camera)
 
+    if Convars:GetInt("portal_debug_portal_rendering") > 0 then
+        self.debugCamera:SetOrigin(self.camera:GetOrigin())
+        self.debugCamera:SetQAngle(self.camera:GetAngles())
+        self.debugCamera:SetRenderingEnabled(true)
+    end
+
 	return self.camera
+end
+
+function base:ClearDebug()
+    self.debugCamera:SetRenderingEnabled(false)
 end
 
 local function CorrectFov(dist,size)

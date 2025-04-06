@@ -42,7 +42,12 @@ function base:OnReady(readyType)
             local portal2Monitor = self:FindInPrefab("portal_2_monitor")
             local portal1Trigger = self:FindInPrefab("portal_1_trigger")
             local portal2Trigger = self:FindInPrefab("portal_2_trigger")
-            if not (portal1Camera and portal2Camera and portal1Monitor and portal2Monitor and portal1Trigger and portal2Trigger) then
+            local portal1DebugCamera = self:FindInPrefab("portal_1_debug_camera")
+            local portal2DebugCamera = self:FindInPrefab("portal_2_debug_camera")
+            if not (portal1Camera and portal2Camera
+            and portal1Monitor and portal2Monitor
+            and portal1Trigger and portal2Trigger
+            and portal1DebugCamera and portal2DebugCamera) then
                 Warning("Missing entity in portal pair prefab " .. self:GetName())
                 self:Kill()
                 return
@@ -55,6 +60,11 @@ function base:OnReady(readyType)
             portal2Monitor:SetEntityName("_portalmonitor" .. self.portal2Name:lower())
             portal1Trigger:SetEntityName("_portaltrigger" .. self.portal1Name:lower())
             portal2Trigger:SetEntityName("_portaltrigger" .. self.portal2Name:lower())
+
+            portal1DebugCamera:SetEntityName("_portaldebugcamera" .. self.portal1Name:lower())
+            portal2DebugCamera:SetEntityName("_portaldebugcamera" .. self.portal2Name:lower())
+            portal1DebugCamera:SetRenderColor(self.portal1Color.x, self.portal1Color.y, self.portal1Color.z)
+            portal2DebugCamera:SetRenderColor(self.portal2Color.x, self.portal2Color.y, self.portal2Color.z)
 
             -- test teleport
             self:FindInPrefab("portal_1_teleport"):SetEntityName("_portalteleport" .. self.portal1Name:lower())

@@ -46,7 +46,7 @@ local function resolveColor(color)
 end
 
 ---@enum PortalColors
----@type table<string, PortalColor>
+---@type table<string, PortalColor> # Name -> PortalColor
 PortalManager.colors = {
     blue = defPortalColor("blue", "orange", Color(0, 0.4, 1)),
     orange = defPortalColor("orange", "blue", Color(1, 0.4, 0)),
@@ -64,7 +64,18 @@ PortalManager.PortalableSurfaceNamePrefix = ""
 
 Convars:RegisterConvar("portal_debug_portals", "0", "Shows debugging visuals for portals", 0)
 Convars:RegisterConvar("portal_debug_portalgun", "0", "Shows debugging visuals for the portalgun", 0)
-Convars:RegisterConvar("portal_debug_portal_rendering", "1", "Shows debugging visuals for portal rendering", 0)
+Convars:RegisterConvar("portal_debug_portal_rendering", "0", "Shows debugging visuals for portal rendering", 0)
+Convars:RegisterCommand("portal_debug_clear", function()
+    Convars:SetInt("portal_debug_portal_rendering", 0)
+    debugoverlay:RemoveAllInScope("portaldebug")
+    ---@TODO Create function for looping portals
+    for name in pairs(PortalManager.colors) do
+        local portal = PortalManager:GetPortal(name)
+        if portal then
+            portal:ClearDebug()
+        end
+    end
+end, "Clears all debugging visuals (only needed for portal_debug_portal_rendering)", 0)
 
 ---@diagnostic disable-next-line: lowercase-global
 function debugprint_portalgun(...)
@@ -471,6 +482,14 @@ end
 function PortalManager:GetPortalTeleport(color)
     color = resolveColor(color)
     return Entities:FindByName(nil, "_PortalTeleport" .. color.name)--[[@as PortalTeleport]]
+end
+
+---Get the debug camera entity associated with a portal color.
+---@param color PortalColor|string
+---@return EntityHandle?
+function PortalManager:GetPortalDebugCamera(color)
+    color = resolveColor(color)
+    return Entities:FindByName(nil, "_PortalDebugCamera" .. color.name)
 end
 
 ---Get the currently opened portal connected to a specified color.
