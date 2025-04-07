@@ -408,7 +408,7 @@ function base:UpdatePickupItemPosition()
 
         local aimAt = nil
         -- Example of special rotation entities
-        if ent:GetName() == "@Wheatly" then
+        if ent:GetModelName() == "models/npcs/personality_sphere/sphere_physics.vmdl" then
             aimAt = (Player:EyePosition() - ent:GetOrigin()):Normalized()
         else
             -- Default face portalgun
