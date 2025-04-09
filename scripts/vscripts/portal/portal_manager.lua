@@ -61,6 +61,10 @@ PortalManager.AllowPortalsOnlyOnPrefixedEntities = false
 ---The prefix part that must be on portalable surface entities.
 PortalManager.PortalableSurfaceNamePrefix = ""
 
+---List of targetnames the portalgun cannot pickup
+---@type string[]
+PortalManager.disabledPickupNames = {}
+
 
 Convars:RegisterConvar("portal_debug_portals", "0", "Shows debugging visuals for portals", 0)
 Convars:RegisterConvar("portal_debug_portalgun", "0", "Shows debugging visuals for the portalgun", 0)
@@ -118,6 +122,25 @@ function PortalManager:AddPortalColor(name, connection, color)
         return
     end
     Player:SaveTable("PortalColors", self.colors)
+end
+
+---Sets a targetname as being allowed to be picked up by the portalgun or not.
+---@param name string
+---@param enabled boolean
+function PortalManager:SetPickupNameEnabled(name, enabled)
+    if enabled then
+        ArrayRemoveVal(self.disabledPickupNames, name)
+    else
+        if not vlua.find(self.disabledPickupNames, name) then
+            table.insert(self.disabledPickupNames, name)
+        end
+    end
+
+    if not Player then
+        warn("PortalManager cannot save disabledPickupNames because player doesn't exist")
+    else
+        Storage.SaveTable(Player, "PortalManager.disabledPickupNames", self.disabledPickupNames)
+    end
 end
 
 ---Utility function for tracing in a direction.
@@ -571,6 +594,7 @@ ListenToPlayerEvent("player_activate", function (params)
     PortalManager.PortalableSurfaceNamePrefix = Player:LoadString("PortalableSurfaceNamePrefix", PortalManager.PortalableSurfaceNamePrefix)
     PortalManager.AllowPortalsOnlyOnPrefixedEntities = Player:LoadBoolean("AllowPortalsOnlyOnPrefixedEntities", PortalManager.AllowPortalsOnlyOnPrefixedEntities)
     PortalManager.colors = Player:LoadTable("PortalColors", PortalManager.colors)
+    PortalManager.disabledPickupNames = Player:LoadTable("PortalManager.disabledPickupNames", PortalManager.disabledPickupNames)
 end)
 
 -- Hack to save portalable values

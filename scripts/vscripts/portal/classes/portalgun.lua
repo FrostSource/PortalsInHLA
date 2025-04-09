@@ -80,10 +80,6 @@ base.fireButtonIsHeld = false
 ---If the pickup ability is enabled
 base.itemPickupEnabled = true
 
----Entity targetnames that are not allowed to be picked up
----@type string[]
-base.disabledPickupNames = {}
-
 ---If the item is allowed to be dropped
 base.itemDropEnabled = true
 
@@ -623,7 +619,7 @@ function base:GetNearestPickupEntity()
     TraceLine(traceTable)
 
     if traceTable.hit
-    and not vlua.find(self.disabledPickupNames, traceTable.enthit:GetName())
+    and not vlua.find(PortalManager.disabledPickupNames, traceTable.enthit:GetName())
     and vlua.find(PICKUP_CLASS_WHITELIST, traceTable.enthit:GetClassname()) then
         return traceTable.enthit
     end
@@ -695,38 +691,23 @@ end
 ---Disables the ability to pick up an entity by name
 ---@param name string
 function base:DisableNamePickup(name)
-    if not vlua.find(self.disabledPickupNames) then
-        table.insert(self.disabledPickupNames, name)
-    end
-    self:Save("disabledPickupNames")
-    -- Drop the current entity if it has the same name
-    if self.pickupEntity ~= nil and self.pickupEntity:GetName() == name then
-        self:DropEntity()
-    end
+    PortalManager:SetPickupNameEnabled(name, false)
 end
 
 ---Allows the ability to pick up an entity by name
 ---@param name string
 function base:EnableNamePickup(name)
-    local index = vlua.find(self.disabledPickupNames, name)
-    if index then
-        table.remove(self.disabledPickupNames, index)
-    end
-    self:Save("disabledPickupNames")
+    PortalManager:SetPickupNameEnabled(name, true)
 end
 
 ---Disables the portal gun from picking up this named entity
 function CEntityInstance:DisablePortalgunPickup()
-    if PortalManager.portalGun then
-        PortalManager.portalGun:DisableNamePickup(self:GetName())
-    end
+    PortalManager:SetPickupNameEnabled(self:GetName(), false)
 end
 
 ---Allows the portal gun to pick up this named entity
 function CEntityInstance:EnablePortalgunPickup()
-    if PortalManager.portalGun then
-        PortalManager.portalGun:EnableNamePickup(self:GetName())
-    end
+    PortalManager:SetPickupNameEnabled(self:GetName(), true)
 end
 
 ---Stops the portal gun from dropping its currently held item
@@ -775,44 +756,6 @@ end
 function base:ActivatePortalGun()
     self.allowedToFire = true
 end
-
--- ---Main entity think function. Think state is saved between loads
--- function base:Think()
-
-
---     if self:IsEquipped() then
-
---         if not self.__disablePickupUntilTriggerRelease and Input:Button(self.hand, self.pickupButton) then
---             self:HandlePickupAbility()
---         else
---             if self.__disablePickupUntilTriggerRelease then
---                 self.__disablePickupUntilTriggerRelease = false
---             end
---             if self.__pickupEntity ~= nil then
---                 self.__pickupEntity = nil
---                 StopSoundEvent(SND_USE_LOOP, self)
---                 StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
---             end
---             if self.allowedToFire then
---                 if Input:Button(self.hand, self.bluePortalButton) then
---                     if self.bluePortalEnabled then
---                         self:TryFirePortal(PortalManager.colors.blue)
---                     end
---                     self.fireButtonIsHeld = true
---                 elseif Input:Button(self.hand, self.orangePortalButton) then
---                     if self.orangePortalEnabled then
---                         self:TryFirePortal(PortalManager.colors.orange)
---                     end
---                     self.fireButtonIsHeld = true
---                 else
---                     self.fireButtonIsHeld = false
---                 end
---             end
---         end
---     end
-
---     return 0
--- end
 
 --Used for classes not attached directly to entities
 return base
