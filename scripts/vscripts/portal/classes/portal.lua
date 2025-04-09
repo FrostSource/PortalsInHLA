@@ -149,15 +149,15 @@ function base:Open(position, normal, color)
     -- local particles = ParticleManager:CreateParticleForPlayer(PTX_PORTAL_EFFECT, 1, self.particleSystem, Player)
     -- ParticleManager:SetParticleControl(particles, 5, color.color)
 
-    -- self.portalModel = SpawnEntityFromTableSynchronous("prop_dynamic", {
-    --     targetname = color.name .. "Portalview",
-    --     angles = normalRotated,
-    --     ---@TODO Update material to use dynamic expressions (2023-11-10 don't remember why expressions were wanted)
-    --     skin = color.name,
-    --     model = "models/vrportal/portalshape.vmdl",
-    -- })
-    -- ---@TODO Can move this into construction?
-    -- self.portalModel:SetOrigin(position + normal)
+    self.portalModel = SpawnEntityFromTableSynchronous("prop_dynamic", {
+        targetname = color.name .. "Portalview",
+        angles = normalRotated,
+        ---@TODO Update material to use dynamic expressions (2023-11-10 don't remember why expressions were wanted)
+        skin = color.name,
+        model = "models/vrportal/portalshape.vmdl",
+    })
+    ---@TODO Can move this into construction?
+    self.portalModel:SetOrigin(position)
 
     -- self.teleport = SpawnEntityFromTableSynchronous("point_teleport", {
     --     targetname = color.name .. "Portal_teleport",
