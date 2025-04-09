@@ -69,6 +69,8 @@ base.__ptxLight = -1
 
 base.__timeSinceLastFire = 0
 base.__lastUsedTime = 0
+---@type Color
+base.__lastFiredColor = nil
 
 ---The hand that this gun is attached to.
 ---@type CPropVRHand
@@ -148,6 +150,10 @@ function base:CreateGunParticles()
     ParticleManager:SetParticleControl(self.__ptxBarrel, 5, Vector(0,0.4,1))
     ParticleManager:SetParticleControlEnt(self.__ptxLight, 0, self, 5, "light", Vector(0,0,0), true)
     ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
+
+    if self.__lastFiredColor ~= nil then
+        self:SetGunParticlesColor(self.__lastFiredColor)
+    end
 end
 
 function base:DestroyGunParticles()
@@ -158,6 +164,16 @@ function base:DestroyGunParticles()
     if self.__ptxLight ~= -1 then
         ParticleManager:DestroyParticle(self.__ptxLight, true)
         self.__ptxLight = -1
+    end
+end
+
+---@param color Color
+function base:SetGunParticlesColor(color)
+    if self.__ptxBarrel ~= -1 then
+        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color:ToDecimalVector())
+    end
+    if self.__ptxLight ~= -1 then
+        ParticleManager:SetParticleControl(self.__ptxLight, 5, color:ToDecimalVector())
     end
 end
 
@@ -294,9 +310,8 @@ function base:TryFirePortal(color)
 
         self.hand:FireHapticPulse(1)
 
-        -- Set the gun color particles
-        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color.color:ToDecimalVector())
-        ParticleManager:SetParticleControl(self.__ptxLight, 5, color.color:ToDecimalVector())
+        self:SetGunParticlesColor(color.color)
+        self.__lastFiredColor = color.color
 
         debugprint_portalgun("Portal gun trying to fire portal", color)
 
