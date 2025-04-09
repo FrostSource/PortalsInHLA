@@ -92,6 +92,7 @@ function base:CleanupAndDestroy()
         ParticleManager:DestroyParticle(self.__ptxEffect, true)
     end
     self.trigger:DisconnectRedirectedOutput("OnStartTouch", "OnTriggerTouch", self)
+    self:ClearDebug()
 
     self:Kill()
 end
