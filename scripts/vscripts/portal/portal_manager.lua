@@ -158,14 +158,26 @@ end
 function TraceLineIgnorePhysics(traceTable)
     local ignore = traceTable.ignore
     TraceLine(traceTable)
-    if traceTable.hit
+
+    local timeout = 0
+
+    while traceTable.hit
     -- ignore physics objects
     and (IsPortalIgnorableEntity(traceTable.enthit)
     -- ignore the original ignored entity
-    or (ignore ~= nil and traceTable.enthit == ignore)) then
+    or (ignore ~= nil and traceTable.enthit == ignore)) do
         traceTable.hit = false
         traceTable.ignore = traceTable.enthit
+        traceTable.startpos = traceTable.pos
+        print(Debug.EntStr(traceTable.enthit))
         TraceLine(traceTable)
+
+
+        timeout = timeout + 1
+        if timeout > 10 then
+            warn("PortalManager: TraceLineIgnorePhysics timed out")
+            break
+        end
     end
 
 end
