@@ -31,6 +31,8 @@ base:GameEvent("item_pickup", function (self, params)
             ---@TODO Send useful spawnkeys from this item
             -- weapon:OnSpawn({})
             StartSoundEvent("PortalGun.Equipped", weapon)
+            weapon:CreateGunParticles()
+            weapon.physicalEquipped = true
         end
     end
 end)

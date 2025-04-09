@@ -87,7 +87,8 @@ base.disabledPickupNames = {}
 ---If the item is allowed to be dropped
 base.itemDropEnabled = true
 
-
+---Tracks if the generic pistol is equipped
+base.physicalEquipped = false
 
 local highlightPtfx = nil
 
@@ -156,9 +157,15 @@ function base:CreateGunParticles()
     ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
 end
 
-function  base:DestroyGunParticles()
-    ParticleManager:DestroyParticle(self.__ptxBarrel, true)
-    ParticleManager:DestroyParticle(self.__ptxLight, true)
+function base:DestroyGunParticles()
+    if self.__ptxBarrel ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxBarrel, true)
+        self.__ptxBarrel = -1
+    end
+    if self.__ptxLight ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxLight, true)
+        self.__ptxLight = -1
+    end
 end
 
 function base:AnimGraphListener(tagName, status)
@@ -543,12 +550,14 @@ function base:SetupInputs()
                 self:CreateGunParticles()
                 StartSoundEvent(SND_EQUIP, self)
                 EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackDisable")
+                self.physicalEquipped = true
             else
                 -- Only cleanup if the gun is being unequipped
-                if self:IsEquipped() then
+                if self.physicalEquipped then
                     self:DestroyGunParticles()
                     self:PauseThink()
                     EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackEnable")
+                    self.physicalEquipped = false
                 end
             end
         end)
