@@ -192,7 +192,6 @@ function TraceLineIgnorePhysics(traceTable)
         traceTable.hit = false
         traceTable.ignore = traceTable.enthit
         traceTable.startpos = traceTable.pos
-        print(Debug.EntStr(traceTable.enthit))
         TraceLine(traceTable)
 
 
