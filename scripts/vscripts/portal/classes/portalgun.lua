@@ -179,34 +179,49 @@ end
 
 ---Things needed to be called when the player first equips the gun
 function base:InitPhysical()
-    self:ResumeThink()
-    self:CreateGunParticles()
-    StartSoundEvent(SND_EQUIP, self)
+    -- Done once
+    for _, child in ipairs(self:GetChildrenMemSafe()) do
+        child:Kill()
+    end
 
     -- Used to stop the player from shooting (removes dryfire sound)
     if not Entities:FindByName(nil, "_PortalGunPlayerProxy") then
         SpawnEntityFromTableSynchronous("logic_playerproxy", { targetname = "_PortalGunPlayerProxy"})
     end
-    EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackDisable")
 
-    self.physicalEquipped = true
+    -- Should be done every equip
+    self:AttachToHand(false)
 end
 
 ---Detaches the gun from the currently attached hand glove.
 function base:DetachFromHand()
-    local parent = self:GetMoveParent()
-    if parent then
-        if parent:GetClassname() == "hlvr_prop_renderable_glove" then
-            parent:SetRenderAlpha(255)
-        end
-        self:DropEntity()
-        self.hand = nil
-        self:SetParent(nil, "")
-        self:SetOrigin(Vector())
-        self:SetAngles(0, 0, 0)
+    if Convars:GetBool("portalgun_is_physical") then
 
-        ---@TODO Move to disabling function
+        local glove = Player.PrimaryHand:GetGlove()
+        if glove then
+            glove:SetRenderingEnabled(true)
+        end
+
+        self.physicalEquipped = false
+        EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackEnable")
+
+        self:DestroyGunParticles()
         self:PauseThink()
+    else
+        local parent = self:GetMoveParent()
+        if parent then
+            if parent:GetClassname() == "hlvr_prop_renderable_glove" then
+                parent:SetRenderAlpha(255)
+            end
+            self:DropEntity()
+            self.hand = nil
+            self:SetParent(nil, "")
+            self:SetOrigin(Vector())
+            self:SetAngles(0, 0, 0)
+
+            ---@TODO Move to disabling function
+            self:PauseThink()
+        end
     end
 end
 
@@ -223,11 +238,20 @@ function base:AttachToHand(useSecondary)
         -- This should only be used to force the gun into the hand
         -- Equipping is done through standard Alyx inventory
 
-        ---@TODO Check for already attached?
-        hand:AddHandAttachment(self)
+        -- ---@TODO Check for already attached?
+        -- hand:AddHandAttachment(self)
 
-        StartSoundEvent(SND_EQUIP, self)
+        local glove = Player.PrimaryHand:GetGlove()
+        if glove then
+            glove:SetRenderingEnabled(false)
+        end
 
+        self.physicalEquipped = true
+        EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackDisable")
+
+        -- StartSoundEvent(SND_EQUIP, self)
+
+        self:CreateGunParticles()
         self:SetupInputs()
         self:ResumeThink()
     else
@@ -568,18 +592,12 @@ function base:SetupInputs()
         ---@param params PlayerEventWeaponSwitch
         weaponSwitchListener = ListenToPlayerEvent("weapon_switch", function (params)
             if params.item == self then
-                self:ResumeThink()
-                self:CreateGunParticles()
+                self:AttachToHand()
                 StartSoundEvent(SND_EQUIP, self)
-                EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackDisable")
-                self.physicalEquipped = true
             else
                 -- Only cleanup if the gun is being unequipped
                 if self.physicalEquipped then
-                    self:DestroyGunParticles()
-                    self:PauseThink()
-                    EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackEnable")
-                    self.physicalEquipped = false
+                    self:DetachFromHand()
                 end
             end
         end)
