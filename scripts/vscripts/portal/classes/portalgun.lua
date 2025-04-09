@@ -359,10 +359,24 @@ function base:DisablePlayerCollisionWith(entity)
     end
 
     ---@TODO Reset name afterwards?
-    if entity:GetName() == "" then
+    local name = entity:GetName()
+    local nameChanged = false
+
+    -- Only one entity with a name will be affected so we change it temporarily
+    -- Hopefully fast enough to not cause I/O issues
+    if name == "" or #Entities:FindAllByName(name) > 1 then
         entity:SetEntityName(DoUniqueString("entity"))
+        nameChanged = true
     end
     collisionPair:EntFire("DisableCollisionsWith", entity:GetName())
+
+    if nameChanged then
+        entity:Delay(function()
+            if IsValidEntity(entity) then
+                entity:SetEntityName(name)
+            end
+        end, 0)
+    end
 end
 
 ---Enable all player collisions.
