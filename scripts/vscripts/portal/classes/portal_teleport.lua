@@ -32,14 +32,25 @@ end
 
 ---@param offset number
 function base:Teleport(offset)
-    local ent = self.landmark
-    ent:SetLocalAngles(0, 180, 0)
-    ent:SetLocalOrigin(Vector(10 + offset,0,0))
+    local landmark = self.landmark
+    -- landmark:SetLocalAngles(0, 180, 0)
+
+    -- if portal is straight up or down
+    if math.isclose(abs(landmark:GetAngles().x), 90) then
+        -- set player's angle to the same as the target portal
+        local targang = self.target:GetAngles()
+        landmark:SetAngles(targang.x, targang.y - AngleDiff(targang.y, Player:GetAngles().y), targang.z)
+        -- push player out so they're not behind the wall
+        self.target:SetLocalOrigin(Vector(64,0,0))
+    end
+
+    landmark:SetLocalOrigin(Vector(10 + offset,0,0))
     self:Enable()
     -- self:EntFire("Enable")
     self:Delay(function()
         self:Disable()
-        ent:ResetLocal()
+        landmark:ResetLocal()
+        self.target:ResetLocal()
     end, 0.1)
 end
 
