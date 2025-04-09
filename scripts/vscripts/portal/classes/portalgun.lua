@@ -18,6 +18,11 @@ local PICKUP_CLASS_WHITELIST = {
     "prop_physics_interactive",
 }
 
+-- Highlight colors need to be lighter than originals
+---@TODO See if it's possible to lighten color dynamically inside particle
+local HIGHLIGHT_COLOR_BLUE = Color(0.4, 0.6, 0.9)
+local HIGHLIGHT_COLOR_ORANGE = Color(0.9, 0.4, 0.2)
+
 ---PortalGun related convars
 Convars:RegisterConvar("portalgun_fire_delay", "0.2", "Min seconds between each portal fire press.", 0)
 Convars:RegisterConvar("portalgun_held_button_fire_fire_delay", "0.5", "Min seconds between each portal fire held.", 0)
@@ -69,7 +74,7 @@ base.__ptxLight = -1
 
 base.__timeSinceLastFire = 0
 base.__lastUsedTime = 0
----@type Color
+---@type PortalColor
 base.__lastFiredColor = nil
 
 ---The hand that this gun is attached to.
@@ -124,6 +129,15 @@ function base:OnReady(loaded)
         self:AnimGraphListener(tagName, status)
     end)
 
+    -- -- Default current portal color
+    -- if self.__lastFiredColor == nil then
+    --     if self.bluePortalEnabled then
+    --         self.__lastFiredColor = PortalManager.colors.blue.color
+    --     elseif self.orangePortalEnabled then
+    --         self.__lastFiredColor = PortalManager.colors.orange.color
+    --     end
+    -- end
+
     -- Update the global handle
     PortalManager.portalGun = self
 
@@ -152,7 +166,7 @@ function base:CreateGunParticles()
     ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
 
     if self.__lastFiredColor ~= nil then
-        self:SetGunParticlesColor(self.__lastFiredColor)
+        self:SetGunParticlesColor(self.__lastFiredColor.color:ToDecimalVector())
     end
 end
 
@@ -167,13 +181,13 @@ function base:DestroyGunParticles()
     end
 end
 
----@param color Color
+---@param color Vector
 function base:SetGunParticlesColor(color)
     if self.__ptxBarrel ~= -1 then
-        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color:ToDecimalVector())
+        ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color)
     end
     if self.__ptxLight ~= -1 then
-        ParticleManager:SetParticleControl(self.__ptxLight, 5, color:ToDecimalVector())
+        ParticleManager:SetParticleControl(self.__ptxLight, 5, color)
     end
 end
 
@@ -267,7 +281,12 @@ function base:AttachToHand(useSecondary)
 
         -- StartSoundEvent(SND_EQUIP, self)
 
-        self:CreateGunParticles()
+        -- Only show portal colors if the gun was fired
+        ---@TODO Is this desired?
+        if self.__lastFiredColor ~= nil then
+            self:CreateGunParticles()
+        end
+
         self:SetupInputs()
         self:ResumeThink()
     else
@@ -310,8 +329,8 @@ function base:TryFirePortal(color)
 
         self.hand:FireHapticPulse(1)
 
-        self:SetGunParticlesColor(color.color)
-        self.__lastFiredColor = color.color
+        self:SetGunParticlesColor(color.color:ToDecimalVector())
+        self.__lastFiredColor = color
 
         debugprint_portalgun("Portal gun trying to fire portal", color)
 
@@ -674,6 +693,18 @@ function base:CreateHighlight(entityToHighlight)
     ParticleManager:SetParticleControlEnt(highlightPtfx, 0, entityToHighlight, 5, nil, Vector(0,0,128), true)
     ParticleManager:SetParticleControl(highlightPtfx, 1, Vector(width, zoffset, height))
     ParticleManager:SetParticleControl(highlightPtfx, 4, Vector(scale, scale, scale))
+
+    local lastCol = self.__lastFiredColor
+    if lastCol ~= nil then
+        if lastCol.name == "blue" then
+            ParticleManager:SetParticleControl(highlightPtfx, 8, HIGHLIGHT_COLOR_BLUE:ToDecimalVector())
+        elseif lastCol.name == "orange" then
+            ParticleManager:SetParticleControl(highlightPtfx, 8, HIGHLIGHT_COLOR_ORANGE:ToDecimalVector())
+        end
+    else
+        -- Default color when no portals are active
+        ParticleManager:SetParticleControl(highlightPtfx, 8, Vector(0.7, 0.8, 0.9))
+    end
 end
 
 ---Destroys the highlight particle if it exists.
