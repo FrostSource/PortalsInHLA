@@ -30,6 +30,7 @@ base:GameEvent("item_pickup", function (self, params)
             AttachClassToEntity(weapon, "portal.classes.portalgun")
             ---@TODO Send useful spawnkeys from this item
             -- weapon:OnSpawn({})
+            StartSoundEvent("PortalGun.Equipped", weapon)
         end
     end
 end)

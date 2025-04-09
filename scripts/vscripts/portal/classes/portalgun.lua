@@ -541,6 +541,7 @@ function base:SetupInputs()
             if params.item == self then
                 self:ResumeThink()
                 self:CreateGunParticles()
+                StartSoundEvent(SND_EQUIP, self)
                 EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackDisable")
             else
                 -- Only cleanup if the gun is being unequipped
