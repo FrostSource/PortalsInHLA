@@ -28,11 +28,9 @@ base:GameEvent("item_pickup", function (self, params)
         if weapon:GetName() == "@PortalGun" then
             ---@cast weapon PortalGun
             AttachClassToEntity(weapon, "portal.classes.portalgun")
+
             ---@TODO Send useful spawnkeys from this item
             -- weapon:OnSpawn({})
-            StartSoundEvent("PortalGun.Equipped", weapon)
-            weapon:CreateGunParticles()
-            weapon.physicalEquipped = true
         end
     end
 end)

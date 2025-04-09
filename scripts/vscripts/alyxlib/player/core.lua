@@ -957,11 +957,13 @@ function CBasePlayer:UpdateWeaponsExistence()
         end
     end
 
-    for i = #weapons.genericpistols, 1, -1 do
-        local generic = weapons.genericpistols[i]
-        local swt = Entities:FindByName(nil, "wpnswitch_" .. generic:GetName())
-        if not swt then
-            table.remove(weapons.genericpistols, i)
+    if #weapons.genericpistols > 0 then
+        for i = #weapons.genericpistols, 1, -1 do
+            local generic = weapons.genericpistols[i]
+            local swt = Entities:FindByName(nil, "wpnswitch_" .. generic:GetName())
+            if not swt then
+                table.remove(weapons.genericpistols, i)
+            end
         end
     end
 end

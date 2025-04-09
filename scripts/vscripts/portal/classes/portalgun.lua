@@ -130,10 +130,7 @@ function base:OnReady(loaded)
     PortalManager.portalGun = self
 
     if Convars:GetBool("portalgun_is_physical") then
-        -- Used to stop the player from shooting
-        if not Entities:FindByName(nil, "_PortalGunPlayerProxy") then
-            SpawnEntityFromTableSynchronous("logic_playerproxy", { targetname = "_PortalGunPlayerProxy"})
-        end
+        self:InitPhysical()
     end
 
     -- if self.hand ~= nil then
@@ -182,6 +179,21 @@ function base:IsEquipped()
     else
         return self.hand ~= nil
     end
+end
+
+---Things needed to be called when the player first equips the gun
+function base:InitPhysical()
+    self:ResumeThink()
+    self:CreateGunParticles()
+    StartSoundEvent(SND_EQUIP, self)
+
+    -- Used to stop the player from shooting (removes dryfire sound)
+    if not Entities:FindByName(nil, "_PortalGunPlayerProxy") then
+        SpawnEntityFromTableSynchronous("logic_playerproxy", { targetname = "_PortalGunPlayerProxy"})
+    end
+    EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackDisable")
+
+    self.physicalEquipped = true
 end
 
 ---Detaches the gun from the currently attached hand glove.
