@@ -214,6 +214,20 @@ function base:InitPhysical()
         child:Kill()
     end
 
+    -- Hide ammo text in panels related to the gun
+    local panelsToFind = 2
+    local ent = Entities:First()
+    while ent ~= nil do
+        if ent:GetClassname() == "hl_vr_weapon_switch_panel" then
+            ent:EntFire("AddCSSClass", "AmmoContainHidden")
+            panelsToFind = panelsToFind - 1
+            if panelsToFind == 0 then
+                break
+            end
+        end
+        ent = Entities:Next(ent)
+    end
+
     -- Used to stop the player from shooting (removes dryfire sound)
     if not Entities:FindByName(nil, "_PortalGunPlayerProxy") then
         SpawnEntityFromTableSynchronous("logic_playerproxy", { targetname = "_PortalGunPlayerProxy"})
