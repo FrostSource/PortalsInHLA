@@ -591,7 +591,7 @@ function base:SetupInputs()
     end
 
     Input:ListenToButton("press", self.hand, self.pickupButton, 1, function (_, params)
-        if self:IsEquipped() and self.itemPickupEnabled then
+        if self:IsEquipped() and self.itemPickupEnabled and self.itemDropEnabled then
             if not self.__disablePickupUntilTriggerRelease then
                 self:PickupEntity(lastNearestPickupEnt)
             end
