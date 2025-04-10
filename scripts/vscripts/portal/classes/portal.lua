@@ -82,6 +82,7 @@ function base:OnReady(loaded)
 end
 
 function base:CleanupAndDestroy()
+    self:PauseThink()
     devprints2("Destroying portal", self:GetName())
     if self.glowLight then self.glowLight:Kill() end
     if self.aimat then self.aimat:Kill() end
@@ -210,6 +211,10 @@ function base:Close()
     StartSoundEventFromPositionReliable(sndevnt, self:GetOrigin())
 
     self:CleanupAndDestroy()
+
+    if self:GetConnectedPortal() then
+        self:GetConnectedPortal():UpdateConnection()
+    end
 end
 
 function base:UpdateConnection()
@@ -223,11 +228,6 @@ function base:UpdateConnection()
             local angles = VectorToAngles(portal.aimat:GetForwardVector())
             portal.monitor:SetAngles(angles.x, angles.y, angles.z)
 
-            -- portal.camera:SetOrigin(portal.aimat:GetOrigin() + portal.aimat:GetForwardVector() * -40)
-
-            -- angles = VectorToAngles(portal.aimat:GetForwardVector())
-            -- portal.camera:SetAngles(angles.x, angles.y, angles.z)
-
             portal.monitor:SetRenderAlpha(255)
             -- EntFire(portal.camera, portal.camera:GetName(), "Enable")
             EntFire(portal.monitor, portal.monitor:GetName(), "Enable")
@@ -237,7 +237,8 @@ function base:UpdateConnection()
 
     else
         -- EntFire(self.camera, self.camera:GetName(), "Enable")
-        EntFire(self.monitor, self.monitor:GetName(), "Enable")
+        EntFire(self.monitor, self.monitor:GetName(), "Disable")
+        self.monitor:SetRenderAlpha(0)
         self:PauseThink()
     end
 end
@@ -552,6 +553,10 @@ function base:CreateCamera()
 	local relOrigin = GetPlayerRelativeOrigin(self)
 
     local connectedPortal = self:GetConnectedPortal()
+
+    if not connectedPortal then
+        return nil
+    end
 	
 	keyvals.origin = GetOriginRelativeTo(connectedPortal, relOrigin)
 	keyvals.angles = connectedPortal:GetAngles()
@@ -613,7 +618,10 @@ end
 ---Main entity think function. Think state is saved between loads
 function base:Think()
 
-    self:CreateCamera()
+    if self:CreateCamera() == nil then
+        -- stop think, will be turned back on when connected portal is created
+        return nil
+    end
 
     -- if not IsVREnabled() and IsValidEntity(self.monitor:GetMoveParent()) then
 	-- 	self.monitor:GetMoveParent():SetVelocity(GetPhysVelocity(Player.HMDAvatar or Player))

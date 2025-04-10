@@ -454,7 +454,7 @@ function PortalManager:ClosePortal(color)
     local portal = self:GetPortal(color)
 
     if portal then
-        portal:CleanupAndDestroy()
+        portal:Close()
         return true
     end
 
