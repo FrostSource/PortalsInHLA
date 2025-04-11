@@ -467,6 +467,38 @@ function base:EnablePlayerCollisions()
     end
 end
 
+---comment
+---@param forward Vector
+---@param up Vector
+---@return QAngle
+local function ForwardUpToAngles(forward, up)
+    -- Normalize input vectors just in case
+    forward = forward:Normalized()
+    up = up:Normalized()
+
+    -- Compute the right vector
+    local right = up:Cross(forward):Normalized()
+
+    -- Recompute orthogonal up to ensure a proper basis
+    local correctedUp = forward:Cross(right):Normalized()
+
+    -- Pitch (x): rotation around right axis = arcsin(-forward.z)
+    local pitch = math.deg(math.asin(-forward.z))
+
+    -- Yaw (y): rotation around up axis = atan2(forward.y, forward.x)
+    local yaw = math.deg(math.atan2(forward.y, forward.x))
+
+    -- Roll (z): rotation around forward axis = atan2(up:dot(right), up:dot(correctedUp))
+    local roll = math.deg(math.atan2(
+        correctedUp:Dot(right),
+        up:Dot(correctedUp)
+    ))
+
+    return QAngle(pitch, yaw, roll) -- Your QAngle constructor
+end
+
+local pickupangleoffset = QAngle(0, 0, 0)
+
 ---Updates the position of the currently held item
 function base:UpdatePickupItemPosition()
     local ent = self.pickupEntity
@@ -507,17 +539,37 @@ function base:UpdatePickupItemPosition()
         velocity = velocity - GetPhysVelocity(ent)
         ent:ApplyAbsVelocityImpulse(velocity * Convars:GetFloat("portalgun_pickup_damping"))
 
-        local aimAt = nil
-        -- Example of special rotation entities
-        if ent:GetModelName() == "models/npcs/personality_sphere/sphere_physics.vmdl" then
-            aimAt = (Player:EyePosition() - ent:GetOrigin()):Normalized()
-        else
-            -- Default face portalgun
-            ---@TODO Capture angles when picked up to maintain original angle?
-            aimAt = (self:GetOrigin() - ent:GetOrigin()):Normalized()
-        end
-        local newAim = ent:GetForwardVector():Slerp(aimAt, Convars:GetFloat("portalgun_pickup_rotate_scale")--[[@as number]])
-        ent:SetForwardVector(newAim)
+        local aimAt = self:GetPickupEntityLookDirection(ent)
+
+        -- local newAim = ent:GetForwardVector():Slerp(aimAt, Convars:GetFloat("portalgun_pickup_rotate_scale")--[[@as number]])
+        -- ent:SetForwardVector(newAim)
+
+        -- local currentAngles = ent:GetAngles()
+        -- local currentForward = ent:GetForwardVector()
+        -- local desiredDirection = aimAt
+        -- local axis = currentForward:Cross(desiredDirection)
+        -- local dot = currentForward:Dot(desiredDirection)
+        -- local angleDiff = math.acos(Clamp(dot, -1, 1))
+        -- local angularVelocity = axis:Normalized() * angleDiff * 50
+
+        local gunAngles = self:GetAngles()
+        local targetAngles = gunAngles + pickupangleoffset
+        local currentAngles = ent:GetAngles()
+        local delta = targetAngles - currentAngles
+        local angularVelocity = AnglesToVector(delta) * 10
+
+        SetPhysAngularVelocity(ent, angularVelocity)
+    end
+end
+
+function base:GetPickupEntityLookDirection(ent)
+    -- Example of special rotation entities
+    if ent:GetModelName() == "models/npcs/personality_sphere/sphere_physics.vmdl" then
+        return (Player:EyePosition() - ent:GetOrigin()):Normalized()
+    else
+        -- Default face portalgun
+        ---@TODO Capture angles when picked up to maintain original angle?
+        return (self:GetOrigin() - ent:GetOrigin()):Normalized()
     end
 end
 
@@ -556,6 +608,9 @@ function base:PickupEntity(entity)
     -- Adjust the pickup distance based on the size of the entity
     modPickupDistance = self.pickupEntity:GetBiggestBounding()
     modPickupOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
+
+    -- self.pickupEntity:SetForwardVector(self:GetPickupEntityLookDirection(self.pickupEntity))
+    pickupangleoffset = RotateOrientation(entity:GetAngles(), self:GetAngles())
 end
 
 ---Drops the currently held item.
@@ -669,6 +724,22 @@ function base:SetupInputs()
 
 end
 
+function base:FixTeleportPickup()
+end
+
+---@param params GameEventPlayerTeleportStart
+base:GameEvent("player_teleport_start", function (self, params)
+    if IsValidEntity(self.pickupEntity) then
+        self.pickupEntity:SetParent(self, "")
+    end
+end)
+---@param params GameEventPlayerTeleportFinish
+base:GameEvent("player_teleport_finish", function (self, params)
+    if IsValidEntity(self.pickupEntity) then
+        self.pickupEntity:SetParent(nil, "")
+    end
+end)
+
 ---Get the nearest entity that can be picked up by the gun.
 ---@return EntityHandle?
 function base:GetNearestPickupEntity()
@@ -694,7 +765,7 @@ function base:GetNearestPickupEntity()
 end
 
 ---Highlights a new entity.
----@param entityToHighlight any
+---@param entityToHighlight EntityHandle
 function base:CreateHighlight(entityToHighlight)
     local scale = entityToHighlight:GetAbsScale()
     local bounds = entityToHighlight:GetBounds()
@@ -707,6 +778,13 @@ function base:CreateHighlight(entityToHighlight)
     ParticleManager:SetParticleControlEnt(highlightPtfx, 0, entityToHighlight, 5, nil, Vector(0,0,128), true)
     ParticleManager:SetParticleControl(highlightPtfx, 1, Vector(width, zoffset, height))
     ParticleManager:SetParticleControl(highlightPtfx, 4, Vector(scale, scale, scale))
+
+    if entityToHighlight:GetModelName() == "models/props/metal_box_dirty.vmdl" then
+        if entityToHighlight:GetMaterialGroupHash() == "722709575" then
+            ParticleManager:SetParticleControl(highlightPtfx, 8, HIGHLIGHT_COLOR_ORANGE:ToDecimalVector())
+        end
+        return
+    end
 
     local lastCol = self.__lastFiredColor
     if lastCol ~= nil then
