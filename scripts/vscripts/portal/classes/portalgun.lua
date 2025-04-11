@@ -369,9 +369,9 @@ function base:TryFirePortal(color)
 
         local result = PortalManager:TracePortalableSurface(muzzleOrigin, muzzleForward, Player)
 
-        local mover = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
+        local mover = SpawnEntityFromTableSynchronous("info_particle_target", {
             origin = muzzleOrigin,
-            model = "models/effects/cube_empty.vmdl",
+            -- model = "models/effects/cube_empty.vmdl",
             -- ScriptedMovement = "1",
         })
         -- mover:SetVelocity(muzzleForward * Convars:GetFloat("portalgun_projectile_speed"))
