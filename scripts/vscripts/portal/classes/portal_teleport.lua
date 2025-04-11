@@ -32,8 +32,9 @@ end
 
 ---@param offset number
 function base:Teleport(offset)
+    
     local landmark = self.landmark
-    -- landmark:SetLocalAngles(0, 180, 0)
+    landmark:SetLocalAngles(0, 180, 0)
 
     -- if portal is straight up or down
     if math.isclose(abs(landmark:GetAngles().x), 90) then
@@ -58,6 +59,7 @@ end
 function base:Think()
     return 0
 end
+
 
 --Used for classes not attached directly to entities
 return base
