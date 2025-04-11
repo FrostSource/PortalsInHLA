@@ -509,7 +509,7 @@ function base:UpdatePickupItemPosition()
     end
 
     if not IsValidEntity(ent) then
-        self.pickupEntity = nil
+        self:DropEntity(true)
         return
     end
 
@@ -617,7 +617,7 @@ end
 ---Drops the currently held item.
 ---
 ---If this is called within the think you must also return nil from the think or an error will occur.
-function base:DropEntity()
+function base:DropEntity(dontStopThink)
     -- Only drop the item if it's enabled
     if not self.itemDropEnabled then
         return
@@ -626,7 +626,9 @@ function base:DropEntity()
     self.pickupEntity = nil
     lastNearestPickupEnt = nil
     -- self.__pickupEntity = nil
-    self:SetContextThink("PortalGunPickupAbility", nil, 0)
+    if not dontStopThink then
+        self:SetContextThink("PortalGunPickupAbility", nil, 0)
+    end
     StopSoundEvent(SND_USE_LOOP, self)
     self:EnablePlayerCollisions()
 end
