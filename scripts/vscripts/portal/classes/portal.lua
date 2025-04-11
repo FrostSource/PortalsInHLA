@@ -290,6 +290,13 @@ local lastPlayerTeleport = 0
 function base:Teleport(ent)
     if self:CanTeleport(ent) then
 
+        if ent:GetModelName() == "models/props/camera_phys.vmdl" then
+            if not ent.firstPortalTouch then
+                ent.firstPortalTouch = true
+                return
+            end
+        end
+
         local connectedPortal = self:GetConnectedPortal()--[[@as Portal]]
 
         
