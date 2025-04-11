@@ -28,10 +28,11 @@ Convars:RegisterConvar("portalgun_fire_delay", "0.2", "Min seconds between each 
 Convars:RegisterConvar("portalgun_held_button_fire_fire_delay", "0.5", "Min seconds between each portal fire held.", 0)
 Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code for holding objects", 0)
 Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
-Convars:RegisterConvar("portalgun_pickup_distance", "10", " Base object hover distance from the portalgun origin", 0)
+Convars:RegisterConvar("portalgun_pickup_distance_mod", "10", " Base object hover distance from the portalgun origin", 0)
 Convars:RegisterConvar("portalgun_pickup_rotate_scale", "0.5", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
 Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectile particle", 0)
 Convars:RegisterConvar("portalgun_pickup_damping", "1", "Damping to apply to pickup speed, lower is slower", 0)
+Convars:RegisterConvar("portalgun_pickup_range", "100", "Max distance an object can be picked up", 0)
 
 Convars:RegisterConvar("portalgun_is_physical", "1", "Portal gun is a physical weapon as opposed to furniture", 0)
 
@@ -515,7 +516,7 @@ function base:UpdatePickupItemPosition()
     -- Manipulate current pickup entity
 
     local desiredPosition = self:GetOrigin()
-        + (self:GetForwardVector() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance")))
+        + (self:GetForwardVector() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
         - modPickupOffset
 
     -- debugoverlay:Sphere(desiredPosition, 1, 255, 0, 0, 255, true, 0)
@@ -749,7 +750,7 @@ function base:GetNearestPickupEntity()
     ---@type TraceTableLine
     local traceTable = {
         startpos = muzzleOrigin,
-        endpos = muzzleOrigin + muzzleForward * self.pickupRange,
+        endpos = muzzleOrigin + muzzleForward * Convars:GetInt("portalgun_pickup_range"),
         ignore = self,
     }
 
