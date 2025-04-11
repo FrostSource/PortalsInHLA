@@ -108,6 +108,30 @@ Convars:RegisterCommand("portal_close_all_portals", function (_, ...)
     PortalManager:CloseAllPortals()
 end, "", 0)
 
+
+local function HidePortalGunBlockers()
+    for _, blocker in ipairs(Entities:FindAllByName("@PortalBlocker")) do
+        blocker:SetOrigin(Vector(15000,15000,15000))
+    end
+end
+
+local function ShowPortalGunBlockers()
+    for _, blocker in ipairs(Entities:FindAllByName("@PortalBlocker")) do
+        if blocker.startPos ~= nil then
+            blocker:SetOrigin(blocker.startPos)
+        end
+    end
+end
+
+local function InitPortalGunBlockers()
+    for _, blocker in ipairs(Entities:FindAllByName("@PortalBlocker")) do
+        blocker.startPos = blocker:LoadVector("startpos", blocker:GetOrigin())
+        blocker:SaveVector("startpos", blocker.startPos)
+        blocker:SetOrigin(Vector(15000,15000,15000))
+    end
+end
+
+
 ---Add a portal color
 ---@param name string
 ---@param connection string
@@ -219,8 +243,13 @@ function PortalManager:TracePortalableSurface(startpos, forward, ignore)
         mask = 4096 -- for transparency (glass)
     }
 
+    ShowPortalGunBlockers()
+
     -- TraceLine(traceTable)
     TraceLineIgnorePhysics(traceTable)
+
+    HidePortalGunBlockers()
+
     if traceTable.hit then
 
         local surfaceIsPortalable = true
@@ -594,6 +623,8 @@ ListenToPlayerEvent("player_activate", function (params)
     PortalManager.AllowPortalsOnlyOnPrefixedEntities = Player:LoadBoolean("AllowPortalsOnlyOnPrefixedEntities", PortalManager.AllowPortalsOnlyOnPrefixedEntities)
     PortalManager.colors = Player:LoadTable("PortalColors", PortalManager.colors)
     PortalManager.disabledPickupNames = Player:LoadTable("PortalManager.disabledPickupNames", PortalManager.disabledPickupNames)
+
+    InitPortalGunBlockers()
 end)
 
 -- Hack to save portalable values
