@@ -508,10 +508,10 @@ function base:UpdatePickupItemPosition()
         velocity = velocity - GetPhysVelocity(ent)
         ent:ApplyAbsVelocityImpulse(velocity * Convars:GetFloat("portalgun_pickup_damping"))
 
-        local aimAt = self:GetPickupEntityLookDirection(ent)
+        local aimAt = VectorToAngles(self:GetPickupEntityLookDirection(ent))
 
         local currentAngles = ent:GetAngles()
-        local angVel = RotationDeltaAsAngularVelocity(currentAngles, self:GetAngles())
+        local angVel = RotationDeltaAsAngularVelocity(currentAngles, aimAt)
         local strength = Convars:GetFloat("portalgun_pickup_rotate_scale")
         angVel = angVel * strength
 
