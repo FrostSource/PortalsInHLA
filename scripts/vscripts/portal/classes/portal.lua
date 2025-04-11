@@ -253,6 +253,11 @@ function base:CanTeleport(ent)
         return false
     end
     ---@TODO Check free space at connected portal
+    
+    if ent.portalTravelDisabled then
+        return false
+    end
+
     return true
 
 end
@@ -648,6 +653,15 @@ function base:Think()
     -- self.camera:SetQAngle(angles)
 
     -- return TICKRATE
+end
+
+
+function CEntityInstance:DisablePortalTravel()
+    self.portalTravelDisabled = true
+end
+
+function CEntityInstance:EnablePortalTravel()
+    self.portalTravelDisabled = false
 end
 
 --Used for classes not attached directly to entities
