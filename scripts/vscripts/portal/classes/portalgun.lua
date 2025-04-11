@@ -29,7 +29,7 @@ Convars:RegisterConvar("portalgun_held_button_fire_fire_delay", "0.5", "Min seco
 Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code for holding objects", 0)
 Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
 Convars:RegisterConvar("portalgun_pickup_distance_mod", "10", " Base object hover distance from the portalgun origin", 0)
-Convars:RegisterConvar("portalgun_pickup_rotate_scale", "0.5", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
+Convars:RegisterConvar("portalgun_pickup_rotate_scale", "1.0", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
 Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectile particle", 0)
 Convars:RegisterConvar("portalgun_pickup_damping", "1", "Damping to apply to pickup speed, lower is slower", 0)
 Convars:RegisterConvar("portalgun_pickup_range", "100", "Max distance an object can be picked up", 0)
@@ -468,38 +468,6 @@ function base:EnablePlayerCollisions()
     end
 end
 
----comment
----@param forward Vector
----@param up Vector
----@return QAngle
-local function ForwardUpToAngles(forward, up)
-    -- Normalize input vectors just in case
-    forward = forward:Normalized()
-    up = up:Normalized()
-
-    -- Compute the right vector
-    local right = up:Cross(forward):Normalized()
-
-    -- Recompute orthogonal up to ensure a proper basis
-    local correctedUp = forward:Cross(right):Normalized()
-
-    -- Pitch (x): rotation around right axis = arcsin(-forward.z)
-    local pitch = math.deg(math.asin(-forward.z))
-
-    -- Yaw (y): rotation around up axis = atan2(forward.y, forward.x)
-    local yaw = math.deg(math.atan2(forward.y, forward.x))
-
-    -- Roll (z): rotation around forward axis = atan2(up:dot(right), up:dot(correctedUp))
-    local roll = math.deg(math.atan2(
-        correctedUp:Dot(right),
-        up:Dot(correctedUp)
-    ))
-
-    return QAngle(pitch, yaw, roll) -- Your QAngle constructor
-end
-
-local pickupangleoffset = QAngle(0, 0, 0)
-
 ---Updates the position of the currently held item
 function base:UpdatePickupItemPosition()
     local ent = self.pickupEntity
@@ -542,24 +510,12 @@ function base:UpdatePickupItemPosition()
 
         local aimAt = self:GetPickupEntityLookDirection(ent)
 
-        -- local newAim = ent:GetForwardVector():Slerp(aimAt, Convars:GetFloat("portalgun_pickup_rotate_scale")--[[@as number]])
-        -- ent:SetForwardVector(newAim)
-
-        -- local currentAngles = ent:GetAngles()
-        -- local currentForward = ent:GetForwardVector()
-        -- local desiredDirection = aimAt
-        -- local axis = currentForward:Cross(desiredDirection)
-        -- local dot = currentForward:Dot(desiredDirection)
-        -- local angleDiff = math.acos(Clamp(dot, -1, 1))
-        -- local angularVelocity = axis:Normalized() * angleDiff * 50
-
-        local gunAngles = self:GetAngles()
-        local targetAngles = gunAngles + pickupangleoffset
         local currentAngles = ent:GetAngles()
-        local delta = targetAngles - currentAngles
-        local angularVelocity = AnglesToVector(delta) * 10
+        local angVel = RotationDeltaAsAngularVelocity(currentAngles, self:GetAngles())
+        local strength = Convars:GetFloat("portalgun_pickup_rotate_scale")
+        angVel = angVel * strength
 
-        SetPhysAngularVelocity(ent, angularVelocity)
+        SetPhysAngularVelocity(ent, angVel)
     end
 end
 
@@ -610,8 +566,6 @@ function base:PickupEntity(entity)
     modPickupDistance = self.pickupEntity:GetBiggestBounding()
     modPickupOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
 
-    -- self.pickupEntity:SetForwardVector(self:GetPickupEntityLookDirection(self.pickupEntity))
-    pickupangleoffset = RotateOrientation(entity:GetAngles(), self:GetAngles())
 end
 
 ---Drops the currently held item.
@@ -727,21 +681,21 @@ function base:SetupInputs()
 
 end
 
-function base:FixTeleportPickup()
-end
+-- function base:FixTeleportPickup()
+-- end
 
----@param params GameEventPlayerTeleportStart
-base:GameEvent("player_teleport_start", function (self, params)
-    if IsValidEntity(self.pickupEntity) then
-        self.pickupEntity:SetParent(self, "")
-    end
-end)
----@param params GameEventPlayerTeleportFinish
-base:GameEvent("player_teleport_finish", function (self, params)
-    if IsValidEntity(self.pickupEntity) then
-        self.pickupEntity:SetParent(nil, "")
-    end
-end)
+-- ---@param params GameEventPlayerTeleportStart
+-- base:GameEvent("player_teleport_start", function (self, params)
+--     if IsValidEntity(self.pickupEntity) then
+--         self.pickupEntity:SetParent(self, "")
+--     end
+-- end)
+-- ---@param params GameEventPlayerTeleportFinish
+-- base:GameEvent("player_teleport_finish", function (self, params)
+--     if IsValidEntity(self.pickupEntity) then
+--         self.pickupEntity:SetParent(nil, "")
+--     end
+-- end)
 
 ---Get the nearest entity that can be picked up by the gun.
 ---@return EntityHandle?
