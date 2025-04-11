@@ -130,14 +130,14 @@ function base:OnReady(loaded)
         self:AnimGraphListener(tagName, status)
     end)
 
-    -- -- Default current portal color
-    -- if self.__lastFiredColor == nil then
-    --     if self.bluePortalEnabled then
-    --         self.__lastFiredColor = PortalManager.colors.blue.color
-    --     elseif self.orangePortalEnabled then
-    --         self.__lastFiredColor = PortalManager.colors.orange.color
-    --     end
-    -- end
+    -- Default current portal color
+    if self.__lastFiredColor == nil then
+        if self.bluePortalEnabled then
+            self.__lastFiredColor = PortalManager.colors.blue
+        elseif self.orangePortalEnabled then
+            self.__lastFiredColor = PortalManager.colors.orange
+        end
+    end
 
     -- Update the global handle
     PortalManager.portalGun = self
