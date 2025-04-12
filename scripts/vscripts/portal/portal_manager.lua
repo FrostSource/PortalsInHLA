@@ -148,6 +148,11 @@ function PortalManager:AddPortalColor(name, connection, color)
     Player:SaveTable("PortalColors", self.colors)
 end
 
+---@return PortalColor
+function PortalManager:GetPortalColor(name)
+    return resolveColor(name)
+end
+
 ---Sets a targetname as being allowed to be picked up by the portalgun or not.
 ---@param name string
 ---@param enabled boolean
