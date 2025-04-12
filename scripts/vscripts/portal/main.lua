@@ -74,6 +74,13 @@ Expose(AllowPortalsOnAnySurface, "AllowPortalsOnAnySurface", _G)
 ---Close all open portals, anywhere.
 ---@param params IOParams
 local function CloseAllPortals(params)
+    if PortalManager:IsAnyPortalOpen() then
+        if PortalManager.portalGun then
+            StartSoundEvent("Portal.FizzlerShimmy", PortalManager.portalGun)
+        else
+            StartSoundEvent("Portal.FizzlerShimmy", Player)
+        end
+    end
     PortalManager:CloseAllPortals()
 end
 Expose(CloseAllPortals, "CloseAllPortals", _G)

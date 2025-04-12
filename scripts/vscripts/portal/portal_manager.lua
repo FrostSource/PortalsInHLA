@@ -500,6 +500,15 @@ function PortalManager:CloseAllPortals()
     end
 end
 
+---Get if any portal is open.
+function PortalManager:IsAnyPortalOpen()
+    for index, value in ipairs(Entities:FindAllByClassname("logic_script")) do
+        if isinstance(value, "Portal") then
+            return true
+        end
+    end
+end
+
 ---Get a portal entity by color.
 ---@param color PortalColor|string
 ---@return Portal?
