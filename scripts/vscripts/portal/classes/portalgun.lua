@@ -584,6 +584,7 @@ function base:DropEntity(dontStopThink)
     if not dontStopThink then
         self:SetContextThink("PortalGunPickupAbility", nil, 0)
     end
+    self:SetGraphParameterBool("bTargeting", false)
     StopSoundEvent(SND_USE_LOOP, self)
     self:EnablePlayerCollisions()
 end
