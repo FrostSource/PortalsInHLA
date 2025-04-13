@@ -108,6 +108,7 @@ function base:Precache(context)
     PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
     PrecacheResource("particle", PTX_PROJECTILE_BLUE, context)
     PrecacheResource("particle", PTX_PROJECTILE_ORANGE, context)
+    PrecacheResource("particle", "particles/portals/portal_close.vpcf", context)
     -- for debugging
     PrecacheModel("models/editor/point_aimat.vmdl", context)
     PrecacheModel("models/effects/cube_empty.vmdl", context)
