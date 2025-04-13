@@ -185,6 +185,13 @@ function base:Open(position, normal, color)
         self:UpdateConnection()
     end
 
+    -- Animate portals opening by scaling up
+    local animSpeed = 0.25
+    self.portalModel:SetAbsScale(0.01)
+    Animation:Animate(self.portalModel, self.portalModel.GetAbsScale, self.portalModel.SetAbsScale, 1, Animation.Curves.linear, animSpeed)
+    self.monitor:SetAbsScale(0.01)
+    Animation:Animate(self.monitor, self.monitor.GetAbsScale, self.monitor.SetAbsScale, 1, Animation.Curves.linear, animSpeed)
+
 end
 
 ---Get the portal connected to this one if it exists.
