@@ -767,6 +767,11 @@ function base:DestroyHighlight(immediately)
     end
 end
 
+---Plays the fizzle animation
+function base:Fizzle()
+    self:SetGraphParameterBool("bFizzle", true)
+end
+
 function base:Think()
 
     if self.pickupEntity ~= nil then
