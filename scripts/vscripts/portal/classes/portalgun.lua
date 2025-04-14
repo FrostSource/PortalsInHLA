@@ -431,41 +431,70 @@ local modPickupOffset = Vector()
 
 ---Disable player collision with an entity.
 ---@param entity EntityHandle
-function base:DisablePlayerCollisionWith(entity)
-    local collisionPair = Entities:FindByName(nil, "_portalgun_collision_pair")
-    if not collisionPair then
-        collisionPair = SpawnEntityFromTableSynchronous("logic_collision_pair", {
-            targetname = "_portalgun_collision_pair",
-            attach1 = "!player"
-        })
-    end
+function base:DisablePlayerCollisionsWith(entity)
+
+    self:EnablePlayerCollisions()
 
     ---@TODO Reset name afterwards?
     local name = entity:GetName()
     local nameChanged = false
 
     -- Only one entity with a name will be affected so we change it temporarily
-    -- Hopefully fast enough to not cause I/O issues
     if name == "" or #Entities:FindAllByName(name) > 1 then
         entity:SetEntityName(DoUniqueString("entity"))
         nameChanged = true
     end
-    collisionPair:EntFire("DisableCollisionsWith", entity:GetName())
 
+    ---@type (string|EntityHandle)[]
+    local collisionEnts = { "!player", Player.PrimaryHand, self }
+
+    for _, ent in ipairs(collisionEnts) do
+        local collisionPair = SpawnEntityFromTableSynchronous("logic_collision_pair", {
+            targetname = "_portalgun_collision_pair",
+            attach1 = type(ent) == "string" and ent or ent:GetName(),
+            attach2 = entity:GetName(),
+            startdisabled = "1"
+        })
+
+        -- Entity and name used need to be saved for disabling later (quirk of the collision pair)
+        if nameChanged then
+            collisionPair.disabledCollisionsEnt = entity
+            collisionPair.disabledCollisionsName = entity:GetName()
+        end
+    end
+
+    -- Reset name to avoid I/O issues
     if nameChanged then
-        entity:Delay(function()
+        -- entity:Delay(function()
             if IsValidEntity(entity) then
                 entity:SetEntityName(name)
             end
-        end, 0)
+        -- end, 0.1)
     end
 end
 
 ---Enable all player collisions.
 function base:EnablePlayerCollisions()
-    local collisionPair = Entities:FindByName(nil, "_portalgun_collision_pair")
-    if collisionPair then
-        collisionPair:EntFire("EnableCollisions")
+    for _, pair in ipairs(Entities:FindAllByName("_portalgun_collision_pair")) do
+
+        local disabledCollisionsEnt = pair.disabledCollisionsEnt--[[@as EntityHandle]]
+        local disabledCollisionsName = pair.disabledCollisionsName--[[@as string]]
+        local name = nil
+        if disabledCollisionsEnt and disabledCollisionsName then
+            name = disabledCollisionsEnt:GetName()
+            -- Same name as when disabled needs to be used (seems to be a quirk of the collision pair)
+            disabledCollisionsEnt:SetEntityName(disabledCollisionsName)
+        end
+
+        pair:EntFire("EnableCollisions", 0)
+        pair:EntFire("Kill", nil, 0.1)
+
+        if name then
+            ---@NOTE: Name is changed after delay so that the pair can use the temporary name
+            disabledCollisionsEnt:Delay(function()
+                disabledCollisionsEnt:SetEntityName(name)
+            end, 0)
+        end
     end
 end
 
@@ -553,7 +582,7 @@ function base:PickupEntity(entity)
     entity:FireOutput("OnPhysGunOnlyPickup", self, self, nil, 0)
 
     -- Disable player collisions to avoid cheat flying
-    self:DisablePlayerCollisionWith(entity)
+    self:DisablePlayerCollisionsWith(entity)
 
     -- Destroy old highlight
     self:DestroyHighlight()
