@@ -252,7 +252,10 @@ function base:DetachFromHand()
         EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackEnable")
 
         self:DestroyGunParticles()
-        self:PauseThink()
+
+        if self.itemDropEnabled or self.pickupEntity == nil then
+            self:PauseThink()
+        end
     else
         local parent = self:GetMoveParent()
         if parent then
