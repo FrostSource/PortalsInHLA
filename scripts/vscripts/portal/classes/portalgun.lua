@@ -28,7 +28,7 @@ Convars:RegisterConvar("portalgun_fire_delay", "0.2", "Min seconds between each 
 Convars:RegisterConvar("portalgun_held_button_fire_fire_delay", "0.5", "Min seconds between each portal fire held.", 0)
 Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code for holding objects", 0)
 Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
-Convars:RegisterConvar("portalgun_pickup_distance_mod", "10", " Base object hover distance from the portalgun origin", 0)
+Convars:RegisterConvar("portalgun_pickup_distance_mod", "2", " Base object hover distance from the portalgun origin", 0)
 Convars:RegisterConvar("portalgun_pickup_rotate_scale", "1.0", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
 Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectile particle", 0)
 Convars:RegisterConvar("portalgun_pickup_damping", "1", "Damping to apply to pickup speed, lower is slower", 0)
@@ -93,6 +93,9 @@ base.itemDropEnabled = true
 
 ---Tracks if the generic pistol is equipped
 base.physicalEquipped = false
+
+---Used to keep forced pickup entities in the same position relative to the hand when unequipped
+base.lastLocalPickupTransform = Vector()
 
 local highlightPtfx = nil
 
@@ -253,7 +256,9 @@ function base:DetachFromHand()
 
         self:DestroyGunParticles()
 
-        if self.itemDropEnabled or self.pickupEntity == nil then
+        if not self.itemDropEnabled and self.pickupEntity ~= nil then
+            self.lastLocalPickupTransform = Player.PrimaryHand:TransformPointWorldToEntity(self:GetPickupPosition())
+        else
             self:PauseThink()
         end
     else
@@ -501,6 +506,16 @@ function base:EnablePlayerCollisions()
     end
 end
 
+function base:GetPickupPosition()
+    if self.pickupEntity == nil then
+        return self:ShootPosition()
+    end
+
+    return self:ShootPosition()
+        + (self:ShootForward() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
+        - modPickupOffset
+end
+
 ---Updates the position of the currently held item
 function base:UpdatePickupItemPosition()
     local ent = self.pickupEntity
@@ -516,9 +531,12 @@ function base:UpdatePickupItemPosition()
 
     -- Manipulate current pickup entity
 
-    local desiredPosition = self:GetOrigin()
-        + (self:GetForwardVector() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
-        - modPickupOffset
+    local desiredPosition
+    if self:IsEquipped() then
+        desiredPosition = self:GetPickupPosition()
+    else
+        desiredPosition = Player.PrimaryHand:TransformPointEntityToWorld(self.lastLocalPickupTransform)
+    end
 
     -- debugoverlay:Sphere(desiredPosition, 1, 255, 0, 0, 255, true, 0)
 
@@ -527,6 +545,8 @@ function base:UpdatePickupItemPosition()
         ---@TODO Does angle need to be set?
         return
     end
+
+    local aimAt = VectorToAngles(self:GetPickupEntityLookDirection(ent))
 
     if Convars:GetBool("portalgun_use_old_pickup_method") then
         local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
@@ -637,7 +657,7 @@ function base:SetupInputs()
     end
 
     Input:ListenToButton("press", self.hand, self.pickupButton, 1, function (_, params)
-        if self:IsEquipped() and self.itemPickupEnabled and self.itemDropEnabled then
+        if self:IsEquipped() and self.itemPickupEnabled then
             if not self.__disablePickupUntilTriggerRelease then
                 self:PickupEntity(lastNearestPickupEnt)
             end
@@ -802,6 +822,14 @@ end
 ---Plays the fizzle animation
 function base:Fizzle()
     self:SetGraphParameterBool("bFizzle", true)
+end
+
+function base:ShootPosition()
+    return self:GetAttachmentNameOrigin("muzzle")
+end
+
+function base:ShootForward()
+    return self:GetAttachmentNameForward("muzzle")
 end
 
 function base:Think()
