@@ -627,7 +627,6 @@ function PortalManager:CreateFailedPortalEffect(pos, dir, color)
     -- local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, Player)
     -- ParticleManager:SetParticleControl(pindex, 0, pos + dir)
     -- ParticleManager:SetParticleControl(pindex, 2, color)
-    SendToConsole("cl_particles_dumplist")
 end
 
 -- Loading values
