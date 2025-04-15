@@ -241,6 +241,22 @@ function base:InitPhysical()
 
     -- Should be done every equip
     self:AttachToHand(false)
+
+    ---@param params PlayerEventWeaponSwitch
+    ListenToPlayerEvent("weapon_switch", function (params)
+        print("Weapon switch", params.item_class)
+        print("Is equipped", self.physicalEquipped)
+        print(Time())
+        if params.item == self then
+            self:AttachToHand()
+            StartSoundEvent(SND_EQUIP, self)
+        else
+            -- Only cleanup if the gun is being unequipped
+            if self.physicalEquipped then
+                self:DetachFromHand()
+            end
+        end
+    end)
 end
 
 ---Detaches the gun from the currently attached hand glove.
@@ -647,8 +663,6 @@ function base:DropEntity(dontStopThink)
     self:EnablePlayerCollisions()
 end
 
-local weaponSwitchListener = -1
-
 function base:SetupInputs()
 
     Input:StopListeningByContext(self)
@@ -708,24 +722,8 @@ function base:SetupInputs()
         end
     end, self)
 
-
-    StopListeningToPlayerEvent(weaponSwitchListener)
-
     -- Physical gun uses standard Alyx inventory so this isn't needed
-    if Convars:GetBool("portalgun_is_physical") then
-        ---@param params PlayerEventWeaponSwitch
-        weaponSwitchListener = ListenToPlayerEvent("weapon_switch", function (params)
-            if params.item == self then
-                self:AttachToHand()
-                StartSoundEvent(SND_EQUIP, self)
-            else
-                -- Only cleanup if the gun is being unequipped
-                if self.physicalEquipped then
-                    self:DetachFromHand()
-                end
-            end
-        end)
-    else
+    if not Convars:GetBool("portalgun_is_physical") then
         Input:ListenToButton("press", self.hand, self.equipButton, 1, function (_, params)
             StartSoundEvent(SND_TOGGLEEQUIP, self)
             if self:IsEquipped() then
