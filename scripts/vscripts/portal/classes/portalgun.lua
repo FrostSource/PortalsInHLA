@@ -671,6 +671,10 @@ function base:SetupInputs()
     end, self)
 
     Input:ListenToButton("release", self.hand, self.pickupButton, 1, function (_, params)
+        if not self:IsEquipped() then
+            return
+        end
+
         -- Do not drop item if disabled
         if not self.itemDropEnabled then
             return
