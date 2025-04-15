@@ -810,8 +810,8 @@ function base:CreateHighlight(entityToHighlight)
     if entityToHighlight:GetModelName() == "models/props/metal_box_dirty.vmdl" then
         if entityToHighlight:GetMaterialGroupHash() == 722709575 then
             ParticleManager:SetParticleControl(highlightPtfx, 8, HIGHLIGHT_COLOR_ORANGE:ToDecimalVector())
+            return
         end
-        return
     end
 
     local lastCol = self.__lastFiredColor
