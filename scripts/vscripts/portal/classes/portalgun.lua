@@ -28,11 +28,12 @@ Convars:RegisterConvar("portalgun_fire_delay", "0.2", "Min seconds between each 
 Convars:RegisterConvar("portalgun_held_button_fire_fire_delay", "0.5", "Min seconds between each portal fire held.", 0)
 Convars:RegisterConvar("portalgun_use_old_pickup_method", "0", "Use the old code for holding objects", 0)
 Convars:RegisterConvar("portalgun_pickup_attenuation", "0.1", "Speed of objects being force grabbed, lower is faster", 0)
-Convars:RegisterConvar("portalgun_pickup_distance_mod", "2", " Base object hover distance from the portalgun origin", 0)
+Convars:RegisterConvar("portalgun_pickup_distance_mod", "2", " Base object hover distance from the portalgun muzzle origin", 0)
 Convars:RegisterConvar("portalgun_pickup_rotate_scale", "1.0", "Speed of objects rotating to face portalgun, higher is faster [0-1]", 0)
 Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectile particle", 0)
 Convars:RegisterConvar("portalgun_pickup_damping", "1", "Damping to apply to pickup speed, lower is slower", 0)
 Convars:RegisterConvar("portalgun_pickup_range", "100", "Max distance an object can be picked up", 0)
+Convars:RegisterConvar("portalgun_pickup_teleport_distance", "512", "Distance at which objects are teleported to the portalgun", 0)
 
 Convars:RegisterConvar("portalgun_is_physical", "1", "Portal gun is a physical weapon as opposed to furniture", 0)
 
@@ -517,7 +518,7 @@ function base:GetPickupPosition()
 end
 
 ---Updates the position of the currently held item
-function base:UpdatePickupItemPosition()
+function base:UpdatePickupItemPosition(immediately)
     local ent = self.pickupEntity
 
     if not self.itemPickupEnabled or ent == nil then
@@ -538,15 +539,20 @@ function base:UpdatePickupItemPosition()
         desiredPosition = Player.PrimaryHand:TransformPointEntityToWorld(self.lastLocalPickupTransform)
     end
 
-    -- debugoverlay:Sphere(desiredPosition, 1, 255, 0, 0, 255, true, 0)
 
-    if VectorDistance(desiredPosition, ent:GetOrigin()) > 512 then
+    local aimAt = VectorToAngles(self:GetPickupEntityLookDirection(ent))
+
+    if immediately then
         ent:SetOrigin(desiredPosition)
-        ---@TODO Does angle need to be set?
+        ent:SetQAngle(aimAt)
         return
     end
 
-    local aimAt = VectorToAngles(self:GetPickupEntityLookDirection(ent))
+    if VectorDistance(desiredPosition, ent:GetOrigin()) > Convars:GetInt("portalgun_pickup_teleport_distance") then
+        ent:SetOrigin(desiredPosition)
+        ent:SetQAngle(aimAt)
+        return
+    end
 
     if Convars:GetBool("portalgun_use_old_pickup_method") then
         local amountBy = VectorDistance(self:GetOrigin(), ent:GetOrigin()) / 50
