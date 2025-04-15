@@ -209,20 +209,19 @@ end
 ---@param traceTable TraceTableLine
 function TraceLineIgnorePhysics(traceTable)
     local ignore = traceTable.ignore
-    TraceLine(traceTable)
 
     local timeout = 0
 
-    while traceTable.hit
+    while TraceLine(traceTable) and traceTable.hit
     -- ignore physics objects
     and (IsPortalIgnorableEntity(traceTable.enthit)
     -- ignore the original ignored entity
     or (ignore ~= nil and traceTable.enthit == ignore)) do
+
         traceTable.hit = false
         traceTable.ignore = traceTable.enthit
+        traceTable.enthit = nil
         traceTable.startpos = traceTable.pos
-        TraceLine(traceTable)
-
 
         timeout = timeout + 1
         if timeout > 10 then
