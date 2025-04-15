@@ -34,6 +34,7 @@ Convars:RegisterConvar("portalgun_projectile_speed", "4000", "Speed of projectil
 Convars:RegisterConvar("portalgun_pickup_damping", "1", "Damping to apply to pickup speed, lower is slower", 0)
 Convars:RegisterConvar("portalgun_pickup_range", "100", "Max distance an object can be picked up", 0)
 Convars:RegisterConvar("portalgun_pickup_teleport_distance", "512", "Distance at which objects are teleported to the portalgun", 0)
+Convars:RegisterConvar("portalgun_pickup_movement_adjust", "1", "Adjust the movement of the object being picked up by the player's movement to minimize interpolation lag", 0)
 
 Convars:RegisterConvar("portalgun_is_physical", "1", "Portal gun is a physical weapon as opposed to furniture", 0)
 
@@ -534,7 +535,7 @@ function base:GetPickupPosition()
 end
 
 ---Updates the position of the currently held item
-function base:UpdatePickupItemPosition(immediately)
+function base:UpdatePickupItemPosition(offset, immediately)
     local ent = self.pickupEntity
 
     if not self.itemPickupEnabled or ent == nil then
@@ -555,6 +556,16 @@ function base:UpdatePickupItemPosition(immediately)
         desiredPosition = Player.PrimaryHand:TransformPointEntityToWorld(self.lastLocalPickupTransform)
     end
 
+    offset = offset or Vector()
+    desiredPosition = desiredPosition + offset
+
+    if Convars:GetInt("portal_debug_portalgun") >= 1 then
+        debugoverlay:Line(self:ShootPosition(), self:ShootPosition() + self:ShootForward() * 100, 0, 0, 255, 255, true, 0)
+        debugoverlay:Sphere(desiredPosition, 1, 0, 255, 0, 255, true, 0)
+        debugoverlay:Sphere(ent:GetCenter(), 1, 255, 0, 0, 255, true, 0)
+        local d = CalcDistanceToLineSegment2D(ent:GetCenter(), self:ShootPosition(), self:ShootPosition() + self:ShootForward() * 100)
+        debugoverlay:Text(ent:GetCenter(), 0, "Distance: " .. d, 0, 255, 0, 255, 255, 0)
+    end
 
     local aimAt = VectorToAngles(self:GetPickupEntityLookDirection(ent))
 
@@ -582,8 +593,6 @@ function base:UpdatePickupItemPosition(immediately)
         local velocity = (desiredPosition - ent:GetOrigin()) / Convars:GetFloat("portalgun_pickup_attenuation")
         velocity = velocity - GetPhysVelocity(ent)
         ent:ApplyAbsVelocityImpulse(velocity * Convars:GetFloat("portalgun_pickup_damping"))
-
-        local aimAt = VectorToAngles(self:GetPickupEntityLookDirection(ent))
 
         local currentAngles = ent:GetAngles()
         local angVel = RotationDeltaAsAngularVelocity(currentAngles, aimAt)
@@ -840,10 +849,22 @@ function base:ShootForward()
     return self:GetAttachmentNameForward("muzzle")
 end
 
+local prevPlayerPos = nil
+
 function base:Think()
 
     if self.pickupEntity ~= nil then
-        self:UpdatePickupItemPosition()
+        local moveVector = Vector()
+        if Convars:GetBool("portalgun_pickup_movement_adjust") then
+            -- Track player movement to stop item lagging behind
+            if prevPlayerPos == nil then
+                prevPlayerPos = Player:GetOrigin()
+            end
+            moveVector = (Player:GetOrigin() - prevPlayerPos) * 10
+            prevPlayerPos = Player:GetOrigin()
+        end
+
+        self:UpdatePickupItemPosition(moveVector)
     elseif self.itemPickupEnabled then
         local nearestPickupEnt = self:GetNearestPickupEntity()
         if nearestPickupEnt then
