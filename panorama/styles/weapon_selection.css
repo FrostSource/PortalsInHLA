@@ -1,0 +1,1587 @@
+@define BrightOrange: #5bb9d8;
+@define IntenseOrange: #409fcf;
+@define ProgressYellow: #7cbfda;
+@define PumpkinOrange: #2fa8c7;
+@define PaleYellow: #d0ebf2;
+@define SoftGold: #9dd1e5;
+@define LightOrange: #63bdd7;
+@define OrangeGlow: #55adc7;
+@define TranslucentYellow1: #5bb9d8dd;
+@define TranslucentYellow2: #5bb9d8aa;
+@define TranslucentYellow3: #7cbfdaad;
+@define TransparentYellow1: #5bb9d800;
+@define TransparentYellow2: #5bb9d899;
+@define TransparentYellowAlt1: #5ca7bd88;
+@define TransparentYellowAlt2: #5ca7bd33;
+@define TranslucentOrange1: #468ba455;
+@define TransparentOrange1: #5ca7bd00;
+@define TransparentOrange2: #6db6cc88;
+@define TransparentOrange3: #6db6cccc;
+@define TransparentOrange4: #6db6cc00;
+@define DeepRed1: #2f5f8266;
+@define DeepRed2: #2f5f8222;
+@define WarmOrange: #4386a233;
+@define TransparentRed1: #4386a200;
+@define SemiTransparentRed: #327aa3aa;
+@define DarkCrimson1: #1e3c5366;
+@define DarkCrimson2: #1e3c5322;
+@define BloodRed: #2f4e6233;
+@define LightGray: #e5e5e5;
+@define GlowYellow: #a3c9d833;
+@define PaleGold: #a3c9d8;
+@define AmmoLowGold: #88b6c9;
+@define AmmoLowGoldGlow: #88b6c944;
+@define AlertOrange: #6ba7bb44;
+@define WarningRed: #3f95b2;
+@define WarningOrange: #297b9f99;
+@define AlertFaint: #6ba7bb11;
+@define DarkAmber: #5ba3b9;
+@define AlertRed: #4a9ab5;
+@define FaintOrangeRed: #3a839e;
+@define WhiteTranslucent: #ffffffaa;
+@define BlackTranslucent: #000000dd;
+
+/* styles for HLVR weapon selection */
+.RootPanel {
+    //    background-color: #00AA00aa;
+    }
+    
+    
+    /* animations seen in colored backing disk */
+    
+    #AnimatedTextureMask{
+        width: 600px;
+        height: 600px;
+        horizontal-align: center;
+        vertical-align: center; 
+        opacity-mask: url("s2r://panorama/images/weapon_select_ui/animated_texture_mask_psd.vtex");
+        overflow: noclip; 
+        opacity: 0;
+        transition-property: opacity, pre-transform-scale2d; 
+        transition-duration: .2s; 
+        pre-transform-scale2d: .2;
+    }
+    
+    .Visible #AnimatedTextureMask{
+        opacity: 1;
+        pre-transform-scale2d: 1;
+    }
+        
+    #AnimatedTexture{
+        background-image: url("s2r://panorama/images/weapon_select_ui/full_mask_overlay_png.vtex");
+        width: 1500px;
+        height: 6000px;
+        horizontal-align: center;
+        vertical-align: center; 
+        transform: translateY(0px);
+        transition-property: transform;
+        transition-duration: 20s; 
+        transition-timing-function: ease-out; 
+    }
+    
+    .Visible #AnimatedTexture{
+        opacity: 1; 
+        transform: translateY(1000px);
+        transition-property: transform;
+        transition-duration: 0s; 
+    }
+    
+    /* .AmmoClipOut #AnimatedTexture{
+        wash-color: BrightOrange;
+    } */
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut #AnimatedTexture{
+        wash-color: none;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .AmmoClipOut.AmmoOut #AnimatedTexture{
+        wash-color: IntenseOrange;
+        opacity: .05; 
+    } */
+    
+    #AnimatedTextureAlt{
+        background-image: url("s2r://panorama/images/weapon_select_ui/full_mask_overlay_alt_png.vtex");
+        width: 1500px;
+        height: 6000px;
+        horizontal-align: center;
+        vertical-align: center; 
+        transform: translateY(0px);
+        transition-property: transform;
+        transition-duration: 10s; 
+        transition-timing-function: ease-out; 
+        wash-color: ProgressYellow; 
+    }
+    
+    .Visible #AnimatedTextureAlt{
+        opacity: .15; 
+        transform: translateY(1000px);
+        transition-property: transform;
+        transition-duration: 0s; 
+        
+    }
+    
+    /* .AmmoClipOut #AnimatedTextureAlt{
+        wash-color: BrightOrange;
+    } */
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut #AnimatedTextureAlt{
+        wash-color: ProgressYellow;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .AmmoClipOut.AmmoOut #AnimatedTextureAlt{
+        wash-color: IntenseOrange;
+        opacity: .05; 
+    } */
+    
+    .Layer1 #AnimatedTextureAlt{
+        visibility: collapse; 
+    }
+    
+    #AnimatedTextureSpinnerMask{
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_spinner_mask_png.vtex");
+        width: 600px;
+        height: 600px;
+        horizontal-align: center;
+        vertical-align: center; 
+        transform: rotateZ(0deg);
+        transition-property: transform;
+        transition-duration: 20s; 
+        transition-timing-function: ease-out; 
+        wash-color: PumpkinOrange; 
+        opacity: 0; 
+    }
+    
+    .Visible #AnimatedTextureSpinnerMask{
+        opacity: .1; 
+        transform: rotateZ(180deg);
+        transition-property: transform;
+        transition-duration: 0s; 
+        
+    }
+    
+    .Layer1 #AnimatedTextureSpinnerMask{
+        visibility: collapse; 
+    }
+    
+    /* .AmmoClipLow #AnimatedTextureSpinnerMask{
+        wash-color: ProgressYellow;
+    } */
+    
+    /* testing yellow .AmmoClipLow state */
+    /* .AmmoClipLow #AnimatedTextureSpinnerMask{
+        wash-color: PumpkinOrange; 
+    } */
+    /* end of testing yellow .AmmoClipLow state */
+    
+    /* .AmmoClipOut #AnimatedTextureSpinnerMask{
+        wash-color: #ffa569;
+        opacity: .08;
+    } */
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut #AnimatedTextureSpinnerMask{
+        wash-color: ProgressYellow;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    
+    /* .AmmoClipOut.AmmoOut #AnimatedTextureSpinnerMask{
+        wash-color: #ff3000;
+        opacity: .05;
+    } */
+    
+    .ActiveWeapon #ActiveWeaponAnimation {
+        background-image: url("s2r://panorama/images/weapon_select_ui/active_weapon_animation_psd.vtex");
+        width: 100%;
+        height: 100%;
+        background-repeat: no-repeat;
+        animation-name: ActiveWeaponSpinner;
+        animation-duration: 4s;
+        animation-delay: 0s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+        wash-color: PaleYellow;
+        opacity: .5; 
+    }
+    
+    @keyframes 'ActiveWeaponSpinner' 
+    {
+        0%
+        {
+            transform: rotateZ(0deg);
+        }
+        50%
+        {
+            transform: rotateZ(-180deg);
+        }
+        100%
+        {
+            transform: rotateZ(359deg);
+        }
+    }
+    
+    /* .AmmoClipLow .ActiveWeapon #ActiveWeaponAnimation {
+        wash-color: SoftGold;
+    } */
+    
+    /* testing yellow .AmmoClipLow state */
+    /* .AmmoClipLow .ActiveWeapon #ActiveWeaponAnimation {
+        wash-color: PaleYellow;
+    } */
+    /* end of testing yellow .AmmoClipLow state */
+    
+    
+    /* .AmmoClipOut .ActiveWeapon #ActiveWeaponAnimation {
+        wash-color: LightOrange;
+    } */
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut .ActiveWeapon #ActiveWeaponAnimation {
+        wash-color: SoftGold;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .AmmoOut .ActiveWeapon #ActiveWeaponAnimation {
+        wash-color: OrangeGlow;
+    } */
+        
+    .Layer0 #ActiveWeaponAnimation {
+        visibility: collapse; 
+    }
+    
+    /* backing disk content */
+        
+    .WorldUITextPanel {
+        width: fit-children;
+        height: fit-children;
+        vertical-align: center;
+        horizontal-align: center;
+        overflow: noclip; 
+    }
+    
+    .SelectionArea {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TranslucentYellow1 ), color-stop( 0.97, TranslucentYellow2 ), to( TranslucentYellow3 ) );
+        border-radius: 50%;
+        width: 600px;
+        height: 600px;
+        opacity: 0;
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .1s; 
+        pre-transform-scale2d: 0;
+        transition-timing-function: ease-in; 
+        animation-name: SelectionAreaFlicker;
+        animation-duration: 4s;
+        animation-delay: 0s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+        
+    }
+    
+    .SelectionArea.Visible {
+        opacity: 1;
+        pre-transform-scale2d: 1.0; 
+    }
+    
+    /* selected weapon highlight state */
+    .FlashSelected .SelectionArea {
+        brightness: 3; 
+        pre-transform-scale2d: 1.0;  
+        animation-name: ActiveWeaponFade;
+        animation-duration: .4s;
+        animation-delay: 0s;
+        animation-timing-function: linear; 
+        animation-iteration-count: 1; 
+    }
+    
+    /* selected weapon highlight state */
+    .Highlight .SelectionArea {
+        brightness: 3; 
+        pre-transform-scale2d: 1.0;
+        opacity: 1;  
+    }
+    
+    
+    @keyframes 'ActiveWeaponFade' 
+    {
+        0%
+        {
+            opacity: 1;
+        }
+        50%
+        {
+            opacity: 1;
+    
+        }
+        100%
+        {
+            opacity: 0;
+        }
+    }
+    
+    .FlashSelected #FlashSpinner {
+        background-image: url("s2r://panorama/images/weapon_select_ui/active_weapon_animation_psd.vtex");
+        width: 100%;
+        height: 100%;
+        background-repeat: no-repeat;
+        animation-name: ActiveWeaponSpinnerFade;
+        animation-duration: .4s;
+        animation-delay: 0s;
+        animation-timing-function: linear; 
+        animation-iteration-count: 1; 
+        wash-color: PaleYellow;
+        opacity: 1; 
+    }
+    
+    @keyframes 'ActiveWeaponSpinnerFade' 
+    {
+        0%
+        {
+            transform: rotateZ(0deg);
+        }
+        50%
+        {
+            transform: rotateZ(-180deg);
+    
+        }
+        100%
+        {
+            transform: rotateZ(359deg);
+        }
+    }
+    
+    .AmmoClipLow.FlashSelected #FlashSpinner {
+        wash-color: SoftGold;
+    }
+    
+    /* testing yellow .AmmoClipLow state */
+    .AmmoClipLow.FlashSelected #FlashSpinner {
+        wash-color: PaleYellow;
+    }
+    /* end of testing orange .AmmoClipOut state */
+    
+    
+    /* .AmmoClipOut.FlashSelected #FlashSpinner {
+        wash-color: #ff3a13;
+    } */
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut.FlashSelected #FlashSpinner {
+        wash-color: SoftGold;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+        
+    .Layer0.FlashSelected #FlashSpinner {
+        visibility: collapse;
+    }
+    
+    .FlashSelected .Layer1 #LoadedAmmoProgressContainer{
+        opacity: 1;
+        pre-transform-scale2d: 1;
+    }
+    
+    .FlashSelected .Layer1 .AmmoContain{
+        opacity: 1;
+        pre-transform-scale2d: 1;
+    }
+    
+    .FlashSelected.ActiveWeapon #ActiveWeaponAnimation{
+        visibility: collapse;
+    }
+    
+    .FlashSelected.AmmoClipLow .SelectionArea {
+        brightness: 3; 
+        pre-transform-scale2d: 1.0;  
+        animation-name: ActiveWeaponFade;
+        animation-duration: .4s;
+        animation-delay: 0s;
+        animation-timing-function: linear; 
+        animation-iteration-count: 1; 
+        opacity: 1;
+        pre-transform-scale2d: 1.0; 
+    }
+    
+    
+    .FlashSelected.AmmoClipLow .Layer1 #LoadedAmmoProgressContainer{
+        opacity: 1;
+        pre-transform-scale2d: 1;
+    }
+    
+    .FlashSelected.AmmoClipLow .Layer1 .AmmoContain{
+        opacity: 1;
+        pre-transform-scale2d: 1;
+    }
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .FlashSelected.AmmoClipOut .SelectionArea {
+        brightness: 3; 
+        pre-transform-scale2d: 1.0;  
+        animation-name: ActiveWeaponFade;
+        animation-duration: .4s;
+        animation-delay: 0s;
+        animation-timing-function: linear; 
+        animation-iteration-count: 1; 
+        opacity: 1;
+        pre-transform-scale2d: 1.0; 
+    }
+    
+    .FlashSelected.AmmoClipOut .Layer1 #LoadedAmmoProgressContainer{
+        opacity: 1;
+        pre-transform-scale2d: 1;
+    }
+    
+    .FlashSelected.AmmoClipOut .Layer1 .AmmoContain{
+        opacity: 1;
+        pre-transform-scale2d: 1;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    @keyframes 'ActiveWeaponFade' 
+    {
+        0%
+        {
+            opacity: 1;
+        }
+        50%
+        {
+            opacity: 1;
+    
+        }
+        100%
+        {
+            opacity: 0;
+        }
+    }
+    
+    
+    
+    @keyframes 'SelectionAreaFlicker' 
+    {
+        0%
+        {
+        opacity: 1; 
+        }
+        3%
+        {
+        opacity: .95;   
+        }
+        5%
+        {
+        opacity: 1; 
+        }
+        8%
+        {
+        opacity: .93;   
+        }
+        10%
+        {
+        opacity: .97;   
+        }
+        11%
+        {
+        opacity: 1; 
+        }
+        14%
+        {
+        opacity: .92;   
+        }
+        15%
+        {
+        opacity: .95;   
+        }
+        17%
+        {
+        opacity: .95;   
+        }
+        18%
+        {
+        opacity: 1; 
+        }
+        21%
+        {
+        opacity: .92;   
+        }
+        24%
+        {
+        opacity: .95;   
+        }
+        26%
+        {
+        opacity: .93;   
+        }
+        29%
+        {
+        opacity: .88;   
+        }
+        30%
+        {
+        opacity: 1; 
+        }
+        33%
+        {
+        opacity: .99;   
+        }
+        35%
+        {
+        opacity: .94;   
+        }
+        36%
+        {
+        opacity: 1; 
+        }
+        38%
+        {
+        opacity: .9;    
+        }
+        39%
+        {
+        opacity: .95;   
+        }
+        41%
+        {
+        opacity: .9;    
+        }
+        44%
+        {
+        opacity: 1;
+        }
+        46%
+        {
+        opacity: .93;   
+        }
+        48%
+        {
+        opacity: .9;    
+        }
+        50%
+        {
+        opacity: 1; 
+        }
+        53%
+        {
+        opacity: 1; 
+        }
+        55%
+        {
+        opacity: 1; 
+        }
+        58%
+        {
+        opacity: .9;    
+        }
+        59%
+        {
+        opacity: .91;   
+        }
+        61%
+        {
+        opacity: .97;   
+        }
+        65%
+        {
+        opacity: 1; 
+        }
+        68%
+        {
+        opacity: 1; 
+        }
+        73%
+        {
+        opacity: 1; 
+        }
+        75%
+        {
+        opacity: 1; 
+        }
+        80%
+        {
+        opacity: .96;   
+        }
+        82%
+        {
+        opacity: .95;   
+        }
+        85%
+        {
+        opacity: .89;   
+        }
+        88%
+        {
+        opacity: .99;   
+        }
+        90%
+        {
+        opacity: 1; 
+        }
+        92%
+        {
+        opacity: .96;   
+        }
+        95%
+        {
+        opacity: .9;    
+        }
+        96%
+        {
+        opacity: .9;    
+        }
+        98%
+        {
+        opacity: .92;   
+        }
+        100%
+        {
+        opacity: 1;
+        }
+    }
+    
+    /* visiblity of backing disk content in different states */
+    
+    .Layer0 .SelectionArea{
+        blur: gaussian( 2 );
+    }
+        
+        
+    .Layer1 .SelectionArea {
+        background-color: none;
+    }
+    
+    .Layer0 .AmmoContain{
+        opacity: .2; 
+        wash-color: ProgressYellow; 
+        
+    }
+    
+    /* .Layer0 .AmmoClipLow .AmmoContain {
+        opacity: .2; 
+        wash-color: DarkAmber; 
+    }
+    
+    
+    .Layer0 .AmmoClipOut .AmmoContain {
+        opacity: .4; 
+        wash-color: AlertRed; 
+    } */
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    
+    /* .Layer0 .AmmoClipOut .AmmoContain {
+        opacity: .4; 
+        wash-color: DarkAmber; 
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .Layer0 .AmmoClipOut.AmmoOut .AmmoContain {
+        wash-color: FaintOrangeRed;
+        opacity: .2; 
+    } */
+        
+    .Layer1 .AmmoContain{
+        opacity: 0;
+        pre-transform-scale2d: .9;
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .2s;
+    }
+    
+    .Visible .Layer1 .AmmoContain {
+        opacity: 1;
+        pre-transform-scale2d: 1;
+        transition-duration: 0s;
+        transition-property: opacity;
+    }
+    
+    
+    .Layer0.SelectionArea.ActiveWeapon {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TranslucentYellow1 ), color-stop( 0.97, TranslucentYellow2 ), to( TranslucentYellow3 ) );
+    }
+    
+    .Layer1.SelectionArea.ActiveWeapon {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellow1 ), color-stop( 0.93, TransparentYellow1 ), color-stop( 0.97, TransparentYellow2 ), to( TransparentYellow1 ) );
+    }
+    
+    .Layer0.SelectionArea.HighLight {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TranslucentYellow1 ), color-stop( 0.97, TranslucentYellow2 ), to( TranslucentYellow3 ) );
+    }
+    
+    .Layer1.SelectionArea.HighLight {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellow1 ), color-stop( 0.93, TransparentYellow1 ), color-stop( 0.97, TransparentYellow2 ), to( TransparentYellow1 ) );
+    }
+    
+    
+    
+    /* set on SelectionArea when ammo is low */ 
+    .AmmoClipLow .SelectionArea {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), color-stop( 0.97, TransparentYellowAlt2 ), to( TranslucentOrange1 ) );
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TranslucentYellow1 ), color-stop( 0.97, TranslucentYellow2 ), to( TranslucentYellow3 ) );
+        border-radius: 50%; 
+        //animation-name: ReloadPulse0;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+        opacity: 0;
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .1s; 
+    }
+    
+    .AmmoClipLow .SelectionArea.Visible{
+        opacity: 1;
+        pre-transform-scale2d: 1.0; 
+    }
+    
+    
+    
+    @keyframes 'ReloadPulse0' 
+    {
+        0%
+        {
+            brightness: 1;
+        }
+        50%
+        {
+            brightness: 2;
+        }
+        100%
+        {
+            brightness: 1;
+        }
+    }
+    
+    .Layer1 .AmmoClipLow.SelectionArea{
+        //background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        //animation-name: ReloadPulse1;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+    }
+    
+    @keyframes 'ReloadPulse1' 
+    {
+        0%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        }
+        50%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        }
+        100%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        }
+    }
+    
+    .AmmoClipLow.SelectionArea.ActiveWeapon {
+        //background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), to( TransparentYellowAlt2 ) );
+        
+        //animation-name: AmmoClipLowReloadPulse;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+    }
+    
+    @keyframes 'AmmoClipLowReloadPulse' 
+    {
+        0%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), color-stop( 0.93, TransparentYellowAlt2 ),  to( TranslucentOrange1 ) );
+        }
+        50%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( #EC782999 ), color-stop( 0.97, #EC782966 ), to( #f46e1488 ) );
+        }
+        100%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), color-stop( 0.97, TransparentYellowAlt2 ), to( TranslucentOrange1 ) );
+        }
+    }
+    
+    .Layer1 .AmmoClipLow.SelectionArea.ActiveWeapon {
+        //background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), to( TransparentYellowAlt2 ) );
+        //animation-name: AmmoClipLowReloadPulse1;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+    }
+    
+    @keyframes 'AmmoClipLowReloadPulse1' 
+    {
+        0%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), color-stop( 0.93, TransparentOrange1 ), color-stop( 0.97, TransparentOrange2 ), to( TransparentOrange4 ) );
+        }
+        50%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), color-stop( 0.93, TransparentOrange1 ), color-stop( 0.97, TransparentOrange3 ), to( TransparentOrange4 ) );
+        }
+        100%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), color-stop( 0.93, TransparentOrange1 ), color-stop( 0.97, TransparentOrange2 ), to( TransparentOrange4 ) );
+        }
+    }
+    
+    
+    /* .AmmoClipOut.SelectionArea {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( DeepRed1 ), color-stop( 0.97, DeepRed2 ), to( WarmOrange ) );
+        border-radius: 50%;
+        opacity: 0; 
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .1s; 
+    }
+    
+    .AmmoClipOut.SelectionArea.Visible {
+        opacity: 1;
+        pre-transform-scale2d: 1.0; 
+    }
+    
+    .Layer1 .AmmoClipOut {
+        background-color: none; 
+        border-radius: 50%; 
+    }
+    
+    .AmmoClipOut.SelectionArea.ActiveWeapon {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( DeepRed1 ), color-stop( 0.97, DeepRed2 ), to( WarmOrange ) );
+    }
+    
+    .Layer1 .AmmoClipOut.SelectionArea.ActiveWeapon {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentRed1 ), color-stop( 0.93, TransparentRed1 ), color-stop( 0.97, SemiTransparentRed ), to( TransparentRed1 ) );
+    } */
+    
+    /* .AmmoClipOut.AmmoOut {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( DarkCrimson1 ), color-stop( 0.97, DarkCrimson2 ), to( BloodRed ) );
+        border-radius: 50%; 
+    } */
+    
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut .SelectionArea {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), color-stop( 0.97, TransparentYellowAlt2 ), to( TranslucentOrange1 ) );
+        border-radius: 50%; 
+        animation-name: ReloadPulse0;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+        opacity: 0;
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .1s; 
+    }
+    
+    .AmmoClipOut .SelectionArea.Visible{
+        opacity: 1;
+        pre-transform-scale2d: 1.0; 
+    } */
+    
+    
+    
+    @keyframes 'ReloadPulse0' 
+    {
+        0%
+        {
+            brightness: 1;
+        }
+        50%
+        {
+            brightness: 2;
+        }
+        100%
+        {
+            brightness: 1;
+        }
+    }
+    
+    /* .Layer1 .AmmoClipOut.SelectionArea{
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        animation-name: ReloadPulse1;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+    } */
+    
+    @keyframes 'ReloadPulse1' 
+    {
+        0%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        }
+        50%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        }
+        100%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), to( TransparentOrange1 ) );
+        }
+    }
+    
+    /* .AmmoClipOut.SelectionArea.ActiveWeapon {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), to( TransparentYellowAlt2 ) );
+        
+        animation-name: AmmoClipLowReloadPulse;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+    } */
+    
+    
+    @keyframes 'AmmoClipLowReloadPulse' 
+    {
+        0%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( #EC782966 ), color-stop( 0.93, #EC782922 ),  to( #f46e1433 ) );
+        }
+        50%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( #EC7829 ), color-stop( 0.97, TransparentYellowAlt1 ), to( #f46e14 ) );
+        }
+        100%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( #EC782966 ), color-stop( 0.97, #EC782922 ), to( #f46e1433 ) );
+        }
+    }
+    
+    /* .AmmoClipOut.SelectionArea {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), to( TransparentYellowAlt2 ) );
+        
+        animation-name: AmmoClipLowLayer0ReloadPulse;
+        animation-duration: 1s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+    } */
+    
+    @keyframes 'AmmoClipLowLayer0ReloadPulse' 
+    {
+        0%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( #EC782966 ), color-stop( 0.93, #EC782922 ),  to( #f46e1433 ) );
+        }
+        50%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( #EC7829 ), color-stop( 0.97, TransparentYellowAlt1 ), to( #f46e14 ) );
+        }
+        100%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( #EC782966 ), color-stop( 0.97, #EC782922 ), to( #f46e1433 ) );
+        }
+    }
+    
+    /* .Layer1 .AmmoClipOut.SelectionArea.ActiveWeapon {
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentYellowAlt1 ), to( TransparentYellowAlt2 ) );
+        animation-name: AmmoClipLowReloadPulse1;
+        animation-duration: 2s;
+        animation-delay: .1s;
+        animation-timing-function: linear; 
+        animation-iteration-count: infinite; 
+    } */
+    
+    /* .Layer1 .AmmoClipOut.AmmoOut.SelectionArea.ActiveWeapon {
+        animation-name: none;
+    } */
+    
+    
+    @keyframes 'AmmoClipLowReloadPulse1' 
+    {
+        0%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), color-stop( 0.93, TransparentOrange1 ), color-stop( 0.97, #ffa96f ), to( TransparentOrange4 ) );
+            
+        }
+        50%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), color-stop( 0.93, TransparentOrange1 ), color-stop( 0.97, #ffa96f ), to( TransparentOrange4 ) );
+            
+        }
+        100%
+        {
+            background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentOrange1 ), color-stop( 0.93, TransparentOrange1 ), color-stop( 0.97, #ffa96f ), to( TransparentOrange4 ) );
+            
+        }
+    }
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .Layer1 .AmmoClipOut.AmmoOut {
+        background-color: none; 
+    } */
+    
+    /* .AmmoClipOut.AmmoOut.SelectionArea{
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( DarkCrimson1 ), color-stop( 0.97, DarkCrimson2 ), to( BloodRed ) );
+        animation-name: none;
+    }
+    
+    .AmmoClipOut.AmmoOut.SelectionArea.ActiveWeapon{
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( DarkCrimson1 ), color-stop( 0.97, DarkCrimson2 ), to( BloodRed ) );
+    }
+    
+    .Layer1 .AmmoClipOut.AmmoOut.SelectionArea.ActiveWeapon{
+        background-color: gradient( radial, 50% 50%, 0% 0%, 50% 50%, from( TransparentRed1 ), color-stop( 0.93, TransparentRed1 ), color-stop( 0.97, SemiTransparentRed ), to( TransparentRed1 ) );
+    } */
+    
+    .AmmoContain {
+        padding-top: 350px;
+        //color: rgb(229, 229, 229);
+        flow-children: right;
+        horizontal-align: center;
+    }
+    
+    .Layer0 #LoadedAmmoProgressContainer{
+        opacity: .15; 
+        wash-color: ProgressYellow;    
+    }
+    
+    .Layer0 .AmmoClipLow #LoadedAmmoProgressContainer{
+        opacity: .15; 
+        wash-color: DarkAmber;    
+    }
+    
+    .Layer1 #LoadedAmmoProgressContainer{
+        opacity: 0;
+        pre-transform-scale2d: .9;
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .2s;
+    }
+    
+    .Visible .Layer1 #LoadedAmmoProgressContainer {
+        opacity: 1;
+        pre-transform-scale2d: 1;
+        transition-duration: 0s;
+        transition-property: opacity;
+    }
+        
+        
+    .AmmoContainHidden .AmmoContain {
+        visibility: collapse;
+    }
+    
+    
+    .AmmoClip {
+        font-family: Raju;
+        font-size: 130px;
+        vertical-align: bottom;
+        line-height: 120px;
+        color: rgb(229, 229, 229);
+        text-shadow: 0px 0px 120px 3 GlowYellow;
+    }
+    
+    .AmmoSeperator {
+        font-family: Raju;
+        font-size: 90px;
+        line-height: 120px;
+        margin-left: 8px;
+        margin-top: 24px; 
+        color: rgb(229, 229, 229);
+        text-shadow: 0px 0px 120px 3 GlowYellow;
+    }
+    
+    .AmmoReserve {
+        font-family: Raju;
+        font-size: 90px;
+        line-height: 120px;
+        margin-top: 24px;
+        margin-left: 8px;
+        color: rgb(229, 229, 229);
+        text-shadow: 0px 0px 120px 3 GlowYellow;
+    }
+    
+    
+    .Left .AmmoReserve  {
+        color: PaleGold;
+    }
+    
+    .Left .AmmoSeperator {
+        color: PaleGold;
+    }
+    
+    .AmmoClipLow.Left .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipLow.Left .AmmoReserve {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipLow.Left .AmmoSeperator {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    /* .AmmoClipOut.Left .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    .AmmoClipOut.Left .AmmoReserve {
+        color: WarningRed;
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    .AmmoClipOut.Left .AmmoSeperator {
+        color: WarningRed;
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    } */
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut.Left .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Left .AmmoReserve {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Left .AmmoSeperator {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    
+    /* .AmmoClipOut.AmmoOut.Left .AmmoReserve {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    }
+    
+    .AmmoClipOut.AmmoOut.Left .AmmoSeperator {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    }
+    
+    .AmmoClipOut.AmmoOut.Left .AmmoClip {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    } */
+    
+    
+    .Top .AmmoReserve  {
+        color: PaleGold;
+    }
+    
+    .Top .AmmoSeperator {
+        color: PaleGold;
+    }
+    
+    .AmmoClipLow.Top .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipLow.Top .AmmoReserve {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipLow.Top .AmmoSeperator {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Top .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    .AmmoClipOut.Top .AmmoReserve {
+        color: WarningRed;
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    .AmmoClipOut.Top .AmmoSeperator {
+        color: WarningRed;
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    .AmmoClipOut.Top .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Top .AmmoReserve {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Top .AmmoSeperator {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    /* end of testing orange .AmmoClipOut state */
+    
+    
+    /* .AmmoClipOut.AmmoOut.Top .AmmoReserve {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    }
+    
+    .AmmoClipOut.AmmoOut.Top .AmmoSeperator {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    }
+    
+    .AmmoClipOut.AmmoOut.Top .AmmoClip {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    } */
+    
+    
+    
+    .Right .AmmoReserve  {
+        color: PaleGold;
+    }
+    
+    .Right .AmmoSeperator {
+        color: PaleGold;
+    }
+    
+    .AmmoClipLow.Right .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipLow.Right .AmmoReserve {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipLow.Right .AmmoSeperator {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Right .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    .AmmoClipOut.Right .AmmoReserve {
+        color: WarningRed;
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    .AmmoClipOut.Right .AmmoSeperator {
+        color: WarningRed;
+        text-shadow: 0px 0px 120px 3 AlertOrange;
+    }
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    .AmmoClipOut.Right .AmmoClip {
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Right .AmmoReserve {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    
+    .AmmoClipOut.Right .AmmoSeperator {
+        color: AmmoLowGold;
+        text-shadow: 0px 0px 120px 3 AmmoLowGoldGlow;
+    }
+    /* end of testing orange .AmmoClipOut state */
+    
+    
+    /* .AmmoClipOut.AmmoOut.Right .AmmoReserve {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    }
+    
+    .AmmoClipOut.AmmoOut.Right .AmmoSeperator {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    }
+    
+    .AmmoClipOut.AmmoOut.Right .AmmoClip {
+        color: WarningOrange;
+        text-shadow: 0px 0px 120px 3 AlertFaint;
+    } */
+    
+    
+    
+    
+    #LoadedAmmoProgressContainer {
+        width: 100%;
+        height: 100%;
+    }
+    
+    .Left #LoadedAmmoProgressContainer {
+        opacity-mask: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_shotgun_mask_psd.vtex");
+    }
+    
+    .Top #LoadedAmmoProgressContainer {
+        opacity-mask: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_pistol_mask_psd.vtex");
+    }
+    
+    .Right #LoadedAmmoProgressContainer {
+        opacity-mask: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_rapid_fire_mask_psd.vtex");
+    }
+    
+    .AmmoContainHidden #LoadedAmmoProgressContainer {
+        visibility: collapse;
+    }
+    
+    #LoadedAmmo {
+        background-color: WhiteTranslucent;
+        border-radius: 50%;
+        width: 100%;
+        height: 100%;
+    }
+    
+    #UnloadedAmmo {
+        background-color: BlackTranslucent;
+        border-radius: 50%;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* .AmmoClipOut.AmmoOut #UnloadedAmmo {
+        background-color: WarningOrange;
+    } */
+    
+    .Top #PistolShadow{
+        /* TODO: Add this back if portal gun image is created */
+        /* background-image: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_pistol_shadow_psd.vtex"); */
+        background-size: 100%;
+        width: 600px;
+        height: 600px;
+        opacity: .19; 
+        wash-color: ProgressYellow; 
+        blur: gaussian( 2 );    
+    }
+    
+    .AmmoClipLow.Top #PistolShadow{
+        wash-color: DarkAmber;
+    }
+    
+    .AmmoClipOut.Top #PistolShadow{
+        wash-color: AlertRed;
+    }
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    .AmmoClipOut.Top #PistolShadow{
+        wash-color: DarkAmber;
+    }
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .AmmoClipOut.AmmoOut.Top #PistolShadow{
+        wash-color: FaintOrangeRed;
+    } */
+    
+    .Layer1 .Top #PistolShadow{
+        visibility: collapse; 
+    }
+    
+    .Left #ShotgunShadow{
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_shotgun_shadow_psd.vtex");
+        background-size: 100%;
+        width: 600px;
+        height: 600px;
+        opacity: .19; 
+        wash-color: ProgressYellow; 
+        blur: gaussian( 2 );    
+    }
+    
+    .AmmoClipLow.Left #ShotgunShadow{
+        wash-color: DarkAmber;
+    }
+    
+    .AmmoClipOut.Left #ShotgunShadow{
+        wash-color: AlertRed;
+    }
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    .AmmoClipOut.Left #ShotgunShadow{
+        wash-color: DarkAmber;
+    }
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .AmmoClipOut.AmmoOut.Left #ShotgunShadow{
+        wash-color: FaintOrangeRed;
+    } */
+    
+    .Layer1 .Left #ShotgunShadow{
+        visibility: collapse; 
+    }
+    
+    .Right #SmgShadow{
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_smg_shadow_psd.vtex");
+        background-size: 100%;
+        width: 600px;
+        height: 600px;
+        opacity: .19; 
+        wash-color: ProgressYellow; 
+        blur: gaussian( 2 );    
+    }
+    
+    .AmmoClipLow.Right #SmgShadow{
+        wash-color: DarkAmber;
+    }
+    
+    .AmmoClipOut.Right #SmgShadow{
+        wash-color: AlertRed;
+    }
+    
+    /* testing orange .AmmoClipOut state (red is causing confusion) */
+    /* .AmmoClipOut.Right #SmgShadow{
+        wash-color: AlertRed;
+    } */
+    /* end of testing orange .AmmoClipOut state */
+    
+    /* .AmmoClipOut.AmmoOut.Right #SmgShadow{
+        wash-color: FaintOrangeRed;
+    } */
+        
+    .Layer1 .Right #SmgShadow{
+        visibility: collapse; 
+    }
+    
+    .Bottom #ToolShadow{
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_tool_shadow_psd.vtex");
+        background-size: 100%;
+        width: 600px;
+        height: 600px;
+        opacity: .19; 
+        wash-color: ProgressYellow; 
+        blur: gaussian( 2 );    
+    }
+    
+    .Layer1 .Bottom #ToolShadow{
+        visibility: collapse; 
+    }
+    
+    .Center #HandShadow{
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_select_ui_hand_shadow_psd.vtex");
+        background-size: 100%;
+        width: 600px;
+        height: 600px;
+        opacity: .19; 
+        wash-color: ProgressYellow; 
+        blur: gaussian( 2 );    
+    }
+    
+    .Layer1 .Center #HandShadow{
+        visibility: collapse; 
+    }
+    
+    .Left #WeaponSwapIcon {
+        horizontal-align: left;
+        vertical-align: center; 
+        margin-left: 870px; 
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_swap_icon_psd.vtex");
+        background-size: 100%;
+        background-repeat: no-repeat;
+        //transform: rotateZ(90deg);
+        opacity: 0;     
+        transition-property: opacity, transform, pre-transform-scale2d;
+        transition-duration: .3s; 
+        //pre-transform-scale2d: .5;
+        transform: translateX(50px);
+    }
+    
+    .Visible.Left #WeaponSwapIcon{
+        transform: translateX(0px);
+    }
+    
+    .Top #WeaponSwapIcon {
+        horizontal-align: center;
+        vertical-align: bottom;
+        margin-bottom: 40px; 
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_swap_icon_vert_psd.vtex");
+        background-size: 100%;
+        background-repeat: no-repeat;   
+        transition-property: transform;
+        transition-duration: .2s; 
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    
+    .Visible.Top #WeaponSwapIcon{
+        transform: translateY(0px);
+    }
+    
+    .Bottom #WeaponSwapIcon {
+        horizontal-align: center;
+        vertical-align: bottom;
+        margin-bottom: 870px; 
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_swap_icon_bottom_psd.vtex");
+        transform: translateY(-50px);
+        background-size: 100%;
+        background-repeat: no-repeat;
+        opacity: 0;     
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .3s; 
+        //pre-transform-scale2d: .5;
+    }
+    
+    .Visible.Bottom #WeaponSwapIcon{
+        transform: translateY(0px);
+    }
+    
+    .Right #WeaponSwapIcon {
+        horizontal-align: right;
+        vertical-align: center; 
+        margin-right: 870px; 
+        background-image: url("s2r://panorama/images/weapon_select_ui/weapon_swap_icon_right_psd.vtex");
+        background-size: 100%;
+        background-repeat: no-repeat;
+        transform: translateX(-50px);
+        opacity: 0;     
+        transition-property: opacity, pre-transform-scale2d;
+        transition-duration: .3s; 
+        //pre-transform-scale2d: .5;
+    }
+    
+    .Visible.Right #WeaponSwapIcon{
+        transform: translateY(0px);
+    }
+    
+    .QuickSwitch #WeaponSwapIcon {
+        //opacity: 1; 
+        //transform: rotateZ(0deg); 
+        //transition-duration: .3s; 
+        //pre-transform-scale2d: 1;
+    }
+    
+    
+    .Layer1 #WeaponSwapIcon {
+        width: 110px;
+        height: 110px;
+        opacity: 0;
+        transition-property: opacity, transform, pre-transform-scale2d;
+        transition-duration: .2s; 
+        pre-transform-scale2d: .9;
+    }
+    
+    
+    .Layer0 #WeaponSwapIcon {
+        width: 110px;
+        height: 110px;
+        wash-color: #ffed57;
+        blur: gaussian( 6 );
+        opacity: 0;
+        transition-property: opacity, transform, pre-transform-scale2d;
+        transition-duration: .2s; 
+        pre-transform-scale2d: .9;
+    }
+    
+    .Visible.Layer1 #WeaponSwapIcon {
+        opacity: .7;
+        pre-transform-scale2d: 1;
+    }
+    
+    
+    .Visible.Layer0 #WeaponSwapIcon {
+        wash-color: #ffed57;
+        blur: gaussian( 4 );
+        opacity: .3;
+        pre-transform-scale2d: 1;
+    }
+    
+    
+    
+    
+    
