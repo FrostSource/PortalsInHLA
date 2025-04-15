@@ -217,6 +217,14 @@ function base:Close()
     end
     StartSoundEventFromPositionReliable(sndevnt, self:GetOrigin())
 
+    local target = SpawnEntityFromTableSynchronous("info_particle_target", {
+        origin = self:GetOrigin(),
+        angles = RotateOrientation(self:GetAngles(), QAngle(0, 0, 90)),
+    })
+    local closePt = ParticleManager:CreateParticleForPlayer("particles/portals/portal_close.vpcf", 1, target, Player)
+    ParticleManager:SetParticleControl(closePt, 2, PortalManager:GetPortalColor(self.colorName).color:ToVector())
+    target:EntFire("Kill", nil, 2)
+
     self:CleanupAndDestroy()
 
     if self:GetConnectedPortal() then
