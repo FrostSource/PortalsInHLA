@@ -506,7 +506,7 @@ function base:EnablePlayerCollisions()
         local disabledCollisionsEnt = pair.disabledCollisionsEnt--[[@as EntityHandle]]
         local disabledCollisionsName = pair.disabledCollisionsName--[[@as string]]
         local name = nil
-        if disabledCollisionsEnt and disabledCollisionsName then
+        if disabledCollisionsEnt and disabledCollisionsName and IsValidEntity(disabledCollisionsEnt) then
             name = disabledCollisionsEnt:GetName()
             -- Same name as when disabled needs to be used (seems to be a quirk of the collision pair)
             disabledCollisionsEnt:SetEntityName(disabledCollisionsName)
