@@ -312,11 +312,12 @@ function PortalManager:ReorientPortalPerpendicular(normal, forward)
     return normalAngles
 end
 
+---Attempts to adjust the position of the portal to the nearest valid position.
 ---@param position Vector
 ---@param normalAngles QAngle
 ---@param maxAttempts number
 ---@return Vector|nil # Adjusted position or nil if failed
-function PortalManager:TestPortalPositionAdjust(position, normalAngles, maxAttempts)
+function PortalManager:PortalPositionAdjust(position, normalAngles, maxAttempts)
 
     local startingPosition = position
     position = position + normalAngles:Forward() * 1
@@ -341,18 +342,6 @@ function PortalManager:TestPortalPositionAdjust(position, normalAngles, maxAttem
         hitDown = trace((-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
         hitLeft = trace(normalAngles:Left() * PORTAL_SIZE_Y / 2)
         hitRight = trace((-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
-        -- local UpTrace = self:TraceDirection(position, normalAngles:Up())
-        -- if not UpTrace.hit then
-        --     UpTrace = self:TraceDirection(position + normalAngles:Up() * PORTAL_SIZE_Z / 2, -normalAngles:Forward() * 30)
-        --     if not UpTrace.hit then hitUp = true end
-        -- else hitUp = true end
-
-        -- local DownTrace = self:TraceDirection(position, (-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
-        -- local hitDown = DownTrace.hit
-        -- local LeftTrace = self:TraceDirection(position, normalAngles:Left() * PORTAL_SIZE_Y / 2)
-        -- local hitLeft = LeftTrace.hit
-        -- local RightTrace = self:TraceDirection(position, (-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
-        -- local hitRight = RightTrace.hit
 
         if not hitUp and not hitDown and not hitLeft and not hitRight then
             if Convars:GetInt("portal_debug_portals") >= 1 then
@@ -392,44 +381,7 @@ function PortalManager:TryCreatePortalAt(position, normal, color)
     color = resolveColor(color)
     local normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
 
-    -- local UpTrace = self:TraceDirection(position + normalAngles:Forward() * 10, normalAngles:Up() * PORTAL_SIZE_Z / 2)
-    -- if not UpTrace.hit then
-    --     UpTrace = self:TraceDirection(UpTrace.endpos, -normalAngles:Forward() * 30)
-    --     if not UpTrace.hit then
-    --         return false
-    --     end
-    -- else
-    --     return false
-    -- end
-    -- local DownTrace = self:TraceDirection(position+normalAngles:Forward() * 10, (-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
-    -- if not DownTrace.hit then
-    --     DownTrace = self:TraceDirection(DownTrace.endpos, -normalAngles:Forward() * 30)
-    --     if not DownTrace.hit then
-    --         return false
-    --     end
-    -- else
-    --     return false
-    -- end
-    -- local LeftTrace = self:TraceDirection(position + normalAngles:Forward() * 10, normalAngles:Left() * PORTAL_SIZE_Y / 2)
-    -- if not LeftTrace.hit then
-    --     LeftTrace = self:TraceDirection(LeftTrace.endpos, -normalAngles:Forward() * 30)
-    --     if not LeftTrace.hit then
-    --         return false
-    --     end
-    -- else
-    --     return false
-    -- end
-    -- local RightTrace = self:TraceDirection(position+normalAngles:Forward() * 10, (-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
-    -- if not RightTrace.hit then
-    --     RightTrace = self:TraceDirection(RightTrace.endpos, -normalAngles:Forward() * 30)
-    --     if not RightTrace.hit then
-    --         return false
-    --     end
-    -- else
-    --     return false
-    -- end
-
-    position = self:TestPortalPositionAdjust(position, normalAngles, PORTAL_SIZE_Y)
+    position = self:PortalPositionAdjust(position, normalAngles, PORTAL_SIZE_Y)
 
     if position == nil then
         return false
@@ -623,10 +575,6 @@ function PortalManager:CreateFailedPortalEffect(pos, dir, color)
     local pindex = ParticleManager:CreateParticle(ppath, 0, Player)
     ParticleManager:SetParticleControl(pindex, 0, pos + dir)
 
-    -- For color changing particle (broken)
-    -- local pindex = ParticleManager:CreateParticle("particles/portal_projectile/portal_badsurface.vpcf", 0, Player)
-    -- ParticleManager:SetParticleControl(pindex, 0, pos + dir)
-    -- ParticleManager:SetParticleControl(pindex, 2, color)
 end
 
 -- Loading values

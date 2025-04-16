@@ -752,22 +752,6 @@ function base:SetupInputs()
 
 end
 
--- function base:FixTeleportPickup()
--- end
-
--- ---@param params GameEventPlayerTeleportStart
--- base:GameEvent("player_teleport_start", function (self, params)
---     if IsValidEntity(self.pickupEntity) then
---         self.pickupEntity:SetParent(self, "")
---     end
--- end)
--- ---@param params GameEventPlayerTeleportFinish
--- base:GameEvent("player_teleport_finish", function (self, params)
---     if IsValidEntity(self.pickupEntity) then
---         self.pickupEntity:SetParent(nil, "")
---     end
--- end)
-
 ---Get the nearest entity that can be picked up by the gun.
 ---@return EntityHandle?
 function base:GetNearestPickupEntity()

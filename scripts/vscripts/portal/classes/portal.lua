@@ -314,38 +314,6 @@ function base:Teleport(ent)
 
         local connectedPortal = self:GetConnectedPortal()--[[@as Portal]]
 
-        
-
-        -- if ent:IsPlayer() then
-        --     -- Teleport player
-        --     if lastPlayerTeleport - GetFrameCount() < 0 and self:CanTeleport(Player) then
-        --         -- In VR
-        --         if Player.HMDAvatar ~= nil then
-
-        --             local pos = connectedPortal:GetAbsOrigin() + connectedPortal:GetForwardVector() * 30
-
-        --             local dir = connectedPortal:GetForwardVector()
-        --             local forward = Player.HMDAnchor:GetForwardVector()
-        --             local newForward = dir * forward:Length()
-        --             newForward = -forward + newForward - dir
-        --             newForward.z = 0
-
-        --             Player.HMDAvatar:SetAbsOrigin(pos)
-        --             Player:SetAnchorForwardAroundPlayer(newForward)
-
-        --             lastPlayerTeleport = GetFrameCount() + 50
-        --         -- In NOVR
-        --         else
-        --             self:TeleportPhysicalEntity(Player, connectedPortal)
-        --             local dir = connectedPortal:GetForwardVector()
-        --             local forward = Player:GetForwardVector()
-        --             local newForward = dir * forward:Length()
-        --             Player:SetForwardVector(-forward + newForward - dir)
-        --         end
-        --         StartSoundEvent(SND_TELEPORT_ENTER, Player)
-        --     end
-        -- else
-
             self:TeleportPhysicalEntity(ent, connectedPortal)
 
             if not ent:IsPlayer() then
@@ -356,7 +324,6 @@ function base:Teleport(ent)
                     ent:Drop()
                 end
             end
-        -- end
 
     end
 end
@@ -427,41 +394,12 @@ local function transformAngles(entFrom, entTo, entAng)
 	return RotateOrientation(VectorToAngles(F), QAngle(0,0, -Rad2Deg(math.atan2(R.z, U.z))) )
 end
 
+---@param ent EntityHandle
+---@param connectedPortal Portal
 function base:TeleportPhysicalEntity(ent, connectedPortal)
-    -- local localPositionOnPortal = self:TransformPointWorldToEntity(ent:GetAbsOrigin())
-    -- local dir = connectedPortal:GetForwardVector()
-    -- -- Teleport from OriginalPortal to Portal but keep velocity and rotation of the entity with offset to keep it from constantly teleporting back and forth
-    -- local newPos = connectedPortal:TransformPointEntityToWorld(localPositionOnPortal + Vector(PORTAL_MAXS.x, 0, 0))
-    -- ent:SetOrigin(newPos)
-    
-    -- DebugDrawSphere(newPos, Vector(0,255,0), 255, 32, true, 100)
-    -- ent:EntFire("DisableMotion")
-
-    -- local dirAngle = transformAngles(self.aimat, connectedPortal.aimat, ent)
-    -- ent:SetQAngle(dirAngle)
-
-    -- -- Rotate Velocity to match the new direction
-    -- local vel = GetPhysVelocity(ent)
-    -- local newVel = dir * vel:Length() * 0.95
-
-    -- ent:ApplyAbsVelocityImpulse(-vel + newVel - dir)
-
-    -- if PortalManager:Debugging() then
-    --     DebugDrawLine(self:GetOrigin(), self:GetOrigin() + vel, 255, 0, 0, true, 10)
-    --     DebugDrawLine(connectedPortal:GetOrigin(), connectedPortal:GetOrigin() + newVel, 0, 255, 0, true, 10)
-    --     print(Debug.SimpleVector(vel))
-    --     print(Debug.SimpleVector(newVel))
-    --     print("___________")
-    -- end
-
-
-
-
-
 
     local timeDiff = Time() - ent:Attribute_GetFloatValue("ent_teleport_time", 0)
 
-    -- print(timeDiff)
     local MAX_TIME = 0.25
 	if timeDiff < MAX_TIME and timeDiff >= 0 then return end
 
@@ -478,14 +416,18 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 	local dirVelocity = transformDirection(self, connectedPortal, velocity:Normalized())
 	local dirAngVelocity = transformDirection(self, connectedPortal, angularVelocity:Normalized())
 
-	-- ent:SetOrigin(dirPosition-dirOffset)
-    -- DebugDrawSphere(dirPosition-dirOffset, Vector(0,255,0), 255, 16, true, 100)
-    -- ent:EntFire("DisableMotion")
-	--self:SetForwardVector(dirForward)
+    local newPos
+    local oldPos = ent:GetOrigin()
+
+    if Convars:GetInt("portal_debug_portals") >= 1 then
+        debugoverlay:Sphere(oldPos, 2, 255, 255, 0, 255, false, 6)
+        debugoverlay:Box(ent:GetBoundingMins(), ent:GetBoundingMaxs(), 255, 255, 0, 255, false, 6)
+    end
 
 	if not ent:IsPlayer() then
 		-- Not Player
-        ent:SetOrigin(dirPosition-dirOffset)
+        newPos = dirPosition-dirOffset
+        ent:SetOrigin(newPos)
 		ent:ApplyAbsVelocityImpulse(-velocity)
 
 		ent:SetAngles(dirAngle.x, dirAngle.y, dirAngle.z)
@@ -494,7 +436,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 		SetPhysAngularVelocity(ent, dirAngVelocity*angularVelocity:Length())
 	else
 		-- Player
-        local newPos = (dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4
+        newPos = (dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4
 
         local distanceAdjustment = 0
 
@@ -506,28 +448,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
             newPos = newPos + AnglesToVector(dirAngle) * distanceAdjustment
         end
 
-        -- DebugDrawSphere(newPos, Vector(255,255,0), 255, 16, true, 15)
-
         if IsVREnabled() then
-            -- self.teleport:SetOrigin(newPos)
-            -- self.teleport:SetQAngle(dirAngle)
-
-            -- Player:SetMovementEnabled(false)
-            -- self:Delay(function()
-            --     self.teleport:EntFire("TeleportToCurrentPos")
-            --     Player:EntFire("EnableTeleport", "1", 0.01)
-            -- end, 0)
-
-            -- Trying new trigger_teleport method
-            -- self.teleport:Enable()
-            -- local plrangle = dirAngle:Forward()
-            -- plrangle.z = 0
-            -- plrangle = plrangle:Normalized()
-            -- -- Player:SetAnchorForwardAroundPlayer(plrangle)
-            -- Player:SetForwardVector(plrangle)
-            -- self.teleport:Delay(function()
-            --     self.teleport:Disable()
-            -- end, 0.1)
             self.teleport:Teleport(distanceAdjustment)
         else
             ent:SetOrigin(newPos)
@@ -540,6 +461,12 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 
         StartSoundEvent(SND_TELEPORT_ENTER, Player)
 	end
+
+    if Convars:GetInt("portal_debug_portals") >= 1 then
+        debugoverlay:Sphere(newPos, 2, 0, 0, 255, 255, false, 6)
+        debugoverlay:Box(ent:GetBoundingMins(), ent:GetBoundingMaxs(), 0, 0, 255, 255, false, 6)
+        debugoverlay:Line(oldPos, newPos, 0, 0, 255, 255, false, 6)
+    end
 end
 
 
@@ -584,16 +511,15 @@ function base:CreateCamera()
     if not connectedPortal then
         return nil
     end
-	
+
 	keyvals.origin = GetOriginRelativeTo(connectedPortal, relOrigin)
 	keyvals.angles = connectedPortal:GetAngles()
 	keyvals.targetname = self.monitor:GetName():gsub("monitor", "camera")
 	keyvals.ZNear = math.max(math.abs(relOrigin.x) - CAMERA_NEARZ_OFFSET, 0.001)
 	keyvals.FOV = self.camera.Fov or DEFAULT_CAMERA_FOV
-	
+
 	self.camera = SpawnEntityFromTableSynchronous("point_camera", keyvals)
 	self.camera.Fov = keyvals.FOV
-	--tbl.Camera:SetPortalID(thisEntity:GetPortalID())
 
 	DoEntFireByInstanceHandle(self.monitor, "SetCamera", keyvals.targetname, 0, self.camera, self.camera)
 
@@ -625,21 +551,14 @@ function base:ModifyTexture()
 
 	local plrDist = 2*Vector(plrLocal.x/p_size.x, plrLocal.y/p_size.y, plrLocal.z/p_size.z)
 
-	local base = (1/math.tan(Deg2Rad(self.camera.Fov/2)))/plrDist.x
+	local _base = (1/math.tan(Deg2Rad(self.camera.Fov/2)))/plrDist.x
 
 	self.camera.Fov = CorrectFov(plrLocal, p_size)
 	self.camera:SetFOV(self.camera.Fov)
-	--print("CAM: " .. tbl.Camera.Fov)
 
-	local tex_offset = Vector(0, 0.5-base*((plrLocal.y/p_size.y)+0.5), 0.5+base*((plrLocal.z/p_size.z)-0.5))
+	local tex_offset = Vector(0, 0.5-_base*((plrLocal.y/p_size.y)+0.5), 0.5+_base*((plrLocal.z/p_size.z)-0.5))
 
-	--print(0.5+base*((plrLocal.z/tbl.Monitor.Size.z)-0.5))
-	--print("Player: " .. tostring(plrLocal))
-	--print("Base: " .. base)
-	--print("X: " .. tex_offset.y)
-	--print("Y: " .. tex_offset.z)
-
-	DoEntFireByInstanceHandle(self.monitor, "setrenderattribute", tostring("all=" .. base .. "," .. base .. "," .. tex_offset.y .. "," .. tex_offset.z), 0, self.monitor, self.monitor)
+	DoEntFireByInstanceHandle(self.monitor, "setrenderattribute", tostring("all=" .. _base .. "," .. _base .. "," .. tex_offset.y .. "," .. tex_offset.z), 0, self.monitor, self.monitor)
 end
 
 ---Main entity think function. Think state is saved between loads
@@ -650,31 +569,9 @@ function base:Think()
         return nil
     end
 
-    -- if not IsVREnabled() and IsValidEntity(self.monitor:GetMoveParent()) then
-	-- 	self.monitor:GetMoveParent():SetVelocity(GetPhysVelocity(Player.HMDAvatar or Player))
-	-- 	self.monitor:SetOrigin(self.aimat:GetAbsOrigin())
-	-- end
-
     self:ModifyTexture()
 
     return 0
-
-    -- local connectedPortal = self:GetConnectedPortal()--[[@as Portal]]
-
-    -- -- Update render camera
-    -- local PlayerToConnectedPortal = connectedPortal.aimat:TransformPointWorldToEntity(Player:EyePosition())
-    -- PlayerToConnectedPortal.z = PlayerToConnectedPortal.z * -1
-    -- PlayerToConnectedPortal.x = Clamp(PlayerToConnectedPortal.x, 0, 40)
-    -- PlayerToConnectedPortal.y = Clamp(PlayerToConnectedPortal.y / 10, -15, 15)
-    -- PlayerToConnectedPortal.z = Clamp(PlayerToConnectedPortal.z / 10, -10, 10)
-
-    -- local camPos = self.aimat:TransformPointEntityToWorld(-PlayerToConnectedPortal)
-    -- self.camera:SetOrigin(camPos)
-
-    -- local angles = VectorToAngles( self.aimat:TransformPointEntityToWorld(PlayerToConnectedPortal) - self.aimat:GetOrigin() )
-    -- self.camera:SetQAngle(angles)
-
-    -- return TICKRATE
 end
 
 
