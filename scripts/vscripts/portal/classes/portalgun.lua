@@ -99,6 +99,9 @@ base.physicalEquipped = false
 ---Used to keep forced pickup entities in the same position relative to the hand when unequipped
 base.lastLocalPickupTransform = Vector()
 
+---Entity that the pickup item should look at
+base.lookAtEntity = nil
+
 local highlightPtfx = nil
 
 ---@type EntityHandle?
@@ -604,6 +607,14 @@ function base:UpdatePickupItemPosition(offset, immediately)
 end
 
 function base:GetPickupEntityLookDirection(ent)
+    if self.lookAtEntity then
+        if IsValidEntity(self.lookAtEntity) then
+            return (self.lookAtEntity:GetOrigin() - ent:GetOrigin()):Normalized()
+        else
+            self.lookAtEntity = nil
+        end
+    end
+
     -- Example of special rotation entities
     if ent:GetModelName() == "models/npcs/personality_sphere/sphere_physics.vmdl" then
         return (Player:EyePosition() - ent:GetOrigin()):Normalized()
@@ -670,6 +681,22 @@ function base:DropEntity(dontStopThink)
     self:SetGraphParameterBool("bTargeting", false)
     StopSoundEvent(SND_USE_LOOP, self)
     self:EnablePlayerCollisions()
+end
+
+---@param ent EntityHandle|string|nil
+function base:SetPickupLookAt(ent)
+    if ent ~= nil then
+        if type(ent) == "string" then
+            ent = Entities:FindByName(nil, ent)
+        end
+
+        if not IsValidEntity(ent) then
+            warn("Invalid pickup look at entity: " .. tostring(ent))
+            return
+        end
+    end
+
+    self.lookAtEntity = ent
 end
 
 function base:SetupInputs()
