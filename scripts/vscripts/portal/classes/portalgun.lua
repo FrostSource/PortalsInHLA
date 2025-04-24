@@ -63,6 +63,10 @@ base.pickupRange = 100
 ---Entity handle of the currently picked up entity.
 ---@type EntityHandle
 base.pickupEntity = nil
+---Hover distance for the current entity based on size
+base.pickupEntityDistance = 0
+---Hover offset for the current entity based on center point
+base.pickupEntityOffset = Vector()
 
 ---Stops the pickup ability until trigger is released.
 base.__disablePickupUntilTriggerRelease = false
@@ -455,9 +459,6 @@ function base:TryFirePortal(color)
     return false
 end
 
-local modPickupDistance = 0
-local modPickupOffset = Vector()
-
 ---Disable player collision with an entity.
 ---@param entity EntityHandle
 function base:DisablePlayerCollisionsWith(entity)
@@ -533,8 +534,8 @@ function base:GetPickupPosition()
     end
 
     return self:ShootPosition()
-        + (self:ShootForward() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
-        - modPickupOffset
+        + (self:ShootForward() * (self.pickupEntityDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
+        - self.pickupEntityOffset
 end
 
 ---Updates the position of the currently held item
@@ -658,8 +659,8 @@ function base:PickupEntity(entity)
     end
 
     -- Adjust the pickup distance based on the size of the entity
-    modPickupDistance = self.pickupEntity:GetBiggestBounding()
-    modPickupOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
+    self.pickupEntityDistance = self.pickupEntity:GetBiggestBounding()
+    self.pickupEntityOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
 
 end
 
