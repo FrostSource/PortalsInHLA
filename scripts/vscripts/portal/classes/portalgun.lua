@@ -78,6 +78,7 @@ base.finishedFiringAnimation = true
 
 base.__ptxBarrel = -1
 base.__ptxLight = -1
+base.__ptxPickup = -1
 
 base.__timeSinceLastFire = 0
 base.__lastUsedTime = 0
@@ -117,6 +118,7 @@ function base:Precache(context)
     debugprint_portalgun("PortalGun precaching")
     PrecacheResource("particle", "particles/portalgun_barrel.vpcf", context)
     PrecacheResource("particle", "particles/portalgun_light.vpcf", context)
+    PrecacheResource("particle", "particles/portalgun/portalgun_beam_holding_fp.vpcf", context)
     PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
     PrecacheResource("particle", PTX_PROJECTILE_BLUE, context)
     PrecacheResource("particle", PTX_PROJECTILE_ORANGE, context)
@@ -653,6 +655,16 @@ function base:PickupEntity(entity)
     -- Destroy old highlight
     self:DestroyHighlight()
 
+    -- Electric particle
+    if self.__ptxPickup ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxPickup, true)
+    end
+    self.__ptxPickup = ParticleManager:CreateParticle("particles/portalgun/portalgun_beam_holding_fp.vpcf", 1, self)
+    ParticleManager:SetParticleAlwaysSimulate(self.__ptxPickup)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 1, self, 5, "Arm1_attach3", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 2, self, 5, "Arm2_attach3", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 3, self, 5, "Arm3_attach3", Vector(0,0,0), true)
+
     -- Drop the item from the player's hands
     if Player:IsHolding(entity) then
         entity:Drop()
@@ -682,6 +694,11 @@ function base:DropEntity(dontStopThink)
     self:SetGraphParameterBool("bTargeting", false)
     StopSoundEvent(SND_USE_LOOP, self)
     self:EnablePlayerCollisions()
+
+    if self.__ptxPickup ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxPickup, true)
+        self.__ptxPickup = -1
+    end
 end
 
 ---@param ent EntityHandle|string|nil
