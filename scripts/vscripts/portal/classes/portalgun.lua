@@ -661,6 +661,7 @@ function base:PickupEntity(entity)
     end
     self.__ptxPickup = ParticleManager:CreateParticle("particles/portalgun/portalgun_beam_holding_fp.vpcf", 1, self)
     ParticleManager:SetParticleAlwaysSimulate(self.__ptxPickup)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 0, self, 5, "muzzle", Vector(0,0,0), true)
     ParticleManager:SetParticleControlEnt(self.__ptxPickup, 1, self, 5, "Arm1_attach3", Vector(0,0,0), true)
     ParticleManager:SetParticleControlEnt(self.__ptxPickup, 2, self, 5, "Arm2_attach3", Vector(0,0,0), true)
     ParticleManager:SetParticleControlEnt(self.__ptxPickup, 3, self, 5, "Arm3_attach3", Vector(0,0,0), true)
