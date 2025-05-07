@@ -398,9 +398,11 @@ function base:TryFirePortal(color)
         -- ParticleManager:SetParticleControlForward(pindex, 1, muzzleForward)
         -- ParticleManager:SetParticleControl(pindex, 5, color.color:ToDecimalVector())
         if portalIsBlue then
-            StartSoundEventFromPositionReliable("PortalGun.Shoot.Blue", muzzleOrigin)
+        --    StartSoundEventFromPositionReliable("PortalGun.Shoot.Blue", muzzleOrigin)
+			StartSoundEvent("PortalGun.Shoot.Blue", PortalManager.portalGun)
         else
-            StartSoundEventFromPositionReliable("PortalGun.Shoot.Orange", muzzleOrigin)
+        --    StartSoundEventFromPositionReliable("PortalGun.Shoot.Orange", muzzleOrigin)
+			StartSoundEvent("PortalGun.Shoot.Orange", PortalManager.portalGun)
         end
 
         local result = PortalManager:TracePortalableSurface(muzzleOrigin, muzzleForward, Player)
