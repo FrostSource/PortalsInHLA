@@ -282,6 +282,7 @@ function base:DetachFromHand()
         EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackEnable")
 
         self:DestroyGunParticles()
+		self:DropEntity(true)
 
         if not self.itemDropEnabled and self.pickupEntity ~= nil then
             self.lastLocalPickupTransform = Player.PrimaryHand:TransformPointWorldToEntity(self:GetPickupPosition())
