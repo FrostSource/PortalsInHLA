@@ -276,6 +276,9 @@ function base:DetachFromHand()
         local glove = Player.PrimaryHand:GetGlove()
         if glove then
             glove:SetRenderingEnabled(true)
+			for _,child in pairs(glove:GetChildrenMemSafe()) do
+				child:SetRenderingEnabled(true)
+			end
         end
 
         self.physicalEquipped = false
@@ -326,6 +329,9 @@ function base:AttachToHand(useSecondary)
         local glove = Player.PrimaryHand:GetGlove()
         if glove then
             glove:SetRenderingEnabled(false)
+			for _,child in pairs(glove:GetChildrenMemSafe()) do
+				child:SetRenderingEnabled(false)
+			end
         end
 
         self.physicalEquipped = true
