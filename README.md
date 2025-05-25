@@ -3,13 +3,13 @@ This mod creates functional portals in HLA. **IT IS NOT A STANDALONE MOD**; it m
 
 # To Use
 Place `maps/prefabs/portal/portalmanager_required.vmap` in your map.  Map-wise, this is the heart of the logic. You can use `maps\prefabs\portal_spawner.vmap` to create portals in specific spots (like before you get the portal gun in the games). To use the portalgun, add `maps\prefabs\portalgun.vmap` somewhere into the map. The gun will be attached to the player's right hand. There is a DoNotGive setting on the prefab if you wish to give the player the gun somewhere later on in the map. You can do this by sending a RunScriptCode input to !player with the parameter SendToConsole('portalgun_give')
-
+The portalgun can be physical, or non-physical. There is a checkbox on the portalgun prefab.
 
 ## Important Information:
 The Scripts folder needs to go to the `Half-Life Alyx/game/hlvr_Addons/YOURADDON/` folder, otherwise the scripts won't work.
+For portal 1 sounds, use the sounds and soundevents under the `vrportal` folders. For portal 2 sounds, use everything outside of the `vrportal` folders. 
 
-To restrict portalable surfaces, use the `OnlyFunc_BrushPortalable` setting on the PortalManager prefab, set a `PortalPrefix`, and place ALWAYS SOLID func_brush entities with the name you set as the prefix on the surfaces you wish to be portalable. 
-The brushes CAN have toggleable physics, but the brush needs to be solid for valid portal placement.
+To restrict portalable surfaces, use the `OnlyFunc_BrushPortalable` setting on the PortalManager prefab, set a `PortalPrefix`, and place func_brush entities with the name you set as the prefix on the surfaces you wish to be portalable. The brushes have to be solid for valid portal placement. Set them to ALWAYS_SOLID or toggle them manually, depending on your use-case. 
 
 
 ### Prefab infos:
