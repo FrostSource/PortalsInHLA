@@ -283,7 +283,7 @@
     {
         type = "hlvr_null"
     }
-// from game_sounds_animation
+// from game_sounds_animation, unused. You can get these sounds by extracting them from Portal 2's files easily.
 	portalexperiment.portalgun_chargeup = 
 	{
 		base = "Portal.base"
