@@ -676,7 +676,7 @@ local function listenEventWeaponSwitch(data)
     if data.item == "hand_use_controller" then
         Player.CurrentlyEquipped = PLAYER_WEAPON_HAND
     else
-        weaponHandle = Entities:FindBestMatching("", data.item, Player.PrimaryHand:GetPalmPosition(), 64)
+        weaponHandle = Entities:FindBestMatching("", data.item, Player.PrimaryHand:GetPalmPosition(), 256)
         if data.item == "hlvr_weapon_energygun" then
             Player.CurrentlyEquipped = PLAYER_WEAPON_ENERGYGUN
             Player.Items.weapons.energygun = weaponHandle
