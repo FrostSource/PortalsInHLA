@@ -1,0 +1,320 @@
+<!-- kv3 encoding:text:version{e21c7f3c-8a33-41c5-9977-a76d3a32aa0d} format:generic:version{7412167c-06e9-4698-aff2-e63eb59037e7} -->
+{
+// These are the sounds used in Portal 2 and in "The Courtesy Call" project.
+	Portal.base = 
+	{
+		type = "hlvr_default_3d"
+		use_hrtf = 1
+		sa_enabled = 1
+		// sa_pathing_enabled = 1
+		// sa_pathing_mix_level = 1
+		enable_spatial_blend = 1
+		voicegraph = "hlvr.hrtf_filter_dynamics"
+		preload_vsnds = 1
+		mixgroup = "World"
+	}
+	Portal.Open = //this is unused
+	{
+		type = "hlvr_null"
+	}
+	Portal.Open.Orange = 
+	{
+		type = "hlvr_start_multi"
+		soundevent_01 = "Portal.Open.OrangeLayer"
+		soundevent_02 = "Portal.Open.Layer"
+		use_01 = 1
+		use_02 = 1
+	}
+	Portal.Open.Blue = 
+	{
+		type = "hlvr_start_multi"
+		soundevent_01 = "Portal.Open.BlueLayer"
+		soundevent_02 = "Portal.Open.Layer"
+		use_01 = 1
+		use_02 = 1
+	}
+	Portal.Open.OrangeLayer = 
+	{
+		base = "Portal.base"
+		volume = .8
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files = 
+		[
+			"sounds/weapons/portalgun/portal_open_red_01.vsnd",
+			"sounds/weapons/portalgun/portal_open_red_02.vsnd",
+		]
+	}
+	Portal.Open.BlueLayer = 
+	{
+		base = "Portal.base"
+		volume = .4
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files = "sounds/weapons/portalgun/portal_open_blue_01.vsnd"
+	}
+	Portal.Open.Layer =
+	{
+		base = "Portal.base"
+		volume = .5
+		volume_rand_min = .3
+		volume_rand_max = .6
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files =
+		[
+			"sounds/weapons/portalgun/portal_open_red_rock_01.vsnd",
+			"sounds/weapons/portalgun/portal_open_red_rock_02.vsnd",
+		]
+	}
+	Portal.Close = 
+	{
+		base = "Portal.base"
+		vsnd_files =
+		[
+			"sounds/weapons/portalgun/portal_fizzle_01.vsnd",
+			"sounds/weapons/portalgun/portal_fizzle_02.vsnd",
+		]
+	}
+	Portal.Close.Orange = 
+	{
+		base = "Portal.base"
+		volume = .4
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files = "sounds/weapons/portalgun/portal_fizzle_01.vsnd"
+	}
+	Portal.Close.Blue = 
+	{
+		base = "Portal.base"
+		volume = .4
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files = "sounds/weapons/portalgun/portal_fizzle_02.vsnd"
+	}
+	Portal.Enter = 
+	{
+		base = "Portal.base"
+		volume = .3
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files =
+		[
+			"sounds/weapons/portalgun/portal_enter_01.vsnd",
+			"sounds/weapons/portalgun/portal_enter_02.vsnd",
+		]
+	}
+	Portal.Exit = 
+	{
+		base = "Portal.base"
+		volume = .1
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files =
+		[
+			"sounds/weapons/portalgun/portal_exit_01.vsnd",
+			"sounds/weapons/portalgun/portal_exit_02.vsnd",
+		]
+	}
+	PortalPlayer.Enter = 
+	{
+		base = "Portal.Enter"
+	}
+	PortalPlayer.Exit = 
+	{
+		base = "Portal.Exit"
+	}
+	PortalGun.base = 
+	{
+		type = "hlvr_default_3d"
+		use_hrtf = 1
+		sa_enabled = 1
+		// sa_pathing_enabled = 1
+		// sa_pathing_mix_level = 1
+		enable_spatial_blend = 1
+		voicegraph = "hlvr.hrtf_filter_dynamics"
+		mixgroup = "PlayerWeaponFire"
+		preload_vsnds = 1
+	}
+	PortalGun.Use = 
+	{
+		base = "PortalGun.base"
+		volume = .75
+		vsnd_files =
+		[
+			"sounds/player/object_use_01.vsnd",
+			"sounds/player/object_use_02.vsnd",
+		]
+	}
+	PortalGun.UseFailed = 
+	{
+		base = "PortalGun.base"
+		limiter_on = 1
+		limiter_match_type = 1
+		limiter_event_name = "PortalGun.UseFailed"
+		limiter_max = 1
+		limiter_stop_oldest = 1
+		limiter_match_entity = 1
+		vsnd_files = "sounds/player/object_use_failure_01.vsnd"
+	}
+	PortalGun.UseLoop = 
+	{
+		base = "PortalGun.base"
+		volume = .5
+	//	volume_fade_out = 3
+		limiter_on = 1
+		limiter_match_type = 1
+		limiter_event_name = "PortalGun.UseLoop"
+		limiter_max = 1
+		limiter_stop_oldest = 1
+		limiter_match_entity = 1
+		vsnd_files = "sounds/player/object_use_lp_01.vsnd"
+	}
+	PortalGun.UseStop = 
+	{
+		base = "PortalGun.base"
+		vsnd_files = "sounds/player/object_use_stop_01.vsnd"
+	}
+	PortalGun.Shoot.Orange =
+	{
+		base = "PortalGun.base"
+		pitch_rand_min = .05
+		pitch_rand_max = .05
+		vsnd_files =
+		[
+			"sounds/weapons/portalgun/wpn_portal_gun_fire_red_01.vsnd",
+			"sounds/weapons/portalgun/wpn_portal_gun_fire_red_02.vsnd",
+			"sounds/weapons/portalgun/wpn_portal_gun_fire_red_03.vsnd",
+		]
+	}
+	PortalGun.Shoot.Blue =
+	{
+		base = "PortalGun.base"
+		pitch_rand_min = -.05
+		pitch_rand_max = .05
+		vsnd_files =
+		[
+			"sounds/weapons/portalgun/wpn_portal_gun_fire_blue_01.vsnd",
+			"sounds/weapons/portalgun/wpn_portal_gun_fire_blue_02.vsnd",
+			"sounds/weapons/portalgun/wpn_portal_gun_fire_blue_03.vsnd",
+		]
+	}
+	PortalGun.Shoot.Fail =
+	{
+		type = "hlvr_start_multi"
+		soundevent_01 = "PortalGun.Shoot.FailLayer1"
+		soundevent_02 = "PortalGun.Shoot.FailLayer2"
+		use_01 = 1
+		use_02 = 1
+	}
+	PortalGun.Shoot.FailLayer1 =
+	{
+		base = "PortalGun.base"
+		pitch_rand_min = .05
+		pitch_rand_max = .05
+		vsnd_files = "sounds/weapon_ambient/portal_invalid_surface_swt_01.vsnd"
+	}
+	PortalGun.Shoot.FailLayer2 =
+	{
+		base = "PortalGun.base"
+		pitch_rand_min = .05
+		pitch_rand_max = .05
+		vsnd_files =
+		[
+			"sounds/weapons/portalgun/portal_invalid_surface_01.vsnd",
+			"sounds/weapons/portalgun/portal_invalid_surface_02.vsnd",
+			"sounds/weapons/portalgun/portal_invalid_surface_03.vsnd",
+			"sounds/weapons/portalgun/portal_invalid_surface_04.vsnd",
+		]
+	}
+	PortalGun.Equipped =
+	{
+		type = "hlvr_start_multi"
+		soundevent_01 = "PortalGun.EquippedLayer1"
+		soundevent_02 = "PortalGun.EquippedLayer2"
+		use_01 = 1
+		use_02 = 1
+	}
+	PortalGun.EquippedLayer1 =
+	{
+		base = "PortalGun.base"
+		vsnd_files = "sounds/weapon_ambient/wpn_portalgun_activation_01.vsnd"
+	}
+	PortalGun.EquippedLayer2 =
+	{
+		base = "PortalGun.base"
+		volume = .5
+		delay = .25
+		vsnd_files =
+		[
+			"sounds/world/robot_parts/robot_metal_pill_short_01.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_02.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_03.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_04.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_05.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_06.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_07.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_08.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_09.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_10.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_11.vsnd",
+			"sounds/world/robot_parts/robot_metal_pill_short_12.vsnd",
+		]
+	}
+	Portal.FizzlerShimmy =
+	{
+	base = "PortalGun.base"
+	pitch_rand_min = -.05
+	pitch_rand_max = .05
+	vsnd_files = "sounds/weapon_ambient/wpn_portal_fizzler_shimmy_01.vsnd"
+	}
+// not originally part of the vrportal sounds
+	Portal.Ambience = 
+	{
+		base = "Portal.base"
+		volume = .55
+		occlusion_scale = 1
+		mixgroup = "World"
+		volume_falloff_min = 250
+		volume_falloff_max = 300
+		vsnd_files = "sounds/weapon_ambient/wpn_portal_ambient_lp_01.vsnd"
+	}
+	Pistol.NoAmmo = 
+    {
+        type = "hlvr_null"
+    }
+// from game_sounds_animation
+	portalexperiment.portalgun_chargeup = 
+	{
+		base = "Portal.base"
+		volume = .85
+		voicegraph = "hlvr.hrtf_basic"
+		vsnd_files = "sounds/plats/platform_start_lp_01.vsnd"
+	}
+	portalexperiment.portalgun_fire = 
+	{
+		base = "PortalGun.base"
+		vsnd_files = "sounds/weapons/portalgun_shoot_red1.vsnd"
+	}
+	portalexperiment.portal_open = 
+	{
+		base = "Portal.base"
+		vsnd_files = "sounds/weapons/portal_open1.vsnd"
+	}
+	portalexperiment.portalgun_powerdown = 
+	{
+		base = "PortalGun.base"
+		volume = .85
+		vsnd_files = "sounds/weapons/portalGun_powerdown.vsnd"
+	}
+	portalexperiment.bot_enterportal = 
+	{
+		base = "Portal.base"
+		vsnd_files = "sounds/weapons/portal_enter2.vsnd"
+	}
+	portalexperiment.bot_exitportal = 
+	{
+		base = "Portal.base"
+		vsnd_files = "sounds/weapons/portal_exit2.vsnd"
+	}
+}
