@@ -63,6 +63,10 @@ base.pickupRange = 100
 ---Entity handle of the currently picked up entity.
 ---@type EntityHandle
 base.pickupEntity = nil
+---Hover distance for the current entity based on size
+base.pickupEntityDistance = 0
+---Hover offset for the current entity based on center point
+base.pickupEntityOffset = Vector()
 
 ---Stops the pickup ability until trigger is released.
 base.__disablePickupUntilTriggerRelease = false
@@ -74,6 +78,7 @@ base.finishedFiringAnimation = true
 
 base.__ptxBarrel = -1
 base.__ptxLight = -1
+base.__ptxPickup = -1
 
 base.__timeSinceLastFire = 0
 base.__lastUsedTime = 0
@@ -99,6 +104,9 @@ base.physicalEquipped = false
 ---Used to keep forced pickup entities in the same position relative to the hand when unequipped
 base.lastLocalPickupTransform = Vector()
 
+---Entity that the pickup item should look at
+base.lookAtEntity = nil
+
 local highlightPtfx = nil
 
 ---@type EntityHandle?
@@ -110,6 +118,7 @@ function base:Precache(context)
     debugprint_portalgun("PortalGun precaching")
     PrecacheResource("particle", "particles/portalgun_barrel.vpcf", context)
     PrecacheResource("particle", "particles/portalgun_light.vpcf", context)
+    PrecacheResource("particle", "particles/portalgun/portalgun_beam_holding_fp.vpcf", context)
     PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
     PrecacheResource("particle", PTX_PROJECTILE_BLUE, context)
     PrecacheResource("particle", PTX_PROJECTILE_ORANGE, context)
@@ -267,12 +276,16 @@ function base:DetachFromHand()
         local glove = Player.PrimaryHand:GetGlove()
         if glove then
             glove:SetRenderingEnabled(true)
+			for _,child in pairs(glove:GetChildrenMemSafe()) do
+				child:SetRenderingEnabled(true)
+			end
         end
 
         self.physicalEquipped = false
         EntFire(self, "_PortalGunPlayerProxy", "SetCanAttackEnable")
 
         self:DestroyGunParticles()
+		self:DropEntity(true)
 
         if not self.itemDropEnabled and self.pickupEntity ~= nil then
             self.lastLocalPickupTransform = Player.PrimaryHand:TransformPointWorldToEntity(self:GetPickupPosition())
@@ -316,6 +329,9 @@ function base:AttachToHand(useSecondary)
         local glove = Player.PrimaryHand:GetGlove()
         if glove then
             glove:SetRenderingEnabled(false)
+			for _,child in pairs(glove:GetChildrenMemSafe()) do
+				child:SetRenderingEnabled(false)
+			end
         end
 
         self.physicalEquipped = true
@@ -389,9 +405,11 @@ function base:TryFirePortal(color)
         -- ParticleManager:SetParticleControlForward(pindex, 1, muzzleForward)
         -- ParticleManager:SetParticleControl(pindex, 5, color.color:ToDecimalVector())
         if portalIsBlue then
-            StartSoundEventFromPositionReliable("PortalGun.Shoot.Blue", muzzleOrigin)
+        --    StartSoundEventFromPositionReliable("PortalGun.Shoot.Blue", muzzleOrigin)
+			StartSoundEvent("PortalGun.Shoot.Blue", PortalManager.portalGun)
         else
-            StartSoundEventFromPositionReliable("PortalGun.Shoot.Orange", muzzleOrigin)
+        --    StartSoundEventFromPositionReliable("PortalGun.Shoot.Orange", muzzleOrigin)
+			StartSoundEvent("PortalGun.Shoot.Orange", PortalManager.portalGun)
         end
 
         local result = PortalManager:TracePortalableSurface(muzzleOrigin, muzzleForward, Player)
@@ -451,9 +469,6 @@ function base:TryFirePortal(color)
     -- Buttons aren't ready to fire
     return false
 end
-
-local modPickupDistance = 0
-local modPickupOffset = Vector()
 
 ---Disable player collision with an entity.
 ---@param entity EntityHandle
@@ -530,8 +545,8 @@ function base:GetPickupPosition()
     end
 
     return self:ShootPosition()
-        + (self:ShootForward() * (modPickupDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
-        - modPickupOffset
+        + (self:ShootForward() * (self.pickupEntityDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
+        - self.pickupEntityOffset
 end
 
 ---Updates the position of the currently held item
@@ -604,6 +619,14 @@ function base:UpdatePickupItemPosition(offset, immediately)
 end
 
 function base:GetPickupEntityLookDirection(ent)
+    if self.lookAtEntity then
+        if IsValidEntity(self.lookAtEntity) then
+            return (self.lookAtEntity:GetOrigin() - ent:GetOrigin()):Normalized()
+        else
+            self.lookAtEntity = nil
+        end
+    end
+
     -- Example of special rotation entities
     if ent:GetModelName() == "models/npcs/personality_sphere/sphere_physics.vmdl" then
         return (Player:EyePosition() - ent:GetOrigin()):Normalized()
@@ -641,14 +664,25 @@ function base:PickupEntity(entity)
     -- Destroy old highlight
     self:DestroyHighlight()
 
+    -- Electric particle
+    if self.__ptxPickup ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxPickup, true)
+    end
+    self.__ptxPickup = ParticleManager:CreateParticle("particles/portalgun/portalgun_beam_holding_fp.vpcf", 1, self)
+    ParticleManager:SetParticleAlwaysSimulate(self.__ptxPickup)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 0, self, 5, "muzzle", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 1, self, 5, "Arm1_attach3", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 2, self, 5, "Arm2_attach3", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 3, self, 5, "Arm3_attach3", Vector(0,0,0), true)
+
     -- Drop the item from the player's hands
     if Player:IsHolding(entity) then
         entity:Drop()
     end
 
     -- Adjust the pickup distance based on the size of the entity
-    modPickupDistance = self.pickupEntity:GetBiggestBounding()
-    modPickupOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
+    self.pickupEntityDistance = self.pickupEntity:GetBiggestBounding()
+    self.pickupEntityOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
 
 end
 
@@ -670,6 +704,27 @@ function base:DropEntity(dontStopThink)
     self:SetGraphParameterBool("bTargeting", false)
     StopSoundEvent(SND_USE_LOOP, self)
     self:EnablePlayerCollisions()
+
+    if self.__ptxPickup ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxPickup, true)
+        self.__ptxPickup = -1
+    end
+end
+
+---@param ent EntityHandle|string|nil
+function base:SetPickupLookAt(ent)
+    if ent ~= nil then
+        if type(ent) == "string" then
+            ent = Entities:FindByName(nil, ent)
+        end
+
+        if not IsValidEntity(ent) then
+            warn("Invalid pickup look at entity: " .. tostring(ent))
+            return
+        end
+    end
+
+    self.lookAtEntity = ent
 end
 
 function base:SetupInputs()
