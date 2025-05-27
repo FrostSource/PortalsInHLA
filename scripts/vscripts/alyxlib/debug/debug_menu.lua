@@ -454,33 +454,36 @@ end)
 
 -- AlyxLib defaults
 
-DebugMenu:AddCategory("alyxlib", "AlyxLib")
+if Convars:GetInt("developer") > 0 then
 
-DebugMenu:AddToggle("alyxlib", "alyxlib_noclip_vr", "NoClip VR", "noclip_vr")
+    DebugMenu:AddCategory("alyxlib", "AlyxLib")
 
-DebugMenu:AddToggle("alyxlib", "alyxlib_godmode", "God Mode", "god")
+    DebugMenu:AddToggle("alyxlib", "alyxlib_noclip_vr", "NoClip VR", "noclip_vr")
 
-local isRecordingDemo = false
-local currentDemo = ""
+    DebugMenu:AddToggle("alyxlib", "alyxlib_godmode", "God Mode", "god")
 
-DebugMenu:AddButton("alyxlib", "alyxlib_demo_recording", "Start Recording Demo", function()
-    if isRecordingDemo then
-        SendToConsole("stop")
-        currentDemo = ""
-        isRecordingDemo = false
-        DebugMenu:SetItemText("alyxlib", "alyxlib_demo_recording", "Start Recording Demo")
-        -- Panorama:Send(DebugMenu.panel, "SetItemText", "alyxlib", "alyxlib_demo_recording", "Start Recording Demo")
-    else
-        -- Panorama:Send(DebugMenu.panel, "SetItemText", "alyxlib", "alyxlib_demo_recording", "Stop Recording Demo")
-        local localtime = LocalTime()
-        -- remove all whitespace and slashes`
-        local sanitizedMap = GetMapName():gsub("%s+", ""):gsub("/", "_")
-        currentDemo = "demo_" .. sanitizedMap .. "_" .. localtime.Hours .. "-" .. localtime.Minutes .. "-" .. localtime.Seconds
-        SendToConsole("record " .. currentDemo)
-        isRecordingDemo = true
-        DebugMenu:SetItemText("alyxlib", "alyxlib_demo_recording", "Stop Recording Demo")
-        -- Player:Delay(function()
-        --     DebugMenu:Refresh()
-        -- end, 0.5)
-    end
-end)
+    local isRecordingDemo = false
+    local currentDemo = ""
+
+    DebugMenu:AddButton("alyxlib", "alyxlib_demo_recording", "Start Recording Demo", function()
+        if isRecordingDemo then
+            SendToConsole("stop")
+            currentDemo = ""
+            isRecordingDemo = false
+            DebugMenu:SetItemText("alyxlib", "alyxlib_demo_recording", "Start Recording Demo")
+            -- Panorama:Send(DebugMenu.panel, "SetItemText", "alyxlib", "alyxlib_demo_recording", "Start Recording Demo")
+        else
+            -- Panorama:Send(DebugMenu.panel, "SetItemText", "alyxlib", "alyxlib_demo_recording", "Stop Recording Demo")
+            local localtime = LocalTime()
+            -- remove all whitespace and slashes`
+            local sanitizedMap = GetMapName():gsub("%s+", ""):gsub("/", "_")
+            currentDemo = "demo_" .. sanitizedMap .. "_" .. localtime.Hours .. "-" .. localtime.Minutes .. "-" .. localtime.Seconds
+            SendToConsole("record " .. currentDemo)
+            isRecordingDemo = true
+            DebugMenu:SetItemText("alyxlib", "alyxlib_demo_recording", "Stop Recording Demo")
+            -- Player:Delay(function()
+            --     DebugMenu:Refresh()
+            -- end, 0.5)
+        end
+    end)
+end
