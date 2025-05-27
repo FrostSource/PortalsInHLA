@@ -45,7 +45,7 @@ function base:Teleport(offset)
         self.target:SetLocalOrigin(Vector(64,0,0))
     end
 
-    landmark:SetLocalOrigin(Vector(10 + offset,0,0))
+    landmark:SetLocalOrigin(Vector(32 + offset,0,0))
     self:Enable()
     -- self:EntFire("Enable")
     self:Delay(function()
