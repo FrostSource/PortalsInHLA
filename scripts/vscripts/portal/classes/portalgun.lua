@@ -254,9 +254,6 @@ function base:InitPhysical()
 
     ---@param params PlayerEventWeaponSwitch
     ListenToPlayerEvent("weapon_switch", function (params)
-        print("Weapon switch", params.item_class)
-        print("Is equipped", self.physicalEquipped)
-        print(Time())
         if params.item == self then
             self:AttachToHand()
             StartSoundEvent(SND_EQUIP, self)
