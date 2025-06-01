@@ -195,6 +195,11 @@ function base:DestroyGunParticles()
         ParticleManager:DestroyParticle(self.__ptxLight, true)
         self.__ptxLight = -1
     end
+
+    if self.__ptxPickup ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxPickup, true)
+        self.__ptxPickup = -1
+    end
 end
 
 ---@param color Vector
