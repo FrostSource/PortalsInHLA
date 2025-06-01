@@ -458,7 +458,8 @@ if Convars:GetInt("developer") > 0 then
 
     DebugMenu:AddCategory("alyxlib", "AlyxLib")
 
-    DebugMenu:AddToggle("alyxlib", "alyxlib_noclip_vr", "NoClip VR", "noclip_vr")
+    -- Moved to portal2.debug.portal2_debug_menu.lua
+    -- DebugMenu:AddToggle("alyxlib", "alyxlib_noclip_vr", "NoClip VR", "noclip_vr")
 
     DebugMenu:AddToggle("alyxlib", "alyxlib_godmode", "God Mode", "god")
 
