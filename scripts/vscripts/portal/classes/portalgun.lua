@@ -682,6 +682,9 @@ function base:PickupEntity(entity)
         entity:Drop()
     end
 
+    -- Hopefully improve collision accuracy
+    entity:SetDynamicVsDynamicContinuous(true)
+
     -- Adjust the pickup distance based on the size of the entity
     self.pickupEntityDistance = self.pickupEntity:GetBiggestBounding()
     self.pickupEntityOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
@@ -696,6 +699,8 @@ function base:DropEntity(dontStopThink)
     if not self.itemDropEnabled then
         return
     end
+
+    self.pickupEntity:SetDynamicVsDynamicContinuous(true)
 
     self.pickupEntity = nil
     lastNearestPickupEnt = nil
