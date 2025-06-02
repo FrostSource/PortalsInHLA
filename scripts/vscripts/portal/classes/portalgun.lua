@@ -700,7 +700,9 @@ function base:DropEntity(dontStopThink)
         return
     end
 
-    self.pickupEntity:SetDynamicVsDynamicContinuous(true)
+    if IsValidEntity(self.pickupEntity) then
+        self.pickupEntity:SetDynamicVsDynamicContinuous(true)
+    end
 
     self.pickupEntity = nil
     lastNearestPickupEnt = nil
