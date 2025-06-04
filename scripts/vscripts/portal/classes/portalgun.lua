@@ -289,8 +289,13 @@ function base:DetachFromHand()
         self:DestroyGunParticles()
 		self:DropEntity(true)
 
+        -- If item drop is disabled we need to keep thinking
+        -- so the entity will remain attached to the gun/hand
         if not self.itemDropEnabled and self.pickupEntity ~= nil then
             self.lastLocalPickupTransform = Player.PrimaryHand:TransformPointWorldToEntity(self:GetPickupPosition())
+            -- Stop the loop sound until re-equip
+            ---@TODO If we want the sound playing from the hand we need to start a new one
+            StopSoundEvent(SND_USE_LOOP, self)
         else
             self:PauseThink()
         end
@@ -320,6 +325,12 @@ function base:AttachToHand(useSecondary)
     end
 
     local hand = useSecondary and Player.SecondaryHand or Player.PrimaryHand
+
+    -- If an entity is being held (probably because dropping is disabled)
+    -- start the loop sound again
+    if self.pickupEntity ~= nil then
+        StartSoundEvent(SND_USE_LOOP, self)
+    end
 
     if Convars:GetBool("portalgun_is_physical") then
         -- This should only be used to force the gun into the hand
