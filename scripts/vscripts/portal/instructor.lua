@@ -26,7 +26,6 @@ function this:ShowBluePortalHint()
     -- Teach Grenade has 10s timeout
     -- SendToConsole("gameinstructor_teach_lesson \"Lesson - Teach Grenade\"")
     SendToConsole("gameinstructor_teach_lesson \"Lesson - Teach First Reload Single Controller\"")
-    print('hint done')
 end
 
 ---
@@ -56,6 +55,12 @@ function this:ShowPortalGunPickupHint()
     -- end, 0)
 end
 
+function this:SetupCustomText()
+    userLanguage = Convars:GetStr("cl_language")
+    -- This is required to show custom hint text
+    SendToConsole("set_vgui_language " .. userLanguage)
+end
+
 ---
 ---Disable all instructor hints.
 ---Useful for removing Alyx hints.
@@ -68,10 +73,8 @@ end
 ---Enable all instructor hints.
 ---
 function this:EnableHints()
-    userLanguage = Convars:GetStr("cl_language")
     Convars:SetBool("gameinstructor_enable", true)
-    -- This is required to show custom hint text
-    SendToConsole("set_vgui_language " .. userLanguage)
+    this:SetupCustomText()
 end
 
 ---
