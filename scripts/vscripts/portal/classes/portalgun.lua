@@ -327,9 +327,9 @@ function base:AttachToHand(useSecondary)
     local hand = useSecondary and Player.SecondaryHand or Player.PrimaryHand
 
     -- If an entity is being held (probably because dropping is disabled)
-    -- start the loop sound again
+    -- start the loop sound and particles again
     if self.pickupEntity ~= nil then
-        StartSoundEvent(SND_USE_LOOP, self)
+        self:StartPickupSoundAndFx()
     end
 
     if Convars:GetBool("portalgun_is_physical") then
@@ -650,6 +650,23 @@ function base:GetPickupEntityLookDirection(ent)
     end
 end
 
+---
+---Starts the pickup sound and particle effects.
+---
+function base:StartPickupSoundAndFx()
+    StartSoundEvent(SND_USE_LOOP, self)
+    -- Electric particle
+    if self.__ptxPickup ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxPickup, true)
+    end
+    self.__ptxPickup = ParticleManager:CreateParticle("particles/portalgun/portalgun_beam_holding_fp.vpcf", 1, self)
+    ParticleManager:SetParticleAlwaysSimulate(self.__ptxPickup)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 0, self, 5, "muzzle", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 1, self, 5, "Arm1_attach3", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 2, self, 5, "Arm2_attach3", Vector(0,0,0), true)
+    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 3, self, 5, "Arm3_attach3", Vector(0,0,0), true)
+end
+
 ---Forces the gun to pick up an entity
 ---@param entity EntityHandle|nil # Pass nil as a failed pickup
 function base:PickupEntity(entity)
@@ -666,7 +683,7 @@ function base:PickupEntity(entity)
     self.pickupEntity = entity
 
     StartSoundEventFromPositionReliable(SND_USE, self:GetAbsOrigin())
-    StartSoundEvent(SND_USE_LOOP, self)
+    
 
     -- Fire output for hammer use
     entity:FireOutput("OnPhysGunOnlyPickup", self, self, nil, 0)
@@ -677,16 +694,7 @@ function base:PickupEntity(entity)
     -- Destroy old highlight
     self:DestroyHighlight()
 
-    -- Electric particle
-    if self.__ptxPickup ~= -1 then
-        ParticleManager:DestroyParticle(self.__ptxPickup, true)
-    end
-    self.__ptxPickup = ParticleManager:CreateParticle("particles/portalgun/portalgun_beam_holding_fp.vpcf", 1, self)
-    ParticleManager:SetParticleAlwaysSimulate(self.__ptxPickup)
-    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 0, self, 5, "muzzle", Vector(0,0,0), true)
-    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 1, self, 5, "Arm1_attach3", Vector(0,0,0), true)
-    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 2, self, 5, "Arm2_attach3", Vector(0,0,0), true)
-    ParticleManager:SetParticleControlEnt(self.__ptxPickup, 3, self, 5, "Arm3_attach3", Vector(0,0,0), true)
+    self:StartPickupSoundAndFx()
 
     -- Drop the item from the player's hands
     if Player:IsHolding(entity) then
