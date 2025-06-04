@@ -307,7 +307,6 @@
 					},
 					{
 						_class = "PhysicsShapeCapsule"
-						name = "_"
 						parent_bone = "leftarm_1"
 						surface_prop = "default"
 						collision_prop = "default"
@@ -323,6 +322,144 @@
 						radius = 0.5
 						point0 = [ 0.0, 0.0, 0.0 ]
 						point1 = [ 1.5, 0.0, 0.0 ]
+					},
+				]
+			},
+			{
+				_class = "GameDataList"
+				children = 
+				[
+					{
+						_class = "GenericGameData"
+						name = "root1"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "root"
+							radius = 3.5
+							point0 = [ 5.00917, 0.0, 2.11071 ]
+							point1 = [ 5.00187, 0.0, 8.86029 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "root2"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "root"
+							radius = 3.8
+							point0 = [ 5.80015, 0.0, -7.73785 ]
+							point1 = [ 5.79327, 0.0, -2.06203 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "upperarm"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "upperarm"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 2.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "upperarm_1"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "upperarm_1"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 3.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "upperarm_2"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "upperarm_2"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 1.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "rightarm"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "rightarm"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 2.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "rightarm_1"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "rightarm_1"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 3.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "rightarm_2"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "rightarm_2"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 1.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "leftarm"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "leftarm"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 2.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "leftarm_1"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "leftarm_1"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 3.5, 0.0, 0.0 ]
+						}
+					},
+					{
+						_class = "GenericGameData"
+						name = "leftarm_2"
+						game_class = "ao_proxy_capsule"
+						game_keys = 
+						{
+							bonename = "leftarm_2"
+							radius = 0.5
+							point0 = [ 0.0, 0.0, 0.0 ]
+							point1 = [ 1.5, 0.0, 0.0 ]
+						}
 					},
 				]
 			},
