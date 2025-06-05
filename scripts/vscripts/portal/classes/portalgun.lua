@@ -123,6 +123,7 @@ function base:Precache(context)
     PrecacheResource("particle", PTX_PROJECTILE_BLUE, context)
     PrecacheResource("particle", PTX_PROJECTILE_ORANGE, context)
     PrecacheResource("particle", "particles/portals/portal_close.vpcf", context)
+    PrecacheResource("particle", "particles/vortigaunt_fx/vort_energy_hand_residual.vpcf", context)
     -- for debugging
     PrecacheModel("models/editor/point_aimat.vmdl", context)
     PrecacheModel("models/effects/cube_empty.vmdl", context)
@@ -296,6 +297,10 @@ function base:DetachFromHand()
             -- Stop the loop sound until re-equip
             ---@TODO If we want the sound playing from the hand we need to start a new one
             StopSoundEvent(SND_USE_LOOP, self)
+            -- Vort particle (should always be -1 here)
+            self.__ptxPickup = ParticleManager:CreateParticle("particles/vortigaunt_fx/vort_energy_hand_residual.vpcf", 0, Player)
+            ParticleManager:SetParticleControlEnt(self.__ptxPickup, 0, Player.PrimaryHand, PATTACH_POINT_FOLLOW, "vr_palm", Vector(), true)
+            ParticleManager:SetParticleControlEnt(self.__ptxPickup, 1, Player.PrimaryHand, PATTACH_POINT_FOLLOW, "vr_palm", Vector(), true)
         else
             self:PauseThink()
         end
