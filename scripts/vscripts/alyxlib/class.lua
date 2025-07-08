@@ -1,5 +1,5 @@
 --[[
-    v2.3.0
+    v2.3.1
     https://github.com/FrostSource/alyxlib
 
     If not using `vscripts/alyxlib/core.lua`, load this file at game start using the following line:
@@ -74,7 +74,7 @@
     end
     ```
 ]]
-local version = "v2.3.0"
+local version = "v2.3.1"
 
 require "alyxlib.storage"
 require "alyxlib.globals"
@@ -301,9 +301,16 @@ end
 function inherit(script, entity)
     local fenv = entity or getfenv(2)
     if fenv.thisEntity == nil then
-        fenv = getfenv(3)
-        if fenv.thisEntity == nil then
-            error("Could not inherit '"..script.."' because thisEntity could not be found!")
+        -- If given exact entity, get scope of it
+        if IsEntity(entity) then
+            ---@cast entity -nil
+            fenv = entity:GetOrCreatePrivateScriptScope()
+        else
+            -- Check further up environment
+            fenv = getfenv(3)
+            if fenv.thisEntity == nil then
+                error("Could not inherit '"..tostring(script).."' because thisEntity could not be found!")
+            end
         end
     end
     local self = fenv.thisEntity

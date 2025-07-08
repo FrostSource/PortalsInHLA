@@ -1,11 +1,11 @@
 --[[
-    v2.1.3
+    v2.2.0
     https://github.com/FrostSource/alyxlib
 
     
 ]]
 
-local version = "v2.1.3"
+local version = "v2.2.0"
 
 ---@class __PlayerRegisteredEventData
 ---@field callback function
@@ -108,7 +108,9 @@ local player_weapon_to_ammotype =
 local function savePlayerData()
     Storage.SaveTable(Player, "PlayerItems", Player.Items)
 
+    -- Weapons aren't re-equipped on load so we need to save this
     Storage.SaveString(Player, "PlayerCurrentlyEquipped", Player.CurrentlyEquipped)
+
     if Player and Player.LeftHand then
         Storage.SaveEntity(Player, "LeftWristItem", Player.LeftHand.WristItem)
     end
@@ -121,6 +123,7 @@ local function loadPlayerData()
     Player.Items = Storage.LoadTable(Player, "PlayerItems", Player.Items)
 
     Player.CurrentlyEquipped = Storage.LoadString(Player, "PlayerCurrentlyEquipped", Player.CurrentlyEquipped)
+
     if Player and Player.LeftHand then
         Player.LeftHand.WristItem = Storage.LoadEntity(Player, "LeftWristItem", Player.LeftHand.WristItem)
     end
@@ -276,6 +279,8 @@ local function listenEventItemPickup(data)
     local handId = Util.GetHandIdFromTip(data.vr_tip_attachment)
     local hand = Player.Hands[handId + 1]
     local otherhand = Player.Hands[(1 - handId) + 1]
+
+    Player.LastGrabHand = hand
 
     ---@type EntityHandle
     local ent_held
@@ -676,7 +681,7 @@ local function listenEventWeaponSwitch(data)
     if data.item == "hand_use_controller" then
         Player.CurrentlyEquipped = PLAYER_WEAPON_HAND
     else
-        weaponHandle = Entities:FindBestMatching("", data.item, Player.PrimaryHand:GetPalmPosition(), 256)
+        weaponHandle = Entities:FindBestMatching("", data.item, Player.PrimaryHand:GetPalmPosition(), 1024)
         if data.item == "hlvr_weapon_energygun" then
             Player.CurrentlyEquipped = PLAYER_WEAPON_ENERGYGUN
             Player.Items.weapons.energygun = weaponHandle
@@ -700,6 +705,11 @@ local function listenEventWeaponSwitch(data)
     end
 
     Player:UpdateWeaponsExistence()
+
+    -- This event can fire before the player has a hand
+    if Player.PrimaryHand then
+        Player.PrimaryHand.ItemHeld = weaponHandle
+    end
 
     savePlayerData()
 
