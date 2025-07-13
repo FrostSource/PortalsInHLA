@@ -146,14 +146,14 @@ function base:OnReady(loaded)
         self:AnimGraphListener(tagName, status)
     end)
 
-    -- Default current portal color
-    if self.__lastFiredColor == nil then
-        if self.bluePortalEnabled then
-            self.__lastFiredColor = PortalManager.colors.blue
-        elseif self.orangePortalEnabled then
-            self.__lastFiredColor = PortalManager.colors.orange
-        end
-    end
+    -- -- Default current portal color
+    -- if self.__lastFiredColor == nil then
+    --     if self.bluePortalEnabled then
+    --         self.__lastFiredColor = PortalManager.colors.blue
+    --     elseif self.orangePortalEnabled then
+    --         self.__lastFiredColor = PortalManager.colors.orange
+    --     end
+    -- end
 
     -- Update the global handle
     PortalManager.portalGun = self
@@ -365,7 +365,6 @@ function base:AttachToHand(useSecondary)
         -- StartSoundEvent(SND_EQUIP, self)
 
         -- Only show portal colors if the gun was fired
-        ---@TODO Is this desired?
         if self.__lastFiredColor ~= nil then
             self:CreateGunParticles()
         end
@@ -412,8 +411,15 @@ function base:TryFirePortal(color)
 
         self.hand:FireHapticPulse(1)
 
-        self:SetGunPortalParticlesColor(color.color:ToDecimalVector())
         self.__lastFiredColor = color
+
+        -- self.__ptxBarrel & self.__ptxLight should always exist at the same time
+        -- so it should be safe to only check one
+        if self.__ptxBarrel == -1 then
+            self:CreateGunParticles()
+        else
+            self:SetGunPortalParticlesColor(color.color:ToDecimalVector())
+        end
 
         debugprint_portalgun("Portal gun trying to fire portal", color)
 
