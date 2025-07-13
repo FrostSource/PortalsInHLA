@@ -915,6 +915,17 @@ function base:DestroyHighlight(immediately)
     end
 end
 
+---Refreshes the current highlight by destroying and recreating it.
+---This is used in map logic to update the highlight color when a cube changes skin.
+function base:RefreshHighlight()
+    if not IsEntity(lastNearestPickupEnt, true) then
+        return warn("Gun did not have a previous pickup entity to refresh the highlight!")
+    end
+
+    self:DestroyHighlight(true)
+    self:CreateHighlight(lastNearestPickupEnt)
+end
+
 ---Plays fizzle effects if at least one portal exists
 function base:Fizzle()
     if PortalManager:IsPortalOpen(PortalManager.colors.blue)
