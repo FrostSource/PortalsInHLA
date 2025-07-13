@@ -701,7 +701,7 @@ function base:PickupEntity(entity)
     self.pickupEntity = entity
 
     StartSoundEventFromPositionReliable(SND_USE, self:GetAbsOrigin())
-    
+
 
     -- Fire output for hammer use
     entity:FireOutput("OnPhysGunOnlyPickup", self, self, nil, 0)
@@ -924,6 +924,10 @@ end
 ---Refreshes the current highlight by destroying and recreating it.
 ---This is used in map logic to update the highlight color when a cube changes skin.
 function base:RefreshHighlight()
+    if self.pickupEntity ~= nil then
+        return
+    end
+
     if not IsEntity(lastNearestPickupEnt, true) then
         return warn("Gun did not have a previous pickup entity to refresh the highlight!")
     end
