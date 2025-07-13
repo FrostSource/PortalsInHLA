@@ -908,7 +908,7 @@ function base:CreateHighlight(entityToHighlight)
         end
     else
         -- Default color when no portals are active
-        ParticleManager:SetParticleControl(highlightPtfx, 8, Vector(0.7, 0.8, 0.9))
+        ParticleManager:SetParticleControl(highlightPtfx, 8, Vector(1.0, 1.0, 1.0))
     end
 end
 
