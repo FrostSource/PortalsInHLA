@@ -183,11 +183,12 @@ function base:CreateGunParticles()
     ParticleManager:SetParticleControl(self.__ptxLight, 5, Vector(0,0.4,1))
 
     if self.__lastFiredColor ~= nil then
-        self:SetGunParticlesColor(self.__lastFiredColor.color:ToDecimalVector())
+        self:SetGunPortalParticlesColor(self.__lastFiredColor.color:ToDecimalVector())
     end
 end
 
-function base:DestroyGunParticles()
+---Destroys the coloured particles showing which portal was shot last.
+function base:DestroyGunPortalParticles()
     if self.__ptxBarrel ~= -1 then
         ParticleManager:DestroyParticle(self.__ptxBarrel, true)
         self.__ptxBarrel = -1
@@ -196,6 +197,11 @@ function base:DestroyGunParticles()
         ParticleManager:DestroyParticle(self.__ptxLight, true)
         self.__ptxLight = -1
     end
+end
+
+---Destroys all particles existing on the gun.
+function base:DestroyGunParticles()
+    self:DestroyGunPortalParticles()
 
     if self.__ptxPickup ~= -1 then
         ParticleManager:DestroyParticle(self.__ptxPickup, true)
@@ -203,8 +209,9 @@ function base:DestroyGunParticles()
     end
 end
 
+---Sets the colour of the particles that show the last portal shot.
 ---@param color Vector
-function base:SetGunParticlesColor(color)
+function base:SetGunPortalParticlesColor(color)
     if self.__ptxBarrel ~= -1 then
         ParticleManager:SetParticleControl(self.__ptxBarrel, 5, color)
     end
@@ -405,7 +412,7 @@ function base:TryFirePortal(color)
 
         self.hand:FireHapticPulse(1)
 
-        self:SetGunParticlesColor(color.color:ToDecimalVector())
+        self:SetGunPortalParticlesColor(color.color:ToDecimalVector())
         self.__lastFiredColor = color
 
         debugprint_portalgun("Portal gun trying to fire portal", color)
@@ -908,9 +915,17 @@ function base:DestroyHighlight(immediately)
     end
 end
 
----Plays the fizzle animation
+---Plays fizzle effects if at least one portal exists
 function base:Fizzle()
-    self:SetGraphParameterBool("bFizzle", true)
+    if PortalManager:IsPortalOpen(PortalManager.colors.blue)
+    or PortalManager:IsPortalOpen(PortalManager.colors.orange)
+    then
+        self:SetGraphParameterBool("bFizzle", true)
+        if Player.PrimaryHand then
+            Player.PrimaryHand:FireHapticPulse(2)
+        end
+        self:DestroyGunPortalParticles()
+    end
 end
 
 function base:ShootPosition()
