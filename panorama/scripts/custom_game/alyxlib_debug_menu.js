@@ -105,10 +105,10 @@ class Category
         this.content = $.CreatePanel("Panel", this.panel, `${this.id}_content`);
         this.content.AddClass("content");
 
-        // Create category button
-        this.button = CreateDebugMenuButton($("#CategoryBar"), () => SetCategoryVisible(this.id), "CategoryButton", `${this.id}_button`);
-        let label = $.CreatePanel("Label", this.button, `${this.id}_label`);
-        label.text = this.name;
+        // // Create category button
+        // this.button = CreateDebugMenuButton($("#CategoryBar"), () => SetCategoryVisible(this.id), "CategoryButton", `${this.id}_button`);
+        // let label = $.CreatePanel("Label", this.button, `${this.id}_label`);
+        // label.text = this.name;
     }
 
     /**
