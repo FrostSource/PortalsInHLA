@@ -946,6 +946,7 @@ function base:Fizzle()
             Player.PrimaryHand:FireHapticPulse(2)
         end
         self:DestroyGunPortalParticles()
+        self.__lastFiredColor = nil
     end
 end
 
