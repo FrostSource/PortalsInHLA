@@ -125,12 +125,12 @@ class Category
         if (visible)
         {
             this.panel.AddClass("Visible");
-            this.button.AddClass("Selected");
+            // this.button.AddClass("Selected");
         }
         else
         {
             this.panel.RemoveClass("Visible");
-            this.button.RemoveClass("Selected");
+            // this.button.RemoveClass("Selected");
         }
     }
 
@@ -404,6 +404,8 @@ function CreateCategory(id, name)
     let category = new Category(id, name);
 
     categories.push(category);
+
+    $.Msg("currentlySelectedCategory == null", currentlySelectedCategory == null);
 
     if (currentlySelectedCategory == null)
         SetCategoryVisible(category.id);
