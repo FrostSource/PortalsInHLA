@@ -892,24 +892,31 @@ function base:CreateHighlight(entityToHighlight)
     ParticleManager:SetParticleControl(highlightPtfx, 1, Vector(width, zoffset, height))
     ParticleManager:SetParticleControl(highlightPtfx, 4, Vector(scale, scale, scale))
 
+    -- Default color when no portals are active
+    local color = Vector(1.0, 1.0, 1.0)
+
+    ---@NOTE Highlight colors are slightly different than portal colors to make them stand out differently
+
+    -- Box is highlighted based on its skin
     if entityToHighlight:GetModelName() == "models/props/metal_box_dirty.vmdl" then
+        -- 722709575 is the activated skin
         if entityToHighlight:GetMaterialGroupHash() == 722709575 then
-            ParticleManager:SetParticleControl(highlightPtfx, 8, HIGHLIGHT_COLOR_ORANGE:ToDecimalVector())
-            return
+            color = HIGHLIGHT_COLOR_ORANGE:ToDecimalVector()
+        else
+            color = HIGHLIGHT_COLOR_BLUE:ToDecimalVector()
+        end
+    else
+        local lastCol = self.__lastFiredColor
+        if lastCol ~= nil then
+            if lastCol.name == "blue" then
+                color = HIGHLIGHT_COLOR_BLUE:ToDecimalVector()
+            elseif lastCol.name == "orange" then
+                color = HIGHLIGHT_COLOR_ORANGE:ToDecimalVector()
+            end
         end
     end
 
-    local lastCol = self.__lastFiredColor
-    if lastCol ~= nil then
-        if lastCol.name == "blue" then
-            ParticleManager:SetParticleControl(highlightPtfx, 8, HIGHLIGHT_COLOR_BLUE:ToDecimalVector())
-        elseif lastCol.name == "orange" then
-            ParticleManager:SetParticleControl(highlightPtfx, 8, HIGHLIGHT_COLOR_ORANGE:ToDecimalVector())
-        end
-    else
-        -- Default color when no portals are active
-        ParticleManager:SetParticleControl(highlightPtfx, 8, Vector(1.0, 1.0, 1.0))
-    end
+    ParticleManager:SetParticleControl(highlightPtfx, 8, color)
 end
 
 ---Destroys the highlight particle if it exists.
