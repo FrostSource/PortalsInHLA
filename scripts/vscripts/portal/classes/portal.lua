@@ -110,14 +110,19 @@ end
 ---@param position Vector
 ---@param normal Vector
 ---@param color PortalColor
+---@param reorientToPlayer? boolean # If true, the portal will be reoriented to be perpendicular to the player when placed on the ground or ceiling.
 ---@overload fun()
-function base:Open(position, normal, color)
+function base:Open(position, normal, color, reorientToPlayer)
     if Convars:GetInt("portal_debug_portals") >= 1 then
         devprints("Opening portal", Debug.SimpleVector(position), Debug.SimpleVector(normal), color.name, Debug.SimpleVector(color.color:ToVector()))
     end
 
     self.colorName = color.name
-    local normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+    local normalAngles = VectorToAngles(normal)
+
+    if reorientToPlayer then
+        normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+    end
 
     self.aimat = SpawnEntityFromTableSynchronous("point_aimat", {
         targetname = color.name .. "Portal_aimat",

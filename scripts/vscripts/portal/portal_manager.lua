@@ -376,10 +376,16 @@ end
 ---@param position Vector # World position to open the portal at.
 ---@param normal Vector # Normalized direction the portal should face.
 ---@param color PortalColor|string # Color of the portal, must be an existing color.
+---@param reorientToPlayer? boolean # If true, the portal will be reoriented to be perpendicular to the player when placed on the ground or ceiling.
 ---@return boolean # Returns true if the portal successfully opened, false otherwise.
-function PortalManager:TryCreatePortalAt(position, normal, color)
+function PortalManager:TryCreatePortalAt(position, normal, color, reorientToPlayer)
     color = resolveColor(color)
-    local normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+
+    local normalAngles = VectorToAngles(normal)
+
+    if reorientToPlayer then
+        normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+    end
 
     position = self:PortalPositionAdjust(position, normalAngles, PORTAL_SIZE_Y)
 
@@ -396,7 +402,7 @@ function PortalManager:TryCreatePortalAt(position, normal, color)
         end
     end
 
-    PortalManager:CreatePortalAt(position, normal, color)
+    PortalManager:CreatePortalAt(position, normal, color, reorientToPlayer)
     return true
 end
 
@@ -404,7 +410,8 @@ end
 ---@param position Vector
 ---@param normal Vector
 ---@param color PortalColor|string
-function PortalManager:CreatePortalAt(position, normal, color)
+---@param reorientToPlayer? boolean # If true, the portal will be reoriented to be perpendicular to the player when placed on the ground or ceiling.
+function PortalManager:CreatePortalAt(position, normal, color, reorientToPlayer)
     color = resolveColor(color)
     if type(color) ~= "table" or not color.color then
         return
@@ -420,7 +427,7 @@ function PortalManager:CreatePortalAt(position, normal, color)
     })--[[@as Portal]]
 
     -- Portal handles its own opening/connection logic
-    newPortal:Open(position, normal, color)
+    newPortal:Open(position, normal, color, reorientToPlayer)
 
     local connectedPortal = self:GetConnectedPortal(color)
     if connectedPortal then
