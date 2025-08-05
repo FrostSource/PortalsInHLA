@@ -442,6 +442,7 @@ function Debug.ShowEntity(ent, duration)
     end
     DebugDrawLine(from, ent:GetOrigin(), 255, 0, 0, true, duration)
     local radius = ent:GetBiggestBounding()/2
+    radius = Clamp(radius, 0, 32)
     if radius == 0 then radius = 16 end
     DebugDrawCircle(ent:GetOrigin(), Vector(255), 128, radius, true, duration)
     DebugDrawSphere(ent:GetCenter(), Vector(255), 128, radius, true, duration)

@@ -472,6 +472,42 @@ function PortalManager:IsAnyPortalOpen()
     end
 end
 
+---Gets the nearest `Portal` entity to a given position.
+---@param origin Vector
+---@param maxRadius number
+---@return Portal?
+function PortalManager:GetNearestPortal(origin, maxRadius)
+    ---@NOTE logic_script can't be found with FindAllByClassnameWithin for some reason
+    ---@TODO Provide built-in way to get all portals
+    for _, script in ipairs(Entities:FindAllByClassname("logic_script")) do
+        if isinstance(script, "Portal") and VectorDistance(script:GetAbsOrigin(), origin) <= maxRadius then
+            return script--[[@as Portal]]
+        end
+    end
+end
+
+---Gets the nearest `Portal` entity to a given position within a bounding box.
+---@param origin Vector
+---@param mins Vector
+---@param maxs Vector
+---@param maxRadius number
+---@return Portal?
+function PortalManager:GetNearestPortalInBounds(origin, mins, maxs, maxRadius)
+    local best, bestDistance = nil, math.huge
+    for _, script in ipairs(Entities:FindAllByClassname("logic_script")) do
+        print(_, isinstance(script, "Portal"), script:IsWithinBounds(origin + mins, origin + maxs))
+        if isinstance(script, "Portal") and script:IsWithinBounds(origin + mins, origin + maxs) then
+            local distance = VectorDistance(script:GetAbsOrigin(), origin)
+            if distance <= maxRadius and distance < bestDistance then
+                best, bestDistance = script, distance
+                print("found best")
+            end
+        end
+    end
+    print()
+    return best
+end
+
 ---Get a portal entity by color.
 ---@param color PortalColor|string
 ---@return Portal?

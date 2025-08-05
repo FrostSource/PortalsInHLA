@@ -265,6 +265,9 @@ function base:InitPhysical()
     -- Should be done every equip
     self:AttachToHand(false)
 
+    -- Required to stop player ignored traces from hitting the gun
+    self:SetOwner(Player)
+
     ---@param params PlayerEventWeaponSwitch
     ListenToPlayerEvent("weapon_switch", function (params)
         if params.item == self then
@@ -273,7 +276,9 @@ function base:InitPhysical()
         else
             -- Only cleanup if the gun is being unequipped
             if self.physicalEquipped then
-                self:DetachFromHand()
+                if not self:IsNull() then
+                    self:DetachFromHand()
+                end
             end
         end
     end)

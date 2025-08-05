@@ -457,6 +457,8 @@ end
 ---@param value? any # Value to save. If not provided the value will be retrieved from the field with the same `name`.
 ---@luadoc-ignore
 function EntityClass:Save(name, value)
+    if not IsValidEntity(self) then return end
+
     if name then
         Storage.Save(self, name, value~=nil and value or self[name])
     end

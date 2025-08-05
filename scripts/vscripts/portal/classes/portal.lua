@@ -454,7 +454,40 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
         end
 
         if IsVREnabled() then
-            self.teleport:Teleport(distanceAdjustment)
+            -- Anchor with parent probably means player is falling
+            -- needs portal special logic
+            local cachedVelocity = PortalPlayerController:GetCachedVelocity()
+            -- local anchorParent = Player.HMDAnchor:GetMoveParent()
+            -- if anchorParent ~= nil and isinstance(anchorParent, "PortalPlayerPhys") then
+            if cachedVelocity ~= nil then
+                print("PLAYER HAS FALL")
+                -- ---@cast anchorParent PortalPlayerPhys
+                -- anchorParent:SetOrigin(newPos)
+                -- anchorParent:SetVelocity(dirVelocity*anchorParent.velocity:Length())
+                
+                -- self.teleport:Teleport(distanceAdjustment)
+                dirVelocity = transformDirection(self, connectedPortal, cachedVelocity:Normalized())
+                local physEnt = PortalPlayerController:CreatePlayerPhys(connectedPortal:GetForwardVector()*cachedVelocity:Length())
+                debugoverlay:Line(newPos, newPos + cachedVelocity, 0, 255, 0, 255, false, 6)
+                physEnt:SetOrigin(connectedPortal:GetOrigin()+connectedPortal:GetForwardVector()*32)
+
+                print("ANGLES BEFORE")
+                print(physEnt:GetAngles())
+                print(Player.HMDAnchor:GetAngles())
+                print(dirAngle)
+                local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
+                print(newang)
+                local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
+                local currentAngle = physEnt:GetAngles()
+                newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
+                physEnt:SetQAngle(newang)
+                print("ANGLES AFTER")
+                print(physEnt:GetAngles())
+                print(Player.HMDAnchor:GetAngles())
+            else
+                -- Let the teleport entity handle VR player
+                self.teleport:Teleport(distanceAdjustment)
+            end
         else
             ent:SetOrigin(newPos)
             ent:ApplyAbsVelocityImpulse(-velocity)
