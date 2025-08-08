@@ -187,6 +187,9 @@ ListenToPlayerEvent("vr_player_ready", function(params)
         -- end
 
         currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
+        local maxVelocity = 400 -- what it best?
+        DoEntFire("@FallWhooshParam", "SetFloatValue", tostring(PortalPlayerController:GetPlayerVelocity():Length() / maxVelocity), 0, nil, nil)
+
         -- print(math.trunc(playerVelocity:Length(), 2))
         if playerOnGround and not (Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled")) then
             if not CheckGround() then
