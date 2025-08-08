@@ -158,6 +158,12 @@ function base:Think()
 		end
         -- self:SetAbsOrigin(traceTable.pos)
         print("Phys hit ground", traceTable.enthit:GetClassname())
+
+        -- If there is nothing below the player they probably hit a wall
+        if not self:TraceSpace(Vector(0, 0, -2)).hit then
+            StartSoundEventFromPosition("JumpLand.HighVelocityImpact", traceTable.pos)
+        end
+
         Debug.ShowEntity(traceTable.enthit, 10)
         debugoverlay:Sphere(self:GetOrigin(), 5, 255, 0, 0, 255, false, 10)
         local hull = PortalPlayerController:GetPlayerHull()
