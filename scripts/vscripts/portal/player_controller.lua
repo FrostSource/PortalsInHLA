@@ -12,11 +12,38 @@ local currentPlayerVelocity = Vector()
 local PLAYER_GIRTH = 7
 local PLAYER_HEIGHT = 96
 
+local MIN_FLING_SPEED = 300
+
+local currentWooshVolume = 0
+
+EasyConvars:RegisterConvar("portal_woosh_always", "0", "Always adjust the woosh instead of just when flinging")
+
 ---Controls player falling into chasms.
 PortalPlayerController = {}
 
 ---@type PortalPlayerPhys?
 PortalPlayerController.currentPlayerPhys = nil
+
+function PortalPlayerController:UpdateWooshSound()
+    local wooshVolume = self:GetPlayerVelocity():Length() - MIN_FLING_SPEED
+
+    if wooshVolume < 0 then
+        wooshVolume = 0
+    else
+        wooshVolume = wooshVolume / 2000
+        if wooshVolume > 1 then
+            wooshVolume = 1
+        end
+
+        wooshVolume = math.trunc(wooshVolume, 3)
+    end
+
+    if wooshVolume ~= currentWooshVolume then
+        -- valve changes over time of 0.1, this would need a think to replicate
+        DoEntFire("@FallWhooshParam", "SetFloatValue", tostring(wooshVolume), 0, nil, nil)
+        currentWooshVolume = wooshVolume
+    end
+end
 
 function PortalPlayerController:GetPlayerHull()
     return
@@ -187,8 +214,10 @@ ListenToPlayerEvent("vr_player_ready", function(params)
         -- end
 
         currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
-        local maxVelocity = 400 -- what it best?
-        DoEntFire("@FallWhooshParam", "SetFloatValue", tostring(PortalPlayerController:GetPlayerVelocity():Length() / maxVelocity), 0, nil, nil)
+
+        if Convars:GetBool("portal_woosh_always") or PortalPlayerController.currentPlayerPhys ~= nil then
+            PortalPlayerController:UpdateWooshSound()
+        end
 
         -- print(math.trunc(playerVelocity:Length(), 2))
         if playerOnGround and not (Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled")) then
