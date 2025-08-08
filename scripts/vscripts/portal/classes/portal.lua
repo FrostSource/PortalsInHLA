@@ -467,24 +467,19 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 
                 -- self.teleport:Teleport(distanceAdjustment)
                 dirVelocity = transformDirection(self, connectedPortal, cachedVelocity:Normalized())
-                local physEnt = PortalPlayerController:CreatePlayerPhys(connectedPortal:GetForwardVector()*cachedVelocity:Length())
+                local desiredVelocity = connectedPortal:GetForwardVector()*cachedVelocity:Length()
+                local physEnt = PortalPlayerController:GetOrCreatePlayerPhys(desiredVelocity)
                 debugoverlay:Line(newPos, newPos + cachedVelocity, 0, 255, 0, 255, false, 6)
                 physEnt:SetOrigin(connectedPortal:GetOrigin()+connectedPortal:GetForwardVector()*32)
 
-                print("ANGLES BEFORE")
-                print(physEnt:GetAngles())
-                print(Player.HMDAnchor:GetAngles())
-                print(dirAngle)
                 local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
-                print(newang)
                 local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
                 local currentAngle = physEnt:GetAngles()
                 newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
                 physEnt:SetQAngle(newang)
-                print("ANGLES AFTER")
-                print(physEnt:GetAngles())
-                print(Player.HMDAnchor:GetAngles())
             else
+                -- Cache transformed exit velocity so player has horizontal movement when falling
+                PortalPlayerController:CacheVelocity(connectedPortal:GetForwardVector()*PortalPlayerController:GetPlayerVelocity():Length())
                 -- Let the teleport entity handle VR player
                 self.teleport:Teleport(distanceAdjustment)
             end

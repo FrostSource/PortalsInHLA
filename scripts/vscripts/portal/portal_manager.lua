@@ -495,16 +495,13 @@ end
 function PortalManager:GetNearestPortalInBounds(origin, mins, maxs, maxRadius)
     local best, bestDistance = nil, math.huge
     for _, script in ipairs(Entities:FindAllByClassname("logic_script")) do
-        print(_, isinstance(script, "Portal"), script:IsWithinBounds(origin + mins, origin + maxs))
         if isinstance(script, "Portal") and script:IsWithinBounds(origin + mins, origin + maxs) then
             local distance = VectorDistance(script:GetAbsOrigin(), origin)
             if distance <= maxRadius and distance < bestDistance then
                 best, bestDistance = script, distance
-                print("found best")
             end
         end
     end
-    print()
     return best
 end
 

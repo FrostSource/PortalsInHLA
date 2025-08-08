@@ -97,7 +97,7 @@ function base:Think()
 	--local deltaTime = time - lastTime
 	local frameTime = FrameTime()
 
-    local gravitySpeed = Convars:GetFloat("sv_gravity")
+    local gravitySpeed = Convars:GetFloat("sv_gravity") -- default is 386
     -- gravitySpeed = gravitySpeed / 10 -- test
 
     self.__expectingPortal = false
@@ -114,24 +114,28 @@ function base:Think()
         debugoverlay:Box(
             portalDownTrace.pos + Vector(-attractDist, -attractDist, -16),
             portalDownTrace.pos + Vector(attractDist, attractDist, 16), 0, 255, 0, 255, false, 0)
-        -- print(portal)
-        -- print(portal:GetForwardVector().z, portal:GetConnectedPortal())
 
-        if portal and portal:GetForwardVector().z > 0.5 and portal:GetConnectedPortal() then
-            self.__expectingPortal = true
-            -- local tFall = estimateFallTime(self:GetAbsOrigin().z, self.velocity.z, portal:GetAbsOrigin().z, gravitySpeed)
-            -- if tFall then
-            --     print("Attracting to portal")
-                debugoverlay:Sphere(self:GetAbsOrigin(), 2, 255, 0, 0, 255, false, 0)
-                -- local targetVal = computeTargetHorizontalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), tFall)
-                -- local currentHorizontalVel = Vector(self.velocity.x, self.velocity.y, 0)
-                -- local lerpFactor = 0.5
-                -- local newHorizontalVel = LerpVectors(currentHorizontalVel, targetVal, lerpFactor)
-                local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, gravitySpeed)
-                -- self.velocity = Vector(newHorizontalVel.x, newHorizontalVel.y, self.velocity.z)
-                -- self.velocity = newHorizontalVel
-                self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.05)
-            -- end
+        if portal then
+            print(self.velocity:Normalized():Dot(portal:GetForwardVector()) < -0.9)
+            ---@TODO Move player towards all portals in their direction, not just upwards portals
+            if portal:GetForwardVector().z > 0.5 -- portal must be facing up
+            and self.velocity:Normalized():Dot(portal:GetForwardVector()) < -0.8 -- player must be moving towards portal
+            and portal:GetConnectedPortal() then
+                self.__expectingPortal = true
+                -- local tFall = estimateFallTime(self:GetAbsOrigin().z, self.velocity.z, portal:GetAbsOrigin().z, gravitySpeed)
+                -- if tFall then
+                --     print("Attracting to portal")
+                    debugoverlay:Sphere(self:GetAbsOrigin(), 2, 255, 0, 0, 255, false, 0)
+                    -- local targetVal = computeTargetHorizontalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), tFall)
+                    -- local currentHorizontalVel = Vector(self.velocity.x, self.velocity.y, 0)
+                    -- local lerpFactor = 0.5
+                    -- local newHorizontalVel = LerpVectors(currentHorizontalVel, targetVal, lerpFactor)
+                    local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, gravitySpeed)
+                    -- self.velocity = Vector(newHorizontalVel.x, newHorizontalVel.y, self.velocity.z)
+                    -- self.velocity = newHorizontalVel
+                    self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
+                -- end
+            end
         end
     end
 
@@ -243,11 +247,12 @@ end
 
 function base:Remove()
     -- yellow sphere at death point
-    debugoverlay:Sphere(self:GetAbsOrigin(), 8, 255, 255, 0, 255, true, 100)
+    debugoverlay:Sphere(self:GetAbsOrigin(), 8, 255, 255, 0, 255, true, 8)
 	self:ClearPlayerAnchorParent()
 	self:EnablePlayerTeleport()
 	-- self:RemoveVignette()
 	-- self:SetEntityName("old_"..ENT_NAME)
+    PortalPlayerController.currentPlayerPhys = nil
     print('killing')
 	DoEntFireByInstanceHandle(self, "Kill", "", 0.1, self, self)
 end

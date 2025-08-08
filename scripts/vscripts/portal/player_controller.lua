@@ -7,12 +7,16 @@ local MIN_CHASM_HEIGHT = 64
 local playerOnGround = true
 local playerGroundNormal = Vector(0, 0, 1)
 local currentPlayerOrigin = Vector()
+local currentPlayerVelocity = Vector()
 
 local PLAYER_GIRTH = 7
 local PLAYER_HEIGHT = 96
 
 ---Controls player falling into chasms.
 PortalPlayerController = {}
+
+---@type PortalPlayerPhys?
+PortalPlayerController.currentPlayerPhys = nil
 
 function PortalPlayerController:GetPlayerHull()
     return
@@ -117,24 +121,50 @@ local function CleanVector(vec, threshold)
     return Vector(x, y, z)
 end
 
-function PortalPlayerController:CreatePlayerPhys(initialVelocity)
-    playerOnGround = false
-    local velocity = initialVelocity or Vector(0, 0, 0)
-    velocity = CleanVector(velocity)
-    print("spawnnums", velocity.x, velocity.y, velocity.z)
-    local physEnt = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
-		origin = Player:GetAbsOrigin(),-- + Vector(0,0,4),
-        angles = Player.HMDAnchor:GetAngles(),
-		targetname = "catapult_player_physics",
-		vscripts = "portal/classes/playerphys",
-		velocity_x = tostring(velocity.x),
-		velocity_y = tostring(velocity.y),
-		velocity_z = tostring(velocity.z),
-		model = "models/props/choreo/ghost_speaker.vmdl",
-		solid = "0",
-		ScriptedMovement = "1",
-	})
-    return physEnt
+function PortalPlayerController:GetPlayerVelocity()
+    local velocity = Vector()
+    if IsValidEntity(self.currentPlayerPhys) then
+        velocity = self.currentPlayerPhys.velocity
+    else
+        velocity = self:GetCachedVelocity()
+        if not velocity then
+            ---@TODO 100 seems too high, find good multiplier
+            -- velocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
+            velocity = currentPlayerVelocity
+        end
+    end
+
+    return CleanVector(velocity)
+end
+
+function PortalPlayerController:SetPlayerVelocity(velocity)
+    local playerPhys = self:GetOrCreatePlayerPhys(velocity)
+    playerPhys:SetVelocity(velocity)
+end
+
+function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
+    if IsValidEntity(self.currentPlayerPhys) then
+        return self.currentPlayerPhys
+    else
+        playerOnGround = false
+        local velocity = initialVelocity or self:GetPlayerVelocity()
+        velocity = CleanVector(velocity)
+
+        local physEnt = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
+            origin = Player:GetAbsOrigin(),-- + Vector(0,0,4),
+            angles = Player.HMDAnchor:GetAngles(),
+            targetname = "catapult_player_physics",
+            vscripts = "portal/classes/playerphys",
+            velocity_x = tostring(velocity.x),
+            velocity_y = tostring(velocity.y),
+            velocity_z = tostring(velocity.z),
+            model = "models/props/choreo/ghost_speaker.vmdl",
+            solid = "0",
+            ScriptedMovement = "1",
+        })
+        self.currentPlayerPhys = physEnt
+        return physEnt
+    end
 end
 
 function PortalPlayerController:PlayerLandedOnGround()
@@ -156,9 +186,8 @@ ListenToPlayerEvent("vr_player_ready", function(params)
         --     cacheVelocity = Vector(0, 0, 0)
         -- end
 
-        local playerVelocity = Player:GetAbsOrigin() - currentPlayerOrigin
+        currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
         -- print(math.trunc(playerVelocity:Length(), 2))
-        currentPlayerOrigin = Player:GetAbsOrigin()
         if playerOnGround and not (Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled")) then
             if not CheckGround() then
                 -- Check if fall height is high enough
@@ -166,11 +195,13 @@ ListenToPlayerEvent("vr_player_ready", function(params)
                 -- print(trace.hit)
                 if not trace.hit then
                     print("Player falling")
-                    PortalPlayerController:CreatePlayerPhys(playerVelocity * 100)
+                    -- PortalPlayerController:GetOrCreatePlayerPhys(playerVelocity * 100)
+                    PortalPlayerController:SetPlayerVelocity(PortalPlayerController:GetPlayerVelocity())
                     playerOnGround = false
                 end
             end
         end
+        currentPlayerOrigin = Player:GetAbsOrigin()
         return 0
     end, 0)
 end)
