@@ -51,7 +51,7 @@ function base:OnSpawn(spawnkeys)
 	self.m_ExactVelocityChoice = tonumber(spawnkeys:GetValue("exactVelocityChoiceType")) --Exact Solution Method
 	self.m_bUseExactVelocity = truthy(spawnkeys:GetValue("useExactVelocity")) --Use Exact Velocity
 	self.m_strLaunchTarget = spawnkeys:GetValue("launchTarget") or ""
-	self.m_vecLaunchAngles = VectorToAngles(Util.VectorFromString(spawnkeys:GetValue("launchDirection")))
+	self.m_vecLaunchAngles = VectorToAngles(Util.VectorFromString(spawnkeys:GetValue("launchDirection"))) -- [0 0 0] gets converted to [90 0 0]
 	self.m_bLaunchAnglesIsLocal = truthy(spawnkeys:GetValue("launchDirection_isLocal"))
 
     self.m_bUseThresholdCheck = truthy(spawnkeys:GetValue("useThresholdCheck"))
@@ -59,6 +59,23 @@ function base:OnSpawn(spawnkeys)
     self.m_flUpperThreshold = tonumber(spawnkeys:GetValue("upperThreshold"))
     self.m_flEntryAngleTolerance = tonumber(spawnkeys:GetValue("entryAngleTolerance"))
     self.m_bOnlyVelocityCheck = truthy(spawnkeys:GetValue("onlyVelocityCheck"))
+
+    -- print all the values with their display name
+    print("Printing spawn values for trigger_catapult", self:GetName())
+    print("playerSpeed", self.m_flPlayerVelocity)
+    print("physicsSpeed", self.m_flPhysicsVelocity)
+    print("applyAngularImpulse", self.m_bApplyAngularImpulse)
+    print("exactVelocityChoiceType", self.m_ExactVelocityChoice)
+    print("useExactVelocity", self.m_bUseExactVelocity)
+    print("launchTarget", self.m_strLaunchTarget)
+    print("launchDirection", self.m_vecLaunchAngles)
+    print("launchDirection_isLocal", self.m_bLaunchAnglesIsLocal)
+    print("useThresholdCheck", self.m_bUseThresholdCheck)
+    print("lowerThreshold", self.m_flLowerThreshold)
+    print("upperThreshold", self.m_flUpperThreshold)
+    print("entryAngleTolerance", self.m_flEntryAngleTolerance)
+    print("onlyVelocityCheck", self.m_bOnlyVelocityCheck)
+    print()
 
 	if self.m_strLaunchTarget ~= "" and self.m_strLaunchTarget ~= nil then
 		self:SetLaunchTargetByHandle(Entities:FindByName(nil, self.m_strLaunchTarget))
@@ -274,17 +291,27 @@ end
 ---Desc here
 ---@param params IOParams
 function base:StartTouch(params)
+    print("Player hit catapult", self:GetName(), Debug.EntStr(params.activator))
     local victim = params.activator
+
+    if IsValidEntity(victim) and victim:GetOwner() == Player and not victim:IsPlayer() then
+        print("Ignoring player's own entity")
+        return
+    end
 
 	if self.targetHandle then
 
         if not IsValidEntity(self.targetHandle) then
+            print("Catapult has invalid target, clearing target")
 			self.targetHandle = nil
 			self:StartTouch(params)
 			return
 		end
 
+        print("Catapult has target", self.targetHandle:GetName())
+
         if self.m_bUseThresholdCheck then
+            print("Using threshold check")
             local vecVictim
             if victim:IsPlayer() then
                 vecVictim = PortalPlayerController:GetPlayerVelocity()
@@ -293,12 +320,15 @@ function base:StartTouch(params)
             end
 
             local flVictimSpeed = vecVictim:Length()
+            print("Victim speed", flVictimSpeed)
 
             -- get the speed needed to hit the target
             local vecVelocity
             if self.m_bUseExactVelocity then
+                print("Using exact velocity")
                 vecVelocity = self:CalculateLaunchVectorPreserve(vecVictim, victim, self.targetHandle)
             else
+                print("Using normal velocity")
                 vecVelocity = self:CalculateLaunchVector(victim, self.targetHandle)
             end
             local flLaunchSpeed = vecVelocity:Length()
@@ -309,20 +339,25 @@ function base:StartTouch(params)
             local vecNormalizedDirection = vecDirection:Normalized()
 
             local flDot = necNormalizedVictim:Dot(vecNormalizedDirection)
+            print("Is the victim facing the target?", flDot >= self.m_flEntryAngleTolerance, flDot, self.m_flEntryAngleTolerance)
             if flDot >= self.m_flEntryAngleTolerance then
                 -- Is the victim speed within the tolerance to launch them?
                 if ( ( flLaunchSpeed - (flLaunchSpeed * self.m_flLowerThreshold ) ) < flVictimSpeed ) and ( ( flLaunchSpeed + (flLaunchSpeed * self.m_flUpperThreshold ) ) > flVictimSpeed ) then
                     if self.m_bOnlyVelocityCheck then
+                        print("Only velocity check is enabled, sending output")
                         self:FireOutput("OnUser1", params.activator, self, nil, 0)
                     else
+                        print("Launching by target")
                         self:LaunchByTarget(victim, self.targetHandle)
                     end
                 end
             end
         else
+            print("No threshold check, launching by target")
 		    self:LaunchByTarget(params.activator, self.targetHandle)
         end
 	else
+        print("No target, launching by direction")
         local bShouldLaunch = true
 
         if self.m_bUseThresholdCheck then

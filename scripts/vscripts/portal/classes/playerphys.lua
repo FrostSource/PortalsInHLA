@@ -116,7 +116,6 @@ function base:Think()
             portalDownTrace.pos + Vector(attractDist, attractDist, 16), 0, 255, 0, 255, false, 0)
 
         if portal then
-            print(self.velocity:Normalized():Dot(portal:GetForwardVector()) < -0.9)
             ---@TODO Move player towards all portals in their direction, not just upwards portals
             if portal:GetForwardVector().z > 0.5 -- portal must be facing up
             and self.velocity:Normalized():Dot(portal:GetForwardVector()) < -0.8 -- player must be moving towards portal
