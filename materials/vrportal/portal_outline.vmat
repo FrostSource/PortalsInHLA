@@ -1,0 +1,64 @@
+// THIS FILE IS AUTO-GENERATED
+
+Layer0
+{
+	shader "vr_controller_ui.vfx"
+
+	//---- Panorama Panel ----
+	F_PANORAMA_PANEL 1
+
+	//---- Penetrating ----
+	F_PENETRATING 1
+
+	//---- Animation ----
+	TextureFlickeringAnimation ""
+
+	//---- Animation 1 ----
+	g_flAnimation1Scale "1.000"
+	g_flAnimation1Speed "0.125"
+	g_flAnimation1Strength "1.000"
+	g_flFlickering1Speed "0.500"
+	TextureScanlinesMoving1 ""
+
+	//---- Animation 2 ----
+	g_flAnimation2Scale "1.000"
+	g_flAnimation2Speed "0.500"
+	g_flAnimation2Strength "1.000"
+	g_flFlickering2Speed "0.250"
+	TextureScanlinesMoving2 ""
+
+	//---- Color ----
+	TextureColor "materials/vrportal/dummy-gray.tga"
+
+	//---- Fog ----
+	g_bFogEnabled "1"
+
+	//---- Fresnel 1 ----
+	g_flFresnel1Power "0.000"
+	g_flFresnel1Strength "0.000"
+	TextureFresnel1Color "[1.000000 0.501961 0.000000 0.000000]"
+
+	//---- Fresnel 2 ----
+	g_flFresnel2Power "0.000"
+	g_flFresnel2Strength "0.000"
+	TextureFresnel2Color "[0.000000 0.847059 1.000000 1.000000]"
+
+	//---- Hot Spot ----
+	g_flHotSpotStrength "1.000"
+	TextureBrightPixels ""
+
+	//---- Panorama LOD Bias ----
+	g_flPanoramaPanelLODBias "-0.500"
+
+	//---- Scan Line ----
+	TextureScanlines ""
+
+	//---- Translucent ----
+	TextureTranslucency "materials/vrportal/dummy_trans.tga"
+
+	DynamicParams
+	{
+		g_flFresnel2Strength "blueStrength"
+		g_flHotSpotStrength "exists(blueStrength) ? 0 : 1;"
+	}
+}

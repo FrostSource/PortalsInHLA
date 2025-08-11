@@ -5,12 +5,17 @@ if thisEntity then
     return
 end
 
+Convars:RegisterConvar("portal_use_outlines", "1", "Show portal outlines through walls", 0)
+
 local PTX_PORTAL_EFFECT = "particles/portal_effect_parent.vpcf"
 
 local SND_CLOSE = "Portal.Close"
 local SND_CLOSE_BLUE = "Portal.Close.Blue"
 local SND_CLOSE_ORANGE = "Portal.Close.Orange"
 local SND_TELEPORT_ENTER = "PortalPlayer.Enter"
+
+local PORTAL_HALF_WIDTH = 28
+local PORTAL_HALF_HEIGHT = 49.5
 
 ---These are classes which are allowed to be teleported through a portal.
 local PORTAL_CLASS_WHITELIST = {
@@ -172,6 +177,21 @@ function base:Open(position, normal, color, reorientToPlayer)
     --     teleport_parented_entities = "1",
     --     spawnflags = "4",
     -- })
+
+    if Convars:GetBool("portal_use_outlines") then
+        local outlineTest = SpawnEntityFromTableSynchronous("prop_dynamic", {
+            model = "models/vrportal/portal_outline.vmdl",
+            origin = self:GetOrigin(),
+            angles = self:GetAngles(),
+            targetname = color.name .. "Portal_outline",
+        })
+        outlineTest:SetParent(self, "")
+        -- local c = color.color:ToDecimalVector()
+        -- DoEntFireByInstanceHandle(outlineTest, "SetRenderAttribute", "tintColor="..c.x..","..c.y..","..c.z, 0, nil, nil)
+        if color.name == "blue" then
+            DoEntFireByInstanceHandle(outlineTest, "SetRenderAttribute", "blueStrength=100", 0, nil, nil)
+        end
+    end
 
     self.camera = PortalManager:GetPortalCamera(color)
     self.monitor = PortalManager:GetPortalMonitor(color)
@@ -457,15 +477,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
             -- Anchor with parent probably means player is falling
             -- needs portal special logic
             local cachedVelocity = PortalPlayerController:GetCachedVelocity()
-            -- local anchorParent = Player.HMDAnchor:GetMoveParent()
-            -- if anchorParent ~= nil and isinstance(anchorParent, "PortalPlayerPhys") then
             if cachedVelocity ~= nil then
-                print("PLAYER HAS FALL")
-                -- ---@cast anchorParent PortalPlayerPhys
-                -- anchorParent:SetOrigin(newPos)
-                -- anchorParent:SetVelocity(dirVelocity*anchorParent.velocity:Length())
-                
-                -- self.teleport:Teleport(distanceAdjustment)
                 dirVelocity = transformDirection(self, connectedPortal, cachedVelocity:Normalized())
                 local desiredVelocity = connectedPortal:GetForwardVector()*cachedVelocity:Length()
                 local physEnt = PortalPlayerController:GetOrCreatePlayerPhys(desiredVelocity)
@@ -477,6 +489,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 local currentAngle = physEnt:GetAngles()
                 newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
                 physEnt:SetQAngle(newang)
+                PortalPlayerController:ClearCache()
             else
                 -- Cache transformed exit velocity so player has horizontal movement when falling
                 PortalPlayerController:CacheVelocity(connectedPortal:GetForwardVector()*PortalPlayerController:GetPlayerVelocity():Length())
@@ -499,6 +512,58 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
         debugoverlay:Sphere(newPos, 2, 0, 0, 255, 255, false, 6)
         debugoverlay:Box(ent:GetBoundingMins(), ent:GetBoundingMaxs(), 0, 0, 255, 255, false, 6)
         debugoverlay:Line(oldPos, newPos, 0, 0, 255, 255, false, 6)
+    end
+end
+
+---Funnel entity into the portal.
+---@param entity EntityHandle
+function base:FunnelIntoPortal(entity)
+
+    local vPortalForward = self:GetForwardVector()
+    local vPortalRight = self:GetRightVector()
+    local vPortalUp = self:GetUpVector()
+
+    -- Make sure it's a floor portal
+    if vPortalForward.z < 0.8 then return end
+
+    vPortalRight.z = 0
+    vPortalUp.z = 0
+    vPortalRight = vPortalRight:Normalized()
+    vPortalUp = vPortalUp:Normalized()
+
+    local vEntityToPortal = self:GetAbsOrigin() - entity:GetAbsOrigin()
+    local velocity = GetPhysVelocity(entity)
+
+    -- Make sure the player isn't trying to air control, they're falling downward and they are vertically close to the portal
+    if abs(velocity.x) > 64 or abs(velocity.y) > 64 or velocity.z > -165 or vEntityToPortal.z < -512 then
+        return
+    end
+
+    -- Make sure we're in the 2D portal rectangle
+    if (vEntityToPortal:Dot(vPortalRight) * vPortalRight):Length() > PORTAL_HALF_WIDTH * 1.5 then
+        return
+    end
+    if (vEntityToPortal:Dot(vPortalUp) * vPortalUp):Length() > PORTAL_HALF_HEIGHT * 1.5 then
+        return
+    end
+
+    if vEntityToPortal.z > -8.0 then
+        -- We're too close the the portal to continue correcting, but zero the velocity so our fling velocity is nice
+        velocity.x = 0
+        velocity.y = 0
+    else
+        -- Funnel toward the portal
+
+        entity:ApplyAbsVelocityImpulse(-velocity)
+
+        local newHorizontalVel = CalculatePortalVelocity(entity:GetAbsOrigin(), self:GetAbsOrigin(), velocity)
+        local newVelocity = LerpVectors(velocity, newHorizontalVel, 0.025)
+
+        velocity.x = newVelocity.x
+        velocity.y = newVelocity.y
+        velocity.z = newVelocity.z
+
+        entity:ApplyAbsVelocityImpulse(velocity)
     end
 end
 
@@ -603,6 +668,12 @@ function base:Think()
     end
 
     self:ModifyTexture()
+
+    -- Funnel physics objects into this portal
+    -- Only cubes get funneled for now, for performance reasons
+    for _, ent in ipairs(Entities:FindAllByModelWithin("models/props/metal_box_dirty.vmdl", self:GetAbsOrigin(), 1000)) do
+        self:FunnelIntoPortal(ent)
+    end
 
     return 0
 end

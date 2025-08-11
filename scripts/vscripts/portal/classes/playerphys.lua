@@ -7,7 +7,13 @@ end
 
 local PLAYER_MASS = 65 -- in kg
 
-EasyConvars:RegisterConvar("portal_attract_distance", "128", "Distance at which the player is attracted to a portal when falling")
+-- local PORTAL_FUNNEL_AMOUNT = 0.5--6.0
+
+local PORTAL_HALF_WIDTH = 28
+local PORTAL_HALF_HEIGHT = 49.5
+
+-- EasyConvars:RegisterConvar("portal_attract_distance", "128", "Distance at which the player is attracted to a portal when falling")
+Convars:RegisterConvar("player_funnel_into_portals", "1", "Player will move towards portals they are falling into", 0)
 
 
 local DEBUG = true
@@ -56,39 +62,115 @@ function base:SetVelocity(velocity)
     CBaseEntity.SetVelocity(self, velocity)
 end
 
-local function estimateFallTime(playerZ, velocityZ, groundZ, gravity)
-    local distance = playerZ - groundZ
-    local discriminant = velocityZ * velocityZ + 2 * gravity * distance
-    if discriminant < 0 then
-        return nil
-    end
-    -- return (math.sqrt(discriminant) - velocityZ) / gravity
-    return (-velocityZ + math.sqrt(discriminant)) / gravity
-end
-
-local function computeTargetHorizontalVelocity(playerPos, portalPos, t)
-    if t <= 0 then return Vector(0, 0, 0) end
-    local dx = portalPos.x - playerPos.x
-    local dy = portalPos.y - playerPos.y
-    return Vector(dx/t, dy/t, 0)
-end
-
-function CalculatePortalVelocity(playerPos, portalPos, currentVel, gravity)
+function CalculatePortalVelocity(playerPos, portalPos, currentVel)
     local fallHeight = playerPos.z - portalPos.z
-    
+
     -- Only adjust if above target
     if fallHeight <= 0 then
         return currentVel
     end
-    
+
     -- Simple time calculation: how long at current Z velocity to reach target
     local fallTime = fallHeight / math.abs(currentVel.z)
-    
+
     -- Calculate required horizontal velocity to hit target
     local targetVelX = (portalPos.x - playerPos.x) / fallTime
     local targetVelY = (portalPos.y - playerPos.y) / fallTime
-    
+
     return Vector(targetVelX, targetVelY, currentVel.z)
+end
+
+---Funnel the player into the portal
+---@param portal Portal
+function base:FunnelIntoPortal(portal)
+    if not IsValidEntity(portal) then return end
+
+    local vPortalForward = portal:GetForwardVector()
+    local vPortalRight = portal:GetRightVector()
+    local vPortalUp = portal:GetUpVector()
+
+    -- Make sure it's a floor portal
+    if vPortalForward.z < 0.8 then return end
+
+    vPortalRight.z = 0
+    vPortalUp.z = 0
+    vPortalRight = vPortalRight:Normalized()
+    vPortalUp = vPortalUp:Normalized()
+
+    -- Make sure the player is looking down
+    if Player:EyeAngles():Forward().z > -0.1 then return end
+
+    local vPlayerToPortal = portal:GetAbsOrigin() - self:GetAbsOrigin()
+    local velocity = self.velocity
+
+    -- Make sure the player isn't trying to air control, they're falling downward and they are vertically close to the portal
+    -- if abs(velocity.x) > 64 or abs(velocity.y) > 64 or velocity.z > -165 or vPlayerToPortal.z < -512 then
+    if velocity.z > -165 or vPlayerToPortal.z < -512 then
+        return
+    end
+
+    -- Make sure we're in the 2D portal rectangle
+    if (vPlayerToPortal:Dot(vPortalRight) * vPortalRight):Length() > PORTAL_HALF_WIDTH * 5.5 then
+        return
+    end
+    if (vPlayerToPortal:Dot(vPortalUp) * vPortalUp):Length() > PORTAL_HALF_HEIGHT * 5.5 then
+        return
+    end
+
+    -- print("Funneling into portal", portal:GetName())
+
+    if vPlayerToPortal.z > -8.0 then
+        -- This is handled by the portal
+        -- -- We're too close the the portal to continue correcting, but zero the velocity so our fling velocity is nice
+        -- self.velocity.x = 0
+        -- self.velocity.y = 0
+    else
+        -- Funnel toward the portal
+        -- local fFunnelX = vPlayerToPortal.x * PORTAL_FUNNEL_AMOUNT - velocity.x
+        -- local fFunnelY = vPlayerToPortal.y * PORTAL_FUNNEL_AMOUNT - velocity.y
+
+        -- local funnelStrength = 1--PORTAL_FUNNEL_AMOUNT * FrameTime()
+        -- self.velocity.x = self.velocity.x + fFunnelX*funnelStrength
+        -- self.velocity.y = self.velocity.y + fFunnelY*funnelStrength
+        -- self.velocity.x = Lerp(0.9, self.velocity.x, self.velocity.x + fFunnelX*funnelStrength)
+        -- self.velocity.y = Lerp(0.9, self.velocity.y, self.velocity.y + fFunnelY*funnelStrength)
+
+        -- local lerpFactor = 0.25 * FrameTime()
+        -- -- print(lerpFactor, 0.025, FrameTime())
+
+        -- local desiredVX = self.velocity.x + vPlayerToPortal.x * PORTAL_FUNNEL_AMOUNT
+        -- local desiredVY = self.velocity.y + vPlayerToPortal.y * PORTAL_FUNNEL_AMOUNT
+
+        -- self.velocity.x = Lerp(lerpFactor, self.velocity.x, desiredVX)
+        -- self.velocity.y = Lerp(lerpFactor, self.velocity.y, desiredVY)
+
+
+
+        local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, Convars:GetFloat("sv_gravity"))
+        self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
+
+
+
+        -- -- Funnel toward the portal in portal-local space
+        -- local toPortal = portal:GetAbsOrigin() - self:GetAbsOrigin()
+
+        -- -- Position offsets in portal space
+        -- local localX = toPortal:Dot(vPortalRight)
+        -- local localY = toPortal:Dot(vPortalUp)
+
+        -- -- Velocity components in portal space
+        -- local velX = self.velocity:Dot(vPortalRight)
+        -- local velY = self.velocity:Dot(vPortalUp)
+
+        -- -- Calculate corrections
+        -- local fFunnelX = localX * PORTAL_FUNNEL_AMOUNT - velX
+        -- local fFunnelY = localY * PORTAL_FUNNEL_AMOUNT - velY
+
+        -- local funnelStrength = PORTAL_FUNNEL_AMOUNT * FrameTime()
+        -- self.velocity = self.velocity
+        --     + vPortalRight * (fFunnelX * funnelStrength)
+        --     + vPortalUp * (fFunnelY * funnelStrength)
+    end
 end
 
 ---Main entity think function. Think state is saved between loads
@@ -102,39 +184,46 @@ function base:Think()
 
     self.__expectingPortal = false
 
-    local portalDownTrace = self:TraceSpace(Vector(0, 0, -2048))
-    if portalDownTrace.hit then
+    -- local portalDownTrace = self:TraceSpace(Vector(0, 0, -2048))
+    -- if portalDownTrace.hit then
 
-        local attractDist = Convars:GetFloat("portal_attract_distance")
-        -- local portal = PortalManager:GetNearestPortal(portalDownTrace.pos, 128)
-        local portal = PortalManager:GetNearestPortalInBounds(portalDownTrace.pos,
-            Vector(-attractDist, -attractDist, -16),
-            Vector(attractDist, attractDist, 16),
-        attractDist)
-        debugoverlay:Box(
-            portalDownTrace.pos + Vector(-attractDist, -attractDist, -16),
-            portalDownTrace.pos + Vector(attractDist, attractDist, 16), 0, 255, 0, 255, false, 0)
+    --     local attractDist = Convars:GetFloat("portal_attract_distance")
+    --     -- local portal = PortalManager:GetNearestPortal(portalDownTrace.pos, 128)
+    --     local portal = PortalManager:GetNearestPortalInBounds(portalDownTrace.pos,
+    --         Vector(-attractDist, -attractDist, -16),
+    --         Vector(attractDist, attractDist, 16),
+    --     attractDist)
+    --     debugoverlay:Box(
+    --         portalDownTrace.pos + Vector(-attractDist, -attractDist, -16),
+    --         portalDownTrace.pos + Vector(attractDist, attractDist, 16), 0, 255, 0, 255, false, 0)
 
-        if portal then
-            ---@TODO Move player towards all portals in their direction, not just upwards portals
-            if portal:GetForwardVector().z > 0.5 -- portal must be facing up
-            and self.velocity:Normalized():Dot(portal:GetForwardVector()) < -0.8 -- player must be moving towards portal
-            and portal:GetConnectedPortal() then
-                self.__expectingPortal = true
-                -- local tFall = estimateFallTime(self:GetAbsOrigin().z, self.velocity.z, portal:GetAbsOrigin().z, gravitySpeed)
-                -- if tFall then
-                --     print("Attracting to portal")
-                    debugoverlay:Sphere(self:GetAbsOrigin(), 2, 255, 0, 0, 255, false, 0)
-                    -- local targetVal = computeTargetHorizontalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), tFall)
-                    -- local currentHorizontalVel = Vector(self.velocity.x, self.velocity.y, 0)
-                    -- local lerpFactor = 0.5
-                    -- local newHorizontalVel = LerpVectors(currentHorizontalVel, targetVal, lerpFactor)
-                    local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, gravitySpeed)
-                    -- self.velocity = Vector(newHorizontalVel.x, newHorizontalVel.y, self.velocity.z)
-                    -- self.velocity = newHorizontalVel
-                    self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
-                -- end
-            end
+    --     if portal then
+    --         ---@TODO Move player towards all portals in their direction, not just upwards portals
+    --         if portal:GetForwardVector().z > 0.5 -- portal must be facing up
+    --         and self.velocity:Normalized():Dot(portal:GetForwardVector()) < -0.8 -- player must be moving towards portal
+    --         and portal:GetConnectedPortal() then
+    --             self.__expectingPortal = true
+    --             -- local tFall = estimateFallTime(self:GetAbsOrigin().z, self.velocity.z, portal:GetAbsOrigin().z, gravitySpeed)
+    --             -- if tFall then
+    --             --     print("Attracting to portal")
+    --                 debugoverlay:Sphere(self:GetAbsOrigin(), 2, 255, 0, 0, 255, false, 0)
+    --                 -- local targetVal = computeTargetHorizontalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), tFall)
+    --                 -- local currentHorizontalVel = Vector(self.velocity.x, self.velocity.y, 0)
+    --                 -- local lerpFactor = 0.5
+    --                 -- local newHorizontalVel = LerpVectors(currentHorizontalVel, targetVal, lerpFactor)
+    --                 local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, gravitySpeed)
+    --                 -- self.velocity = Vector(newHorizontalVel.x, newHorizontalVel.y, self.velocity.z)
+    --                 -- self.velocity = newHorizontalVel
+    --                 self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
+    --             -- end
+    --         end
+    --     end
+    -- end
+
+    for _, portal in ipairs(PortalManager:GetAllPortals()) do
+        if portal:GetConnectedPortal() then
+            self:FunnelIntoPortal(portal)
+            -- portal:FunnelIntoPortal(self, self.velocity)
         end
     end
 
@@ -156,11 +245,17 @@ function base:Think()
 				enthit:ApplyAbsVelocityImpulse(self.velocity / enthit:GetMass() * PLAYER_MASS)
 			end
 		end
+
+        -- This is a hack to keep the player away from the wall
+        local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
+        PortalPlayerController:CacheBounceVelocity(reflected * 0.02)
+
         -- self:SetAbsOrigin(traceTable.pos)
-        print("Phys hit ground", traceTable.enthit:GetClassname())
+        print("Phys hit ground", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
+        if traceTable.enthit:GetOwner() then print("Owner:", traceTable.enthit:GetOwner():GetClassname()) end
 
         -- If there is nothing below the player they probably hit a wall
-        if not self:TraceSpace(Vector(0, 0, -2)).hit then
+        if not self:TraceSpace(Vector(0, 0, -5)).hit then
             StartSoundEventFromPosition("JumpLand.HighVelocityImpact", traceTable.pos)
         end
 

@@ -505,6 +505,18 @@ function PortalManager:GetNearestPortalInBounds(origin, mins, maxs, maxRadius)
     return best
 end
 
+---Gets a list of all `Portal` entities in the map.
+---@return Portal[]
+function PortalManager:GetAllPortals()
+    local all = {}
+    for _, script in ipairs(Entities:FindAllByClassname("logic_script")) do
+        if isinstance(script, "Portal") then
+            table.insert(all, script)
+        end
+    end
+    return all
+end
+
 ---Get a portal entity by color.
 ---@param color PortalColor|string
 ---@return Portal?

@@ -103,8 +103,6 @@ Convars:RegisterCommand("add_hand_attachment", function (_, classname, handName)
 end, "", 0)
 
 
----Hidden convar state that can be retrieved by other scripts
-RegisterAlyxLibConvar("noclip_vr_enabled", "0", "True if noclip_vr is enabled (readonly)", FCVAR_HIDDEN)
 
 ---Tracks initial button press to prevent repeated logic execution while held
 local quickTurnFlag = false

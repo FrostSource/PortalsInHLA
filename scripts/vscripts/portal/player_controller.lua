@@ -14,9 +14,9 @@ local PLAYER_HEIGHT = 96
 
 local MIN_FLING_SPEED = 300
 
-local currentWooshVolume = 0
+local currentWhooshVolume = 0
 
-EasyConvars:RegisterConvar("portal_woosh_always", "0", "Always adjust the woosh instead of just when flinging")
+EasyConvars:RegisterConvar("portal_woosh_always", "1", "Always adjust the woosh instead of just when flinging")
 
 ---Controls player falling into chasms.
 PortalPlayerController = {}
@@ -24,24 +24,52 @@ PortalPlayerController = {}
 ---@type PortalPlayerPhys?
 PortalPlayerController.currentPlayerPhys = nil
 
-function PortalPlayerController:UpdateWooshSound()
-    local wooshVolume = self:GetPlayerVelocity():Length() - MIN_FLING_SPEED
-
-    if wooshVolume < 0 then
-        wooshVolume = 0
-    else
-        wooshVolume = wooshVolume / 2000
-        if wooshVolume > 1 then
-            wooshVolume = 1
+---@param params PlayerEventItemPickup
+ListenToPlayerEvent("item_pickup", function (params)
+    if params.item then
+        if params.item.portalPrevOwner == nil then
+            params.item.portalPrevOwner = params.item:GetOwner()
+            params.item:SetOwner(Player)
         end
+    end
+end)
 
-        wooshVolume = math.trunc(wooshVolume, 3)
+---@param params PlayerEventItemReleased
+ListenToPlayerEvent("item_released", function (params)
+    if params.item then
+        -- Make sure item isn't being held by either hand for two handed pickups
+        if not Player:IsHolding(params.item) then
+            params.item:Delay(function()
+                print("item released, resetting owner")
+                params.item:SetOwner(params.item.portalPrevOwner)
+                params.item.portalPrevOwner = nil
+            end, 0)
+        end
+    end
+end)
+
+function PortalPlayerController:UpdateWhooshSound(override)
+    local whooshVolume = self:GetPlayerVelocity():Length() - MIN_FLING_SPEED
+
+    if override then
+        whooshVolume = override
+    else
+        if whooshVolume < 0 then
+            whooshVolume = 0
+        else
+            whooshVolume = whooshVolume / 2000
+            if whooshVolume > 1 then
+                whooshVolume = 1
+            end
+
+            whooshVolume = math.trunc(whooshVolume, 3)
+        end
     end
 
-    if wooshVolume ~= currentWooshVolume then
+    if whooshVolume ~= currentWhooshVolume then
         -- valve changes over time of 0.1, this would need a think to replicate
-        DoEntFire("@FallWhooshParam", "SetFloatValue", tostring(wooshVolume), 0, nil, nil)
-        currentWooshVolume = wooshVolume
+        DoEntFire("@FallWhooshParam", "SetFloatValue", tostring(whooshVolume), 0, nil, nil)
+        currentWhooshVolume = whooshVolume
     end
 end
 
@@ -127,6 +155,9 @@ end
 local cacheVelocity = Vector(0, 0, 0)
 local cacheTime = Time()
 
+local cacheBounceVelocity = Vector(0, 0, 0)
+local cacheBounceTime = Time()
+
 function PortalPlayerController:CacheVelocity(velocity)
     cacheVelocity = velocity
     cacheTime = Time()
@@ -137,14 +168,33 @@ function PortalPlayerController:GetCachedVelocity()
     end
     return cacheVelocity
 end
+function PortalPlayerController:ClearCache()
+    cacheVelocity = Vector(0, 0, 0)
+    cacheTime = 0
+end
+
+function PortalPlayerController:CacheBounceVelocity(velocity)
+    cacheBounceVelocity = velocity
+    cacheBounceTime = Time()
+end
+function PortalPlayerController:GetCachedBounceVelocity()
+    if Time() - cacheBounceTime > 0.1 then
+        return nil
+    end
+    return cacheBounceVelocity
+end
+function PortalPlayerController:ClearBounceCache()
+    cacheBounceVelocity = Vector(0, 0, 0)
+    cacheBounceTime = 0
+end
 
 local function CleanVector(vec, threshold)
     threshold = threshold or 1e-6
-    
+
     local x = math.abs(vec.x) < threshold and 0 or vec.x
     local y = math.abs(vec.y) < threshold and 0 or vec.y
     local z = math.abs(vec.z) < threshold and 0 or vec.z
-    
+
     return Vector(x, y, z)
 end
 
@@ -202,32 +252,29 @@ function PortalPlayerController:IsPlayerOnGround()
     return playerOnGround
 end
 
-ListenToPlayerEvent("vr_player_ready", function(params)
-    SpawnEntityFromTableSynchronous("player_speedmod", {targetname='spd'})
-    DoEntFire("spd", "modifyspeed", "2", 0, nil, nil)
+function PortalPlayerController:Enable()
 
-    SendToConsole("god 1")
     currentPlayerOrigin = Player:GetAbsOrigin()
+
     Player:SetContextThink("PortalFallThink", function()
-        -- if Time() - cacheTime > 0.1 then
-        --     cacheVelocity = Vector(0, 0, 0)
-        -- end
 
         currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
 
         if Convars:GetBool("portal_woosh_always") or PortalPlayerController.currentPlayerPhys ~= nil then
-            PortalPlayerController:UpdateWooshSound()
+            PortalPlayerController:UpdateWhooshSound()
         end
 
-        -- print(math.trunc(playerVelocity:Length(), 2))
         if playerOnGround and not (Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled")) then
             if not CheckGround() then
                 -- Check if fall height is high enough
                 local trace = PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT))
-                -- print(trace.hit)
                 if not trace.hit then
                     print("Player falling")
-                    -- PortalPlayerController:GetOrCreatePlayerPhys(playerVelocity * 100)
+                    local bounceVelocity = PortalPlayerController:GetCachedBounceVelocity()
+                    if bounceVelocity then
+                        PortalPlayerController:ClearBounceCache()
+                        PortalPlayerController:CacheVelocity(bounceVelocity)
+                    end
                     PortalPlayerController:SetPlayerVelocity(PortalPlayerController:GetPlayerVelocity())
                     playerOnGround = false
                 end
@@ -235,5 +282,16 @@ ListenToPlayerEvent("vr_player_ready", function(params)
         end
         currentPlayerOrigin = Player:GetAbsOrigin()
         return 0
-    end, 0)
+    end, 0.1)
+end
+
+function PortalPlayerController:Disable()
+    Player:SetContextThink("PortalFallThink", nil, 0)
+end
+
+ListenToPlayerEvent("vr_player_ready", function(params)
+    currentPlayerOrigin = Player:GetAbsOrigin()
+
+    -- Just for testing enable always
+    PortalPlayerController:Enable()
 end)

@@ -554,4 +554,8 @@ local symbols = {"and","break","do","else","elseif","end","false","for","functio
 
 -- end
 
+---Hidden convar state that can be retrieved by other scripts
+---Needs to be outside debug.vr so it's always available
+RegisterAlyxLibConvar("noclip_vr_enabled", "0", "True if noclip_vr is enabled (readonly)", FCVAR_HIDDEN)
+
 return version

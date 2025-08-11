@@ -202,6 +202,7 @@ end
 ---Destroys all particles existing on the gun.
 function base:DestroyGunParticles()
     self:DestroyGunPortalParticles()
+    self:DestroyHighlight(true)
 
     if self.__ptxPickup ~= -1 then
         ParticleManager:DestroyParticle(self.__ptxPickup, true)
@@ -582,7 +583,7 @@ function base:GetPickupPosition()
 
     return self:ShootPosition()
         + (self:ShootForward() * (self.pickupEntityDistance + Convars:GetFloat("portalgun_pickup_distance_mod")))
-        - self.pickupEntityOffset
+        - (self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin())
 end
 
 ---Updates the position of the currently held item
@@ -642,6 +643,9 @@ function base:UpdatePickupItemPosition(offset, immediately)
         end
     else
         local velocity = (desiredPosition - ent:GetOrigin()) / Convars:GetFloat("portalgun_pickup_attenuation")
+        if not PortalPlayerController:IsPlayerOnGround() then
+            velocity = velocity * (PortalPlayerController:GetPlayerVelocity():Length() / 100)
+        end
         velocity = velocity - GetPhysVelocity(ent)
         ent:ApplyAbsVelocityImpulse(velocity * Convars:GetFloat("portalgun_pickup_damping"))
 
@@ -724,12 +728,18 @@ function base:PickupEntity(entity)
         entity:Drop()
     end
 
+    -- Own the entity so traces ignore it
+    if entity.portalPrevOwner == nil then
+        entity.portalPrevOwner = entity:GetOwner()
+        entity:SetOwner(self)
+    end
+
     -- Hopefully improve collision accuracy
     entity:SetDynamicVsDynamicContinuous(true)
 
     -- Adjust the pickup distance based on the size of the entity
     self.pickupEntityDistance = self.pickupEntity:GetBiggestBounding()
-    self.pickupEntityOffset = self.pickupEntity:GetCenter() - self.pickupEntity:GetOrigin()
+    self.pickupEntityOffset = self.pickupEntity:TransformPointWorldToEntity(self.pickupEntity:GetCenter())
 
 end
 
@@ -742,8 +752,12 @@ function base:DropEntity(dontStopThink)
         return
     end
 
-    if IsValidEntity(self.pickupEntity) then
-        self.pickupEntity:SetDynamicVsDynamicContinuous(true)
+    local item = self.pickupEntity
+    if IsValidEntity(item) then
+        item:SetDynamicVsDynamicContinuous(true)
+        -- Reset the owner so traces can hit
+            item:SetOwner(item.portalPrevOwner)
+            item.portalPrevOwner = nil
     end
 
     self.pickupEntity = nil
