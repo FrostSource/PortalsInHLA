@@ -17,6 +17,92 @@ local MIN_FLING_SPEED = 300
 local currentWhooshVolume = 0
 
 EasyConvars:RegisterConvar("portal_woosh_always", "1", "Always adjust the woosh instead of just when flinging")
+EasyConvars:SetPersistent("portal_woosh_always", true)
+
+local mapFlingTriggers = {
+    -- first area
+    "fall_input_modifier",
+    "fall_trigger",
+    "fall_fade_out",
+    "fall_fade_in",
+    "fall_teleport1_destination",
+    "fall_audio1",
+    "fall_teleport1",
+    "fall1_triggeronce",
+
+    -- second area
+    "fall2_trigger_spawn",
+    "fall3_trigger_spawn",
+    "fall4_trigger_spawn",
+    "fall2_triggeronce",
+    "fall3_triggeronce",
+    "fall4_triggeronce",
+    "fall_audio2",
+    "fall_audio3",
+    "fall_audio4",
+    "fall2_trigger",
+    "fall3_trigger",
+    "fall4_trigger",
+    "fall_teleport2_destination",
+    "fall_teleport3_destination",
+    "fall_teleport4_destination",
+    "fall_teleport2",
+    "fall_teleport3",
+    "fall_teleport4",
+    "fall3_trigger_spawn_RL",
+    "fall4_trigger_spawn_RL",
+    "EnableFall3Trigger",
+}
+
+---@param trigger EntityHandle
+local function hideFlingTrigger(trigger, hide)
+    if hide == nil then
+        hide = true
+    end
+
+    if hide then
+        if not trigger:HasAttribute("FlingTriggerHidden") then
+            print("Hiding fling trigger", trigger:GetName())
+            local startingZ = trigger:Attribute_GetFloatValue("StartingZ", trigger:GetAbsOrigin().z)
+            trigger:Attribute_SetFloatValue("StartingZ", startingZ)
+            trigger:SetIntAttr("FlingTriggerHidden", 1)
+            -- move trigger high up so it doesn't hit the player
+            trigger:SetAbsOrigin(trigger:GetAbsOrigin() + Vector(0, 0, 10000))
+        end
+    else
+        if trigger:HasAttribute("FlingTriggerHidden") then
+            print("Unhiding fling trigger", trigger:GetName())
+            local startingZ = trigger:Attribute_GetFloatValue("StartingZ", trigger:GetAbsOrigin().z)
+            trigger:DeleteAttribute("FlingTriggerHidden")
+            -- move trigger back down
+            local origin = trigger:GetAbsOrigin()
+            trigger:SetAbsOrigin(Vector(origin.x, origin.y, startingZ))
+        end
+    end
+end
+
+EasyConvars:RegisterConvar("portal_physical_flings", "1", "Flings will use custom physics simulation", 0, function (newVal, oldVal)
+    if truthy(newVal) == truthy(oldVal) then
+        return
+    end
+
+    if Convars:GetBool("portal_physical_flings") then
+        for _,triggerName in pairs(mapFlingTriggers) do
+            local trigger = Entities:FindByName(nil, triggerName)
+            if trigger then
+                hideFlingTrigger(trigger, true)
+            end
+        end
+    else
+        for _,triggerName in pairs(mapFlingTriggers) do
+            local trigger = Entities:FindByName(nil, triggerName)
+            if trigger then
+                hideFlingTrigger(trigger, false)
+            end
+        end
+    end
+end)
+EasyConvars:SetPersistent("portal_physical_flings", true)
 
 ---Controls player falling into chasms.
 PortalPlayerController = {}
@@ -283,10 +369,29 @@ function PortalPlayerController:Enable()
         currentPlayerOrigin = Player:GetAbsOrigin()
         return 0
     end, 0.1)
+
+    -- Currently flings only exist in sp_a1_intro6
+    -- This should be made dynamic if campaign is expanded
+    if GetMapName() == "sp_a1_intro6" then
+        Player:SetContextThink("DisableFlingTriggers", function()
+
+            if Convars:GetBool("portal_physical_flings") then
+                for _, triggerName in ipairs(mapFlingTriggers) do
+                    local trigger = Entities:FindByName(nil, triggerName)
+                    if trigger then
+                        hideFlingTrigger(trigger)
+                    end
+                end
+            end
+
+            return 0.5
+        end, 0.1)
+    end
 end
 
 function PortalPlayerController:Disable()
     Player:SetContextThink("PortalFallThink", nil, 0)
+    Player:SetContextThink("DisableFlingTriggers", nil, 0)
 end
 
 ListenToPlayerEvent("vr_player_ready", function(params)
