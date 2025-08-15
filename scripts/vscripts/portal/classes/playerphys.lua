@@ -98,7 +98,7 @@ function base:FunnelIntoPortal(portal)
     vPortalUp = vPortalUp:Normalized()
 
     -- Make sure the player is looking down
-    if Player:EyeAngles():Forward().z > -0.1 then return end
+    if Player:EyeAngles():Forward().z > -0.7 then return end
 
     local vPlayerToPortal = portal:GetAbsOrigin() - self:GetAbsOrigin()
     local velocity = self.velocity
@@ -350,6 +350,7 @@ function base:Remove()
     debugoverlay:Sphere(self:GetAbsOrigin(), 8, 255, 255, 0, 255, true, 8)
 	self:ClearPlayerAnchorParent()
 	self:EnablePlayerTeleport()
+    PortalPlayerController:UpdateWhooshSound(0)
 	-- self:RemoveVignette()
 	-- self:SetEntityName("old_"..ENT_NAME)
     PortalPlayerController.currentPlayerPhys = nil

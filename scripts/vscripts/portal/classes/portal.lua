@@ -547,6 +547,8 @@ function base:FunnelIntoPortal(entity)
         return
     end
 
+    debugoverlay:Sphere(entity:GetAbsOrigin(), 8, 255, 0, 128, 255, true, 0.1)
+
     if vEntityToPortal.z > -8.0 then
         -- We're too close the the portal to continue correcting, but zero the velocity so our fling velocity is nice
         velocity.x = 0
@@ -671,7 +673,9 @@ function base:Think()
 
     -- Funnel physics objects into this portal
     -- Only cubes get funneled for now, for performance reasons
-    for _, ent in ipairs(Entities:FindAllByModelWithin("models/props/metal_box_dirty.vmdl", self:GetAbsOrigin(), 1000)) do
+    -- local model = "models/props_junk/wood_crate001a.vmdl"
+    local model = "models/props/metal_box_dirty.vmdl"
+    for _, ent in ipairs(Entities:FindAllByModelWithin(model, self:GetAbsOrigin(), 1000)) do
         self:FunnelIntoPortal(ent)
     end
 

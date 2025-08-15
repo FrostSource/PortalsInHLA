@@ -16,7 +16,7 @@ local MIN_FLING_SPEED = 300
 
 local currentWhooshVolume = 0
 
-EasyConvars:RegisterConvar("portal_woosh_always", "1", "Always adjust the woosh instead of just when flinging")
+EasyConvars:RegisterConvar("portal_woosh_always", "0", "Always adjust the woosh instead of just when flinging")
 EasyConvars:SetPersistent("portal_woosh_always", true)
 
 local mapFlingTriggers = {
@@ -396,6 +396,9 @@ end
 
 ListenToPlayerEvent("vr_player_ready", function(params)
     currentPlayerOrigin = Player:GetAbsOrigin()
+
+    -- SendToConsole("god 1")
+    -- DoEntFire("speedmod", "modifyspeed", "1.6", 0, nil, nil)
 
     -- Just for testing enable always
     PortalPlayerController:Enable()
