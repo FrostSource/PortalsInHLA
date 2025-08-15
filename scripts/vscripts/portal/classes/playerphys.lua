@@ -7,7 +7,7 @@ end
 
 local PLAYER_MASS = 65 -- in kg
 
--- local PORTAL_FUNNEL_AMOUNT = 0.5--6.0
+local PORTAL_FUNNEL_AMOUNT = 6.0
 
 local PORTAL_HALF_WIDTH = 28
 local PORTAL_HALF_HEIGHT = 49.5
@@ -82,7 +82,8 @@ end
 
 ---Funnel the player into the portal
 ---@param portal Portal
-function base:FunnelIntoPortal(portal)
+---@param wishdir Vector
+function base:FunnelIntoPortal(portal, wishdir)
     if not IsValidEntity(portal) then return end
 
     local vPortalForward = portal:GetForwardVector()
@@ -98,22 +99,26 @@ function base:FunnelIntoPortal(portal)
     vPortalUp = vPortalUp:Normalized()
 
     -- Make sure the player is looking down
-    if Player:EyeAngles():Forward().z > -0.7 then return end
+    if Player:EyeAngles():Forward().z > -0.5 then return end
 
     local vPlayerToPortal = portal:GetAbsOrigin() - self:GetAbsOrigin()
     local velocity = self.velocity
 
     -- Make sure the player isn't trying to air control, they're falling downward and they are vertically close to the portal
-    -- if abs(velocity.x) > 64 or abs(velocity.y) > 64 or velocity.z > -165 or vPlayerToPortal.z < -512 then
-    if velocity.z > -165 or vPlayerToPortal.z < -512 then
+    --0.1422
+    if abs(wishdir.x) > 40 or abs(velocity.y) > 40 or velocity.z > -165 or vPlayerToPortal.z < -512 then
+    -- if velocity.z > -165 or vPlayerToPortal.z < -512 then
         return
     end
 
+    -- Make sure player is moving towards the portal
+    -- if portal:GetForwardVector():Dot(velocity) > -0.5 then return end
+
     -- Make sure we're in the 2D portal rectangle
-    if (vPlayerToPortal:Dot(vPortalRight) * vPortalRight):Length() > PORTAL_HALF_WIDTH * 5.5 then
+    if (vPlayerToPortal:Dot(vPortalRight) * vPortalRight):Length() > PORTAL_HALF_WIDTH * 1.5 then
         return
     end
-    if (vPlayerToPortal:Dot(vPortalUp) * vPortalUp):Length() > PORTAL_HALF_HEIGHT * 5.5 then
+    if (vPlayerToPortal:Dot(vPortalUp) * vPortalUp):Length() > PORTAL_HALF_HEIGHT * 1.5 then
         return
     end
 
@@ -126,8 +131,12 @@ function base:FunnelIntoPortal(portal)
         -- self.velocity.y = 0
     else
         -- Funnel toward the portal
-        -- local fFunnelX = vPlayerToPortal.x * PORTAL_FUNNEL_AMOUNT - velocity.x
-        -- local fFunnelY = vPlayerToPortal.y * PORTAL_FUNNEL_AMOUNT - velocity.y
+        local fFunnelX = vPlayerToPortal.x * PORTAL_FUNNEL_AMOUNT - velocity.x
+        local fFunnelY = vPlayerToPortal.y * PORTAL_FUNNEL_AMOUNT - velocity.y
+
+        wishdir.x = wishdir.x + fFunnelX
+        wishdir.y = wishdir.y + fFunnelY
+        return wishdir
 
         -- local funnelStrength = 1--PORTAL_FUNNEL_AMOUNT * FrameTime()
         -- self.velocity.x = self.velocity.x + fFunnelX*funnelStrength
@@ -146,8 +155,9 @@ function base:FunnelIntoPortal(portal)
 
 
 
-        local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, Convars:GetFloat("sv_gravity"))
-        self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
+        --- THIS IS WORKING BUT TOO STRONG
+        -- local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, Convars:GetFloat("sv_gravity"))
+        -- self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
 
 
 
@@ -173,6 +183,32 @@ function base:FunnelIntoPortal(portal)
     end
 end
 
+function base:GetThumbstickVector()
+    -- Check offhand first because it's most common, then check primary hand movement
+    local moveVector = Player:GetAnalogActionPositionForHand(Player.SecondaryHand.Literal, ANALOG_INPUT_TELEPORT_TURN)
+    local hand = Player.SecondaryHand
+    if #moveVector == 0 then
+        moveVector = Player:GetAnalogActionPositionForHand(Player.PrimaryHand.Literal, ANALOG_INPUT_TELEPORT_TURN)
+        hand = Player.PrimaryHand
+    end
+
+    local dir = Vector(0, 0, 0)
+
+    if moveVector:Length() > 0 then
+        local moveType = Player:GetMoveType()
+
+        if moveType == PlayerMoveType.ContinuousHand then
+            dir = (hand:GetAngles():Left() * moveVector.x) + (hand:GetAngles():Forward() * moveVector.y)
+        else
+            dir = (Player:EyeAngles():Left() * moveVector.x) + (Player:EyeAngles():Forward() * moveVector.y)
+        end
+    end
+
+    return dir:Normalized()
+end
+
+local quickTurnFlag = false
+
 ---Main entity think function. Think state is saved between loads
 function base:Think()
 	local time = Time()
@@ -183,6 +219,10 @@ function base:Think()
     -- gravitySpeed = gravitySpeed / 10 -- test
 
     self.__expectingPortal = false
+
+    local wishdir = self:GetThumbstickVector()
+    wishdir.z = 0
+    wishdir = wishdir * 400
 
     -- local portalDownTrace = self:TraceSpace(Vector(0, 0, -2048))
     -- if portalDownTrace.hit then
@@ -222,18 +262,64 @@ function base:Think()
 
     for _, portal in ipairs(PortalManager:GetAllPortals()) do
         if portal:GetConnectedPortal() then
-            self:FunnelIntoPortal(portal)
+            local outdir = self:FunnelIntoPortal(portal, wishdir)
+            if outdir ~= nil then
+                wishdir = outdir
+            end
             -- portal:FunnelIntoPortal(self, self.velocity)
         end
     end
 
-	local gravity = Vector(0,0,-gravitySpeed * frameTime)
-	self.velocity = self.velocity + gravity
+    -- cap movement speed
+    if wishdir:Length() > 120 then
+        wishdir = wishdir:Normalized() * 120
+    end
+    self.velocity = self.velocity + wishdir * frameTime
+
+    -- -- testing accel
+    -- local wishspeed = wishdir:Length()
+    -- if wishspeed ~= 0 and (wishspeed > 100) then
+    --     wishspeed = 100
+    -- end
+    -- local wishspd = wishspeed
+    -- if wishspd > 60 then wishspd = 60 end
+    -- local currentspeed = self.velocity:Dot(wishdir)
+    -- local addspeed = wishspd - currentspeed
+    -- -- if addspeed > 0 then
+    --     local accelspeed = 15 * wishspeed * frameTime * 0.25
+    --     if accelspeed > addspeed then
+    --         accelspeed = addspeed
+    --     end
+    --     -- print(Debug.SimpleVector(wishdir), accelspeed)
+    --     self.velocity = self.velocity + accelspeed * wishdir
+    -- -- end
+
+    local gravity = Vector()
+    -- if not self:TraceSpace(Vector(0, 0, -5)).hit then
+	    gravity = Vector(0,0,-gravitySpeed * frameTime)
+    -- end
+
+    -- local friction = 6
+    -- local decay = math.max(0, 1 - friction * frameTime)
+    local decay = 1
+
+    self.velocity = self.velocity * decay + gravity
+
+    -- cap velocity
+    if self.velocity:Length() > 600 then
+        self.velocity = self.velocity:Normalized() * 600
+    end
 
 	local origin = self:GetAbsOrigin()
 	local offset = self.velocity * frameTime
 	local newOrigin = origin + offset
     -- print(origin.z, offset.z, self.velocity.z*frameTime, newOrigin.z, frameTime)
+
+    -- if self.velocity:Length() < 0.1 then
+    --     PortalPlayerController:PlayerLandedOnGround()
+	-- 	self:Remove()
+    --     return
+    -- end
 
 	local traceTable = self:TraceSpace(offset)
 	if traceTable.hit or Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled") then -- we hit something or noclip was enabled
@@ -245,6 +331,22 @@ function base:Think()
 				enthit:ApplyAbsVelocityImpulse(self.velocity / enthit:GetMass() * PLAYER_MASS)
 			end
 		end
+
+        -- local dot = self.velocity:Dot(traceTable.normal)
+        -- print("cancel out")
+        -- print(Debug.SimpleVector(self.velocity))
+        -- print(Debug.SimpleVector(traceTable.normal))
+        -- if dot < 0 then
+        --     print("Canceling out")
+        --     self.velocity = self.velocity - traceTable.normal * dot
+        -- end
+        -- debugoverlay:Line(self:GetAbsOrigin(), self:GetAbsOrigin()+self.velocity*50, 255, 0, 128, 255, false, 10)
+
+        -- if not self:TraceSpace(self.velocity * frameTime).hit then
+        --     self:SetVelocity(self.velocity)
+        --     PortalPlayerController:CacheVelocity(self.velocity)
+        --     return 0
+        -- end
 
         -- This is a hack to keep the player away from the wall
         local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
@@ -276,6 +378,33 @@ function base:Think()
 		Player:SetAbsOrigin(newOrigin)
 		Player:SetVelocity(self.velocity)
 	end
+
+    --- Custom turning
+
+    local turnSign = 0
+    if Player:IsDigitalActionOnForHand(0, DIGITAL_INPUT_TURN_LEFT) or Player:IsDigitalActionOnForHand(1, DIGITAL_INPUT_TURN_LEFT) then
+        turnSign = 1
+    elseif Player:IsDigitalActionOnForHand(0, DIGITAL_INPUT_TURN_RIGHT) or Player:IsDigitalActionOnForHand(1, DIGITAL_INPUT_TURN_RIGHT) then
+        turnSign = -1
+    else
+        quickTurnFlag = false
+    end
+
+    if turnSign ~= 0 then
+        local angles = Player.HMDAnchor:GetAngles()
+        local amount = 0
+
+        if Convars:GetBool("vr_quick_turn_continuous_enable") then
+            local speed = Convars:GetFloat("vr_quick_turn_continuous_speed") or 0
+            amount = speed * FrameTime() * turnSign
+        elseif Convars:GetBool("vr_teleport_quick_turn_enable") and not quickTurnFlag then
+            local speed = Convars:GetFloat("vr_teleport_quick_turn_angle") or 0
+            amount = speed * turnSign
+            quickTurnFlag = true
+        end
+
+        Player.HMDAnchor:SetAngles(angles.x, angles.y + amount, angles.z)
+    end
 
 	self.lastTime = time
 

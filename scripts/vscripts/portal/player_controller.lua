@@ -16,6 +16,8 @@ local MIN_FLING_SPEED = 300
 
 local currentWhooshVolume = 0
 
+local playerIsTeleporting = false
+
 EasyConvars:RegisterConvar("portal_woosh_always", "0", "Always adjust the woosh instead of just when flinging")
 EasyConvars:SetPersistent("portal_woosh_always", true)
 
@@ -133,6 +135,15 @@ ListenToPlayerEvent("item_released", function (params)
         end
     end
 end)
+
+---@param params GameEventPlayerTeleportStart
+ListenToGameEvent("player_teleport_start", function (params)
+    playerIsTeleporting = true
+end, nil)
+---@param params GameEventPlayerTeleportFinish
+ListenToGameEvent("player_teleport_finish", function (params)
+    playerIsTeleporting = false
+end, nil)
 
 function PortalPlayerController:UpdateWhooshSound(override)
     local whooshVolume = self:GetPlayerVelocity():Length() - MIN_FLING_SPEED
@@ -350,7 +361,7 @@ function PortalPlayerController:Enable()
             PortalPlayerController:UpdateWhooshSound()
         end
 
-        if playerOnGround and not (Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled")) then
+        if playerOnGround and not playerIsTeleporting and not (Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled")) then
             if not CheckGround() then
                 -- Check if fall height is high enough
                 local trace = PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT))
