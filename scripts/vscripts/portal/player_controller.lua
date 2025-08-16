@@ -350,6 +350,7 @@ function PortalPlayerController:IsPlayerOnGround()
 end
 
 function PortalPlayerController:Enable()
+    self:UpdateWhooshSound(0)
 
     currentPlayerOrigin = Player:GetAbsOrigin()
 
@@ -357,22 +358,22 @@ function PortalPlayerController:Enable()
 
         currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
 
-        if Convars:GetBool("portal_woosh_always") or PortalPlayerController.currentPlayerPhys ~= nil then
-            PortalPlayerController:UpdateWhooshSound()
+        if Convars:GetBool("portal_woosh_always") or self.currentPlayerPhys ~= nil then
+            self:UpdateWhooshSound()
         end
 
         if playerOnGround and not playerIsTeleporting and not (Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled")) then
             if not CheckGround() then
                 -- Check if fall height is high enough
-                local trace = PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT))
+                local trace = self:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT))
                 if not trace.hit then
                     print("Player falling")
-                    local bounceVelocity = PortalPlayerController:GetCachedBounceVelocity()
+                    local bounceVelocity = self:GetCachedBounceVelocity()
                     if bounceVelocity then
-                        PortalPlayerController:ClearBounceCache()
-                        PortalPlayerController:CacheVelocity(bounceVelocity)
+                        self:ClearBounceCache()
+                        self:CacheVelocity(bounceVelocity)
                     end
-                    PortalPlayerController:SetPlayerVelocity(PortalPlayerController:GetPlayerVelocity())
+                    self:SetPlayerVelocity(self:GetPlayerVelocity())
                     playerOnGround = false
                 end
             end
@@ -403,6 +404,7 @@ end
 function PortalPlayerController:Disable()
     Player:SetContextThink("PortalFallThink", nil, 0)
     Player:SetContextThink("DisableFlingTriggers", nil, 0)
+    self:UpdateWhooshSound(0)
 end
 
 ListenToPlayerEvent("vr_player_ready", function(params)
@@ -411,6 +413,6 @@ ListenToPlayerEvent("vr_player_ready", function(params)
     -- SendToConsole("god 1")
     -- DoEntFire("speedmod", "modifyspeed", "1.6", 0, nil, nil)
 
-    -- Just for testing enable always
-    PortalPlayerController:Enable()
+    -- -- Just for testing enable always
+    -- PortalPlayerController:Enable()
 end)
