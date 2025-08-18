@@ -33,11 +33,14 @@ function base:OnSpawn(spawnkeys)
 
 	self.velocity = Vector(xVelocity, yVelocity, zVelocity)
     print("VELOCITY NUMS", xVelocity, yVelocity, zVelocity)
-    if xVelocity == 0 and zVelocity == 0 then
-    print("VECLOTIY", self.velocity)
-    debugoverlay:Line(self:GetOrigin(), self:GetOrigin() + self.velocity*100, 255, 0, 255, 255, true, 100)
-    debugoverlay:Sphere(self:GetOrigin(), 8, 255, 0, 255, 255, true, 100)
-    end
+    -- -- if xVelocity == 0 and zVelocity == 0 then
+    -- -- print("VECLOTIY", self.velocity)
+    -- debugoverlay:Line(self:GetOrigin(), self:GetOrigin() + self.velocity*10, 255, 0, 255, 255, true, 100)
+    -- debugoverlay:Sphere(self:GetOrigin(), 8, 255, 0, 255, 255, true, 100)
+    -- -- end
+
+
+    self:DrawTrajectory()
 
     -- self:RemoveOthers()
     -- self:SetEntityName(ENT_NAME)
@@ -485,6 +488,39 @@ function base:Remove()
     PortalPlayerController.currentPlayerPhys = nil
     print('killing')
 	DoEntFireByInstanceHandle(self, "Kill", "", 0.1, self, self)
+end
+
+---Draws the expected trajectory path for this phys object based on its current velocity.
+function base:DrawTrajectory()
+    local step = 0.05
+    local maxSteps = 100
+
+    debugoverlay:PushAndClearDebugOverlayScope("playerphys")
+
+    local simPos = self:GetOrigin()
+    local simVel = self.velocity
+
+    local gravity = Vector(0,0,-Convars:GetFloat("sv_gravity"))
+    local lastPos = simPos
+    for i = 1, maxSteps do
+        -- Apply gravity
+        simVel = simVel + gravity * step
+
+        -- Move forward
+        simPos = simPos + simVel * step
+
+        -- Draw line from lastPos → simPos
+        DebugDrawLine(lastPos, simPos, 255, 255, 255, true, 60)
+
+        -- Check if it hits something
+        local trace = PortalPlayerController:TracePlayerSpace(simPos, simPos + (simPos - lastPos) * 1)
+        if trace.hit then
+            DebugDrawCircle(simPos, Vector(0, 255, 0), 255, 4, true, 60)
+            break
+        end
+
+        lastPos = simPos
+    end
 end
 
 --Used for classes not attached directly to entities

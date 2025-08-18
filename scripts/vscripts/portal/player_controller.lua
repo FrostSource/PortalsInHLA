@@ -21,6 +21,14 @@ local playerIsTeleporting = false
 EasyConvars:RegisterConvar("portal_woosh_always", "0", "Always adjust the woosh instead of just when flinging")
 EasyConvars:SetPersistent("portal_woosh_always", true)
 
+Convars:RegisterCommand("portal_playerphys", function (name, on)
+    if on == "1" then
+        PortalPlayerPhys:Enable()
+    else
+        PortalPlayerPhys:Disable()
+    end
+end, "", FCVAR_HIDDEN)
+
 local mapFlingTriggers = {
     -- first area
     "fall_input_modifier",
