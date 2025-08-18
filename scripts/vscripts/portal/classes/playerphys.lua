@@ -324,8 +324,13 @@ function base:Think()
     --     return
     -- end
 
+    if Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled") then
+        PortalPlayerController:PlayerLandedOnGround()
+		self:Remove()
+    end
+
 	local traceTable = self:TraceSpace(offset)
-	if traceTable.hit or Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled") then -- we hit something or noclip was enabled
+	if traceTable.hit then -- we hit something or noclip was enabled
 		local enthit = traceTable.enthit
 		-- if we hit a physics entity, apply a force to it
 		if enthit and enthit.ApplyAbsVelocityImpulse and enthit.GetMass then
@@ -355,7 +360,6 @@ function base:Think()
         local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
         PortalPlayerController:CacheBounceVelocity(reflected * 0.02)
 
-        -- self:SetAbsOrigin(traceTable.pos)
         print("Phys hit ground", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
         if traceTable.enthit:GetOwner() then print("Owner:", traceTable.enthit:GetOwner():GetClassname()) end
 
@@ -481,7 +485,9 @@ function base:Remove()
     -- yellow sphere at death point
     debugoverlay:Sphere(self:GetAbsOrigin(), 8, 255, 255, 0, 255, true, 8)
 	self:ClearPlayerAnchorParent()
-	self:EnablePlayerTeleport()
+    if not Convars:GetBool("noclip_vr_enabled") then
+    	self:EnablePlayerTeleport()
+    end
     PortalPlayerController:UpdateWhooshSound(0)
 	-- self:RemoveVignette()
 	-- self:SetEntityName("old_"..ENT_NAME)

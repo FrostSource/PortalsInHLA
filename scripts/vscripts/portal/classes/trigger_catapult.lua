@@ -23,6 +23,9 @@ base.m_bLaunchAnglesIsLocal = true
 ---@type EntityHandle
 base.targetHandle = nil
 
+---@type EntityHandle
+base.physicsTarget = nil
+
 base.resetTargetOnCapture = false
 
 -- ---Creates a physics entity for the player, and launches it with the specified velocity.
@@ -51,6 +54,7 @@ function base:OnSpawn(spawnkeys)
 	self.m_ExactVelocityChoice = tonumber(spawnkeys:GetValue("exactVelocityChoiceType")) --Exact Solution Method
 	self.m_bUseExactVelocity = truthy(spawnkeys:GetValue("useExactVelocity")) --Use Exact Velocity
 	self.m_strLaunchTarget = spawnkeys:GetValue("launchTarget") or ""
+	self.m_strPhysicsTarget = spawnkeys:GetValue("physicsTarget") or ""
 	self.m_vecLaunchAngles = VectorToAngles(Util.VectorFromString(spawnkeys:GetValue("launchDirection"))) -- [0 0 0] gets converted to [90 0 0]
 	self.m_bLaunchAnglesIsLocal = truthy(spawnkeys:GetValue("launchDirection_isLocal"))
 
@@ -68,6 +72,7 @@ function base:OnSpawn(spawnkeys)
     print("exactVelocityChoiceType", self.m_ExactVelocityChoice)
     print("useExactVelocity", self.m_bUseExactVelocity)
     print("launchTarget", self.m_strLaunchTarget)
+	print("physicsTarget", self.m_strPhysicsTarget)
     print("launchDirection", self.m_vecLaunchAngles)
     print("launchDirection_isLocal", self.m_bLaunchAnglesIsLocal)
     print("useThresholdCheck", self.m_bUseThresholdCheck)
@@ -80,6 +85,10 @@ function base:OnSpawn(spawnkeys)
 	if self.m_strLaunchTarget ~= "" and self.m_strLaunchTarget ~= nil then
 		self:SetLaunchTargetByHandle(Entities:FindByName(nil, self.m_strLaunchTarget))
 	end
+	if self.m_strPhysicsTarget ~= "" and self.m_strPhysicsTarget ~= nil then
+		self:SetPhysicsTargetByHandle(Entities:FindByName(nil, self.m_strPhysicsTarget))
+	end
+
 	---@TODO: Make sure this doesn't stack on game loads
 	self:RedirectOutput("OnStartTouch", "StartTouch", self)
 end
@@ -260,7 +269,8 @@ end
 ---@param vecVelocity Vector Velocity vector to apply on entity.
 function base:Launch(pVictim, vecVelocity)
 	local vecVictim = GetPhysVelocity(pVictim)
-    print("Launchgin!")
+    print("Launching", pVictim:GetName())
+	StartSoundEvent("hev_suit.bell", Player)
 	-- Handle a player
 	if pVictim:IsPlayer() then
 		-- Send us flying
@@ -294,21 +304,42 @@ function base:StartTouch(params)
     print("Player hit catapult", self:GetName(), Debug.EntStr(params.activator))
     local victim = params.activator
 
-    if IsValidEntity(victim) and victim:GetOwner() == Player and not victim:IsPlayer() then
+    if IsValidEntity(victim) and not victim:IsPlayer()
+	and (victim:GetOwner() == Player
+		or victim == Player.LeftHand
+		or victim == Player.RightHand)
+	then
         print("Ignoring player's own entity")
         return
     end
 
-	if self.targetHandle then
+	local target
+	local usingPhysicsTarget = false
 
-        if not IsValidEntity(self.targetHandle) then
+	if IsPhysicsObject(victim) and self.physicsTarget then
+		target = self.physicsTarget
+		usingPhysicsTarget = true
+		print("Using physics target")
+	else
+		target = self.targetHandle
+		print("Using regular target")
+	end
+
+	if target then
+
+        if not IsValidEntity(target) then
             print("Catapult has invalid target, clearing target")
-			self.targetHandle = nil
+			if usingPhysicsTarget then
+				self.physicsTarget = nil
+			else
+				self.targetHandle = nil
+			end
 			self:StartTouch(params)
 			return
 		end
 
-        print("Catapult has target", self.targetHandle:GetName())
+        print("Catapult has target", target:GetName())
+		if true then return end
 
         if self.m_bUseThresholdCheck then
             print("Using threshold check")
@@ -326,15 +357,15 @@ function base:StartTouch(params)
             local vecVelocity
             if self.m_bUseExactVelocity then
                 print("Using exact velocity")
-                vecVelocity = self:CalculateLaunchVectorPreserve(vecVictim, victim, self.targetHandle)
+                vecVelocity = self:CalculateLaunchVectorPreserve(vecVictim, victim, target)
             else
                 print("Using normal velocity")
-                vecVelocity = self:CalculateLaunchVector(victim, self.targetHandle)
+                vecVelocity = self:CalculateLaunchVector(victim, target)
             end
             local flLaunchSpeed = vecVelocity:Length()
 
             -- is the victim facing the target?
-            local vecDirection = self.targetHandle:GetAbsOrigin() - victim:GetAbsOrigin()
+            local vecDirection = target:GetAbsOrigin() - victim:GetAbsOrigin()
             local necNormalizedVictim = vecVictim:Normalized()
             local vecNormalizedDirection = vecDirection:Normalized()
 
@@ -342,19 +373,21 @@ function base:StartTouch(params)
             print("Is the victim facing the target?", flDot >= self.m_flEntryAngleTolerance, flDot, self.m_flEntryAngleTolerance)
             if flDot >= self.m_flEntryAngleTolerance then
                 -- Is the victim speed within the tolerance to launch them?
+				print("Is the victim speed within the tolerance to launch them?", ( ( flLaunchSpeed - (flLaunchSpeed * self.m_flLowerThreshold ) ) < flVictimSpeed ), ( ( flLaunchSpeed + (flLaunchSpeed * self.m_flUpperThreshold ) ) > flVictimSpeed ))
+				print(( flLaunchSpeed - (flLaunchSpeed * self.m_flLowerThreshold ) ), flVictimSpeed)
                 if ( ( flLaunchSpeed - (flLaunchSpeed * self.m_flLowerThreshold ) ) < flVictimSpeed ) and ( ( flLaunchSpeed + (flLaunchSpeed * self.m_flUpperThreshold ) ) > flVictimSpeed ) then
                     if self.m_bOnlyVelocityCheck then
                         print("Only velocity check is enabled, sending output")
-                        self:FireOutput("OnUser1", params.activator, self, nil, 0)
+                        self:FireOutput("OnUser1", victim, self, nil, 0)
                     else
                         print("Launching by target")
-                        self:LaunchByTarget(victim, self.targetHandle)
+                        self:LaunchByTarget(victim, target)
                     end
                 end
             end
         else
             print("No threshold check, launching by target")
-		    self:LaunchByTarget(params.activator, self.targetHandle)
+		    self:LaunchByTarget(victim, target)
         end
 	else
         print("No target, launching by direction")
@@ -381,9 +414,9 @@ function base:StartTouch(params)
 
         if bShouldLaunch then
             if self.m_bOnlyVelocityCheck then
-                self:FireOutput("OnUser1", params.activator, self, nil, 0)
+                self:FireOutput("OnUser1", victim, self, nil, 0)
             else
-                self:LaunchByDirection(params.activator)
+                self:LaunchByDirection(victim)
             end
         end
 	end
@@ -464,6 +497,18 @@ function base:SetLaunchTargetByHandle(target)
 		self.targetHandle = target
 		self:Save("m_strLaunchTarget", target:GetName())
 		self:SetOwner(nil)
+	end
+end
+
+---Updates the catapult's physics launch target, by entity handle.
+---@param target EntityHandle|nil Handle of physics launch target.
+function base:SetPhysicsTargetByHandle(target)
+	if target == nil then
+		self.physicsTarget = nil
+		self:Save("m_strLaunchTarget", "")
+	else
+		self.physicsTarget = target
+		self:Save("m_strLaunchTarget", target:GetName())
 	end
 end
 
