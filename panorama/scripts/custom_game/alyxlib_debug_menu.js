@@ -133,27 +133,27 @@ class Category
         this.content = $.CreatePanel("Panel", this.panel, `${this.id}_content`);
         this.content.AddClass("content");
 
-        // Create category button
-        this.button = CreateDebugMenuButton($("#CategoryBar"), () => SetCategoryVisible(this.id), "CategoryButton", `${this.id}_button`);
+        // // Create category button
+        // this.button = CreateDebugMenuButton($("#CategoryBar"), () => SetCategoryVisible(this.id), "CategoryButton", `${this.id}_button`);
         
-        // Animate this new tab if being added after the menu is open
-        if (panelReady)
-            this.button.AddClass("flash");
+        // // Animate this new tab if being added after the menu is open
+        // if (panelReady)
+        //     this.button.AddClass("flash");
         
-        let label = $.CreatePanel("Label", this.button, `${this.id}_label`);
-        label.text = this.name;
+        // let label = $.CreatePanel("Label", this.button, `${this.id}_label`);
+        // label.text = this.name;
 
-        // Scale text size to fit button
+        // // Scale text size to fit button
 
-        // Width of CategoryButton
-        let containerWidth = 150;
-        // Good factor for AlyxLib text
-        let baseFactor = 5;
-        // Calculate a scaled factor that grows slowly
-        let factor = baseFactor * Math.max(label.text.length / 17, 1); // never less than 1, so no shrinking below base
-        // Clamp to avoid too small or too big
-        factor = Math.min(Math.max(factor, baseFactor), 10);
-        label.style.fontSize = `${containerWidth / factor}px`;
+        // // Width of CategoryButton
+        // let containerWidth = 150;
+        // // Good factor for AlyxLib text
+        // let baseFactor = 5;
+        // // Calculate a scaled factor that grows slowly
+        // let factor = baseFactor * Math.max(label.text.length / 17, 1); // never less than 1, so no shrinking below base
+        // // Clamp to avoid too small or too big
+        // factor = Math.min(Math.max(factor, baseFactor), 10);
+        // label.style.fontSize = `${containerWidth / factor}px`;
     }
 
     /**

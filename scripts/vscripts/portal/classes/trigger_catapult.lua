@@ -339,7 +339,6 @@ function base:StartTouch(params)
 		end
 
         print("Catapult has target", target:GetName())
-		if true then return end
 
         if self.m_bUseThresholdCheck then
             print("Using threshold check")

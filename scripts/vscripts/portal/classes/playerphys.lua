@@ -8,6 +8,7 @@ end
 local PLAYER_MASS = 65 -- in kg
 
 local PORTAL_FUNNEL_AMOUNT = 6.0
+Convars:RegisterConvar("portal_funnel_amount", tostring(PORTAL_FUNNEL_AMOUNT), "Amount of portals to funnel into", 0)
 
 local PORTAL_HALF_WIDTH = 28
 local PORTAL_HALF_HEIGHT = 49.5
@@ -111,7 +112,7 @@ function base:FunnelIntoPortal(portal, wishdir)
 
     -- Make sure the player isn't trying to air control, they're falling downward and they are vertically close to the portal
     --0.1422
-    if abs(wishdir.x) > 40 or abs(velocity.y) > 40 or velocity.z > -165 or vPlayerToPortal.z < -512 then
+    if abs(wishdir.x) > 40 or abs(wishdir.y) > 40 or velocity.z > -165 or vPlayerToPortal.z < -512 then
     -- if velocity.z > -165 or vPlayerToPortal.z < -512 then
         return
     end
@@ -132,12 +133,15 @@ function base:FunnelIntoPortal(portal, wishdir)
     if vPlayerToPortal.z > -8.0 then
         -- This is handled by the portal
         -- -- We're too close the the portal to continue correcting, but zero the velocity so our fling velocity is nice
-        -- self.velocity.x = 0
-        -- self.velocity.y = 0
+        wishdir.x = 0
+        wishdir.y = 0
+        return wishdir
     else
+        debugoverlay:Sphere(self:GetAbsOrigin(), 1.5, 255, 0, 128, 255, true, 0.02)
         -- Funnel toward the portal
-        local fFunnelX = vPlayerToPortal.x * PORTAL_FUNNEL_AMOUNT - velocity.x
-        local fFunnelY = vPlayerToPortal.y * PORTAL_FUNNEL_AMOUNT - velocity.y
+        local funnelAmount = Convars:GetFloat("portal_funnel_amount")
+        local fFunnelX = vPlayerToPortal.x * funnelAmount - velocity.x
+        local fFunnelY = vPlayerToPortal.y * funnelAmount - velocity.y
 
         wishdir.x = wishdir.x + fFunnelX
         wishdir.y = wishdir.y + fFunnelY
@@ -275,7 +279,7 @@ function base:Think()
         end
     end
 
-    -- cap movement speed
+    -- Cap thumbstick movement speed (NOT max velocity)
     if wishdir:Length() > 120 then
         wishdir = wishdir:Normalized() * 120
     end

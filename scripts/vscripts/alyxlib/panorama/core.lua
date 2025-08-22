@@ -65,6 +65,7 @@ function Panorama:Send(panelEntity, ...)
         end
         i = i + 1
     end
+    dataLength = #data
 
     -- Put all values into a single pipe separated string
     for index, value in ipairs(data) do
