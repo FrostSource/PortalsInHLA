@@ -21,11 +21,14 @@ local playerIsTeleporting = false
 EasyConvars:RegisterConvar("portal_woosh_always", "0", "Always adjust the woosh instead of just when flinging")
 EasyConvars:SetPersistent("portal_woosh_always", true)
 
+EasyConvars:RegisterConvar("portal_player_speed_multiplier", "100", "Player controller estimated speed multiplier")
+EasyConvars:SetPersistent("portal_player_speed_multiplier", true)
+
 Convars:RegisterCommand("portal_playerphys", function (name, on)
     if on == "1" then
-        PortalPlayerPhys:Enable()
+        PortalPlayerController:Enable()
     else
-        PortalPlayerPhys:Disable()
+        PortalPlayerController:Disable()
     end
 end, "", FCVAR_HIDDEN)
 
@@ -364,7 +367,7 @@ function PortalPlayerController:Enable()
 
     Player:SetContextThink("PortalFallThink", function()
 
-        currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
+        currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * Convars:GetFloat("portal_player_speed_multiplier")
 
         if Convars:GetBool("portal_woosh_always") or self.currentPlayerPhys ~= nil then
             self:UpdateWhooshSound()
@@ -405,7 +408,7 @@ function PortalPlayerController:Enable()
             end
 
             return 0.5
-        end, 0.1)
+        end, 0)
     end
 end
 

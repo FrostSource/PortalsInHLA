@@ -15,6 +15,8 @@ local PORTAL_HALF_HEIGHT = 49.5
 -- EasyConvars:RegisterConvar("portal_attract_distance", "128", "Distance at which the player is attracted to a portal when falling")
 Convars:RegisterConvar("player_funnel_into_portals", "1", "Player will move towards portals they are falling into", 0)
 
+EasyConvars:RegisterConvar("portal_max_fling_speed", "1200", "Maximum speed at which the player can move while flinging")
+EasyConvars:SetPersistent("portal_max_fling_speed", true)
 
 local DEBUG = true
 
@@ -309,8 +311,9 @@ function base:Think()
     self.velocity = self.velocity * decay + gravity
 
     -- cap velocity
-    if self.velocity:Length() > 600 then
-        self.velocity = self.velocity:Normalized() * 600
+    local maxSpeed = Convars:GetInt("portal_max_fling_speed")
+    if self.velocity:Length() > maxSpeed then
+        self.velocity = self.velocity:Normalized() * maxSpeed
     end
 
 	local origin = self:GetAbsOrigin()
@@ -358,7 +361,7 @@ function base:Think()
 
         -- This is a hack to keep the player away from the wall
         local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
-        PortalPlayerController:CacheBounceVelocity(reflected * 0.02)
+        PortalPlayerController:CacheBounceVelocity(reflected * 0.05)
 
         print("Phys hit ground", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
         if traceTable.enthit:GetOwner() then print("Owner:", traceTable.enthit:GetOwner():GetClassname()) end
