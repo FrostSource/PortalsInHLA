@@ -482,7 +482,10 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 local desiredVelocity = connectedPortal:GetForwardVector()*cachedVelocity:Length()
                 local physEnt = PortalPlayerController:GetOrCreatePlayerPhys(desiredVelocity)
                 -- debugoverlay:Line(newPos, newPos + cachedVelocity, 0, 255, 0, 255, false, 6)
-                physEnt:SetOrigin(connectedPortal:GetOrigin()+connectedPortal:GetForwardVector()*32)
+                local exitOrigin = connectedPortal:GetOrigin() + connectedPortal:GetForwardVector() * 32
+                -- Player's feet need to be at the bottom of the portal to avoid ceiling clipping
+                local adjustedZ = exitOrigin - connectedPortal:GetUpVector() * 32
+                physEnt:SetOrigin(adjustedZ)
                 physEnt:DrawTrajectory()
 
                 local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
