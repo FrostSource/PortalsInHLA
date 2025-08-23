@@ -5,7 +5,13 @@ if thisEntity then
     return
 end
 
-Convars:RegisterConvar("portal_use_outlines", "1", "Show portal outlines through walls", 0)
+EasyConvars:RegisterConvar("portal_use_outlines", "1", "Show portal outlines through walls", nil,
+    function(newValue, oldValue)
+        local visible = truthy(newValue)
+        for _, portal in ipairs(PortalManager:GetAllPortals()) do
+            portal:SetOutlineVisible(visible)
+        end
+    end)
 
 local PTX_PORTAL_EFFECT = "particles/portal_effect_parent.vpcf"
 
@@ -63,6 +69,8 @@ base.monitor = nil
 base.trigger = nil
 ---@type PortalTeleport
 base.teleport = nil
+---@type EntityHandle?
+base.outline = nil
 
 ---@type string
 base.colorName = ""
@@ -109,6 +117,14 @@ function base:UpdateEffects()
     end
     self.__ptxEffect = ParticleManager:CreateParticleForPlayer(PTX_PORTAL_EFFECT, 1, self.particleSystem, Player)
     ParticleManager:SetParticleControl(self.__ptxEffect, 5, PortalManager.colors[self.colorName].color:ToDecimalVector())
+end
+
+---Sets if the portal outline is visible.
+---@param visible boolean # If true, the outline will be visible
+function base:SetOutlineVisible(visible)
+    if IsValidEntity(self.outline) then
+        self.outline:SetRenderingEnabled(visible)
+    end
 end
 
 ---Open this portal with new properties.
@@ -179,18 +195,20 @@ function base:Open(position, normal, color, reorientToPlayer)
     -- })
 
     if Convars:GetBool("portal_use_outlines") then
-        local outlineTest = SpawnEntityFromTableSynchronous("prop_dynamic", {
+        self.outline = SpawnEntityFromTableSynchronous("prop_dynamic", {
             model = "models/vrportal/portal_outline.vmdl",
             origin = self:GetOrigin(),
             angles = self:GetAngles(),
             targetname = color.name .. "Portal_outline",
         })
-        outlineTest:SetParent(self, "")
+        self.outline:SetParent(self, "")
         -- local c = color.color:ToDecimalVector()
-        -- DoEntFireByInstanceHandle(outlineTest, "SetRenderAttribute", "tintColor="..c.x..","..c.y..","..c.z, 0, nil, nil)
+        -- DoEntFireByInstanceHandle(self.outline, "SetRenderAttribute", "tintColor="..c.x..","..c.y..","..c.z, 0, nil, nil)
         if color.name == "blue" then
-            DoEntFireByInstanceHandle(outlineTest, "SetRenderAttribute", "blueStrength=100", 0, nil, nil)
+            DoEntFireByInstanceHandle(self.outline, "SetRenderAttribute", "blueStrength=100", 0, nil, nil)
         end
+
+        self:SetOutlineVisible(Convars:GetBool("portal_use_outlines"))
     end
 
     self.camera = PortalManager:GetPortalCamera(color)
@@ -444,10 +462,10 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
     local newPos
     local oldPos = ent:GetOrigin()
 
-    if Convars:GetInt("portal_debug_portals") >= 1 then
+    DebugIf("portal_debug_portals", function()
         debugoverlay:Sphere(oldPos, 2, 255, 255, 0, 255, false, 6)
         debugoverlay:Box(ent:GetBoundingMins(), ent:GetBoundingMaxs(), 255, 255, 0, 255, false, 6)
-    end
+    end)
 
 	if not ent:IsPlayer() then
 		-- Not Player
@@ -459,6 +477,10 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 
 		ent:ApplyAbsVelocityImpulse(dirVelocity*velocity:Length())
 		SetPhysAngularVelocity(ent, dirAngVelocity*angularVelocity:Length())
+
+        DebugIf("portal_debug_portals", function()
+            DebugDrawTrajectory(ent, PortalManager.colors[self.colorName].color:ToVector(), nil)
+        end)
 	else
 		-- Player
         newPos = (dirPosition-dirOffset)+ AnglesToVector(dirAngle)*4
@@ -486,7 +508,12 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 -- Player's feet need to be at the bottom of the portal to avoid ceiling clipping
                 local adjustedZ = exitOrigin - connectedPortal:GetUpVector() * 32
                 physEnt:SetOrigin(adjustedZ)
-                physEnt:DrawTrajectory()
+
+                if Convars:GetInt("portal_debug_portals") >= 1 then
+                    -- print(PortalManager.colors[self.colorName].color:ToVector(), "portaldebug")
+                    -- debugoverlay:PushDebugOverlayScope("portaldebug")
+                    physEnt:DrawTrajectory(PortalManager.colors[self.colorName].color:ToVector(), "portal_debug_portals")
+                end
 
                 local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
                 local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
@@ -512,11 +539,18 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
         StartSoundEvent(SND_TELEPORT_ENTER, Player)
 	end
 
-    if Convars:GetInt("portal_debug_portals") >= 1 then
-        debugoverlay:Sphere(newPos, 2, 0, 0, 255, 255, false, 6)
-        debugoverlay:Box(ent:GetBoundingMins(), ent:GetBoundingMaxs(), 0, 0, 255, 255, false, 6)
-        debugoverlay:Line(oldPos, newPos, 0, 0, 255, 255, false, 6)
-    end
+    -- if Convars:GetInt("portal_debug_portals") >= 1 then
+    --     debugoverlay:PushDebugOverlayScope("portaldebug")
+    --     debugoverlay:Sphere(newPos, 2, 0, 0, 255, 255, false, 10)
+    --     debugoverlay:Box(newPos+ent:GetBoundingMins(), newPos+ent:GetBoundingMaxs(), 0, 0, 255, 255, false, 10)
+    --     debugoverlay:Line(oldPos, newPos, 0, 0, 255, 255, false, 10)
+    -- end
+
+    DebugIf("portal_debug_portals", function()
+        debugoverlay:Sphere(newPos, 2, 0, 0, 255, 255, false, 10)
+        debugoverlay:Box(newPos+ent:GetBoundingMins(), newPos+ent:GetBoundingMaxs(), 0, 0, 255, 255, false, 10)
+        debugoverlay:Line(oldPos, newPos, 0, 0, 255, 255, false, 10)
+    end)
 end
 
 ---Funnel entity into the portal.
@@ -551,7 +585,9 @@ function base:FunnelIntoPortal(entity)
         return
     end
 
-    debugoverlay:Sphere(entity:GetAbsOrigin(), 8, 255, 0, 128, 255, true, 0.1)
+    DebugIf("portal_debug_portals", function()
+        debugoverlay:Sphere(entity:GetAbsOrigin(), 2, 255, 0, 128, 255, true, 0.1)
+    end)
 
     if vEntityToPortal.z > -8.0 then
         -- We're too close the the portal to continue correcting, but zero the velocity so our fling velocity is nice

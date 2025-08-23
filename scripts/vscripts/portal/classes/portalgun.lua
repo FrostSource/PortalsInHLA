@@ -611,13 +611,13 @@ function base:UpdatePickupItemPosition(offset, immediately)
     offset = offset or Vector()
     desiredPosition = desiredPosition + offset
 
-    if Convars:GetInt("portal_debug_portalgun") >= 1 then
+    DebugIf("portal_debug_portalgun", function()
         debugoverlay:Line(self:ShootPosition(), self:ShootPosition() + self:ShootForward() * 100, 0, 0, 255, 255, true, 0)
         debugoverlay:Sphere(desiredPosition, 1, 0, 255, 0, 255, true, 0)
         debugoverlay:Sphere(ent:GetCenter(), 1, 255, 0, 0, 255, true, 0)
         local d = CalcDistanceToLineSegment2D(ent:GetCenter(), self:ShootPosition(), self:ShootPosition() + self:ShootForward() * 100)
         debugoverlay:Text(ent:GetCenter(), 0, "Distance: " .. d, 0, 255, 0, 255, 255, 0)
-    end
+    end)
 
     local aimAt = VectorToAngles(self:GetPickupEntityLookDirection(ent))
 

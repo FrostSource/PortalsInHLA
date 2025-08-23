@@ -65,13 +65,27 @@ PortalManager.PortalableSurfaceNamePrefix = ""
 ---@type string[]
 PortalManager.disabledPickupNames = {}
 
+local function checkDebugScope(scope)
+    if not Convars:GetBool(scope) then
+        debugoverlay:RemoveAllInScope(scope)
+    end
+end
 
-Convars:RegisterConvar("portal_debug_portals", "0", "Shows debugging visuals for portals", 0)
-Convars:RegisterConvar("portal_debug_portalgun", "0", "Shows debugging visuals for the portalgun", 0)
-Convars:RegisterConvar("portal_debug_portal_rendering", "0", "Shows debugging visuals for portal rendering", 0)
+local startAllDebugOn = "1"
+
+EasyConvars:RegisterConvar("portal_debug_portals", startAllDebugOn, "Shows debugging visuals for portals", 0, function() checkDebugScope("portal_debug_portals") end)
+EasyConvars:RegisterConvar("portal_debug_portalgun", startAllDebugOn, "Shows debugging visuals for the portalgun", 0, function() checkDebugScope("portal_debug_portalgun") end)
+EasyConvars:RegisterConvar("portal_debug_portal_rendering", startAllDebugOn, "Shows debugging visuals for portal rendering", 0, function() checkDebugScope("portal_debug_portal_rendering") end)
+EasyConvars:RegisterConvar("portal_debug_flings", startAllDebugOn, "Shows debugging visuals for flinging mechanics", 0, function() checkDebugScope("portal_debug_flings") end)
+
 Convars:RegisterCommand("portal_debug_clear", function()
     Convars:SetInt("portal_debug_portal_rendering", 0)
-    debugoverlay:RemoveAllInScope("portaldebug")
+
+    debugoverlay:RemoveAllInScope("portal_debug_portals")
+    debugoverlay:RemoveAllInScope("portal_debug_portalgun")
+    debugoverlay:RemoveAllInScope("portal_debug_portal_rendering")
+    debugoverlay:RemoveAllInScope("portal_debug_flings")
+
     ---@TODO Create function for looping portals
     for name in pairs(PortalManager.colors) do
         local portal = PortalManager:GetPortal(name)
@@ -107,6 +121,76 @@ end, "", 0)
 Convars:RegisterCommand("portal_close_all_portals", function (_, ...)
     PortalManager:CloseAllPortals()
 end, "", 0)
+
+---@param convar string
+---@param scope string
+---@param min number
+---@param func fun()
+---@overload fun(convar, scope, func)
+---@overload fun(convar, func)
+function DebugIf(convar, scope, min, func)
+    if type(scope) == "function" then
+        func = scope
+        scope = convar
+        min = 1
+    elseif type(min) == "function" then
+        func = min
+        min = 1
+    end
+
+    if Convars:GetInt(convar) >= min then
+        debugoverlay:PushDebugOverlayScope(scope)
+        func()
+        debugoverlay:PopDebugOverlayScope()
+        -- debugoverlay:PushDebugOverlayScope("")
+    end
+end
+
+---Draws the expected trajectory path for this phys object based on its current velocity.
+---@param entity EntityHandle
+---@param color? Vector
+---@param scope? string
+function DebugDrawTrajectory(entity, color, scope)
+    local step = 0.05
+    local maxSteps = 100
+
+    if scope then
+        debugoverlay:PushAndClearDebugOverlayScope(scope)
+    end
+
+    local simPos = entity:GetOrigin()
+    local simVel = GetPhysVelocity(entity)
+
+    local gravity = Vector(0,0,-Convars:GetFloat("sv_gravity"))
+    local lastPos = simPos
+    for i = 1, maxSteps do
+        -- Apply gravity
+        simVel = simVel + gravity * step
+
+        -- Move forward
+        simPos = simPos + simVel * step
+
+        -- Draw line from lastPos → simPos
+        DebugDrawLine(lastPos, simPos, 255, 255, 255, true, 30)
+
+        -- Check if it hits something
+        ---@type TraceTableHull
+        local trace = {
+            startpos = lastPos,
+            endpos = simPos,
+            ignore = entity,
+            min = entity:GetBoundingMins(),
+            max = entity:GetBoundingMaxs(),
+        }
+        TraceHull(trace)
+        if trace.hit then
+            DebugDrawCircle(simPos, color or Vector(), 255, 4, true, 30)
+            break
+        end
+
+        lastPos = simPos
+    end
+end
 
 
 local function HidePortalGunBlockers()
@@ -344,11 +428,11 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, maxAttempts)
         hitRight = trace((-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
 
         if not hitUp and not hitDown and not hitLeft and not hitRight then
-            if Convars:GetInt("portal_debug_portals") >= 1 then
+            DebugIf("portal_debug_portals", function()
                 debugoverlay:Sphere(startingPosition, 0.75, 255, 0, 0, 255, true, 5)
                 debugoverlay:HorzArrow(startingPosition, position, 1.5, 255, 0, 0, 255, true, 5)
                 debugoverlay:VertArrow(startingPosition, position, 1.5, 255, 0, 0, 255, true, 5)
-            end
+            end)
             return position - normalAngles:Forward() * 1
         end
 
@@ -365,9 +449,10 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, maxAttempts)
         position = newPosition
     end
 
-    if Convars:GetInt("portal_debug_portalgun") >= 1 then
+    -- if Convars:GetInt("portal_debug_portalgun") >= 1 then
+    DebugIf("portal_debug_portals", function()
         debugoverlay:Text(startingPosition, 0, "Failed to find position for portal", 0, 255, 0, 0, 255, 5)
-    end
+    end)
 
     return nil
 end

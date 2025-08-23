@@ -234,10 +234,10 @@ function base:LaunchByDirection(pVictim)
 	local flVelocity = pVictim:IsPlayer() and self.m_flPlayerVelocity or self.m_flPhysicsVelocity
 	local vecVelocity = vecForward * flVelocity
 
-	if DEBUG then
+	DebugIf("portal_debug_flings", function()
 		local origin = self:GetAbsOrigin()
 		debugoverlay:HorzArrow(origin, origin + vecForward * 128, 24, 0, 255, 0, 255, false, 10)
-	end
+	end)
 
 	self:Launch(pVictim, vecVelocity)
 end
@@ -276,12 +276,20 @@ function base:Launch(pVictim, vecVelocity)
 		-- Send us flying
 		-- we're launching the player with the phys entity in both vr and novr, so that the player has no air control
 		PortalPlayerController:SetPlayerVelocity(vecVelocity)
+
+		DebugIf("portal_debug_flings", function()
+			PortalPlayerController.currentPlayerPhys:DrawTrajectory(Vector(128, 0, 128))
+		end)
 	else
 		self:Drop(pVictim)
 
 		local angImpulse = self.m_bApplyAngularImpulse and RandomAngularImpulse( -150.0, 150.0 ) or Vector(0,0,0)
 		pVictim:ApplyAbsVelocityImpulse(vecVelocity - vecVictim)
 		pVictim:ApplyLocalAngularVelocityImpulse(angImpulse)
+
+		DebugIf("portal_debug_flings", function()
+			DebugDrawTrajectory(pVictim, Vector(128, 0, 128), nil)
+		end)
 	end
 	--OnLaunchedVictim( pVictim )
     self:FireOutput("OnUser1", pVictim, self, nil, 0)

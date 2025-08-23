@@ -137,7 +137,9 @@ function base:FunnelIntoPortal(portal, wishdir)
         wishdir.y = 0
         return wishdir
     else
-        debugoverlay:Sphere(self:GetAbsOrigin(), 1.5, 255, 0, 128, 255, true, 0.02)
+        DebugIf("portal_debug_portals", function()
+            debugoverlay:Sphere(self:GetAbsOrigin(), 1.5, 255, 0, 128, 255, true, 0.02)
+        end)
         -- Funnel toward the portal
         local funnelAmount = Convars:GetFloat("portal_funnel_amount")
         local fFunnelX = vPlayerToPortal.x * funnelAmount - velocity.x
@@ -376,12 +378,14 @@ function base:Think()
             Player:EmitSoundParams("JumpLand.HighVelocityImpact", 0, impactVolume, 0)
         end
 
-        Debug.ShowEntity(traceTable.enthit, 10)
-        debugoverlay:Sphere(self:GetOrigin(), 5, 255, 0, 0, 255, false, 10)
-        local hull = PortalPlayerController:GetPlayerHull()
-        debugoverlay:Box(Player:GetOrigin() + hull.mins, Player:GetOrigin() + hull.maxs, 255, 0, 0, 255, false, 10)
-        debugoverlay:Box(traceTable.pos + hull.mins, traceTable.pos + hull.maxs, 255, 0, 0, 255, false, 10)
-        debugoverlay:Line(self:GetOrigin(), self:GetOrigin() + self.velocity, 255, 0, 0, 255, false, 10)
+        DebugIf("portal_debug_flings", function()
+            Debug.ShowEntity(traceTable.enthit, 10)
+            debugoverlay:Sphere(self:GetOrigin(), 5, 255, 0, 0, 255, false, 10)
+            local hull = PortalPlayerController:GetPlayerHull()
+            debugoverlay:Box(Player:GetOrigin() + hull.mins, Player:GetOrigin() + hull.maxs, 255, 0, 0, 255, false, 10)
+            debugoverlay:Box(traceTable.pos + hull.mins, traceTable.pos + hull.maxs, 255, 0, 0, 255, false, 10)
+            debugoverlay:Line(self:GetOrigin(), self:GetOrigin() + self.velocity, 255, 0, 0, 255, false, 10)
+        end)
         PortalPlayerController:PlayerLandedOnGround()
 		self:Remove()
 		return
@@ -423,9 +427,9 @@ function base:Think()
 
 	self.lastTime = time
 
-	if DEBUG then
-		debugoverlay:Sphere(newOrigin, 8, 255, 0, 0, 255, true, 0)
-	end
+	-- if DEBUG then
+	-- 	debugoverlay:Sphere(newOrigin, 8, 255, 0, 0, 255, true, 0)
+	-- end
 	--print("deltaTime: "..tostring(deltaTime))
 	--print("frameTime: "..tostring(frameTime))
 	return 0
@@ -505,11 +509,20 @@ function base:Remove()
 end
 
 ---Draws the expected trajectory path for this phys object based on its current velocity.
-function base:DrawTrajectory()
+---@param color? Vector
+---@param scope? string
+function base:DrawTrajectory(color, scope)
+    if Convars:GetInt("portal_debug_flings") < 1 then return end
+
     local step = 0.05
     local maxSteps = 100
 
-    debugoverlay:PushAndClearDebugOverlayScope("playerphys")
+    scope = scope or "playerphys"
+    if scope == "playerphys" then
+        debugoverlay:PushAndClearDebugOverlayScope(scope)
+    else
+        debugoverlay:PushDebugOverlayScope(scope)
+    end
 
     local simPos = self:GetOrigin()
     local simVel = self.velocity
@@ -529,7 +542,7 @@ function base:DrawTrajectory()
         -- Check if it hits something
         local trace = PortalPlayerController:TracePlayerSpace(simPos, simPos + (simPos - lastPos) * 1)
         if trace.hit then
-            DebugDrawCircle(simPos, Vector(0, 255, 0), 255, 4, true, 60)
+            DebugDrawCircle(simPos, color or Vector(0, 255, 0), 255, 4, true, 60)
             break
         end
 

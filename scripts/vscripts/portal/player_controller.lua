@@ -234,9 +234,13 @@ local function CheckGround()
     -- }
     -- TraceHull(trace)
     local trace = PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -2))
-    debugoverlay:Line(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -2), 255, 255, 255, 255, false, 0)
-    debugoverlay:Sphere(Player:GetAbsOrigin(), 1, 255, 255, 0, 255, true, 0)
-    debugoverlay:Sphere(Player:GetAbsOrigin() + Vector(0, 0, -2), 1, 0, 0, 255, 255, true, 0)
+    -- debugoverlay:Line(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -2), 255, 255, 255, 255, false, 0)
+    -- debugoverlay:Sphere(Player:GetAbsOrigin(), 1, 255, 255, 0, 255, true, 0)
+    -- debugoverlay:Sphere(Player:GetAbsOrigin() + Vector(0, 0, -2), 1, 0, 0, 255, 255, true, 0)
+
+    DebugIf("portal_debug_flings", function()
+        debugoverlay:Box(trace.startpos + trace.min, trace.startpos + trace.max, trace.hit and 255 or 0, trace.hit and 0 or 255, 0, 170, false, 0)
+    end)
 
     -- print(trace.enthit:GetClassname())
     -- if trace.hit and trace.normal.z >= MIN_STEP_NORMAL then
@@ -249,13 +253,13 @@ local function CheckGround()
         -- if trace.fraction < 1.0 then
         --     Player:SetAbsOrigin(trace.pos)
         -- end
-        debugoverlay:Box(trace.startpos + trace.min, trace.startpos + trace.max, 255, 0, 0, 170, false, 0)
+        -- debugoverlay:Box(trace.startpos + trace.min, trace.startpos + trace.max, 255, 0, 0, 170, false, 0)
         return true
     else
         -- print("no git ground")
         -- playerOnGround = false
         playerGroundNormal = Vector(0, 0, 1)
-        debugoverlay:Box(trace.startpos + trace.min, trace.startpos + trace.max, 0, 255, 0, 170, false, 0)
+        -- debugoverlay:Box(trace.startpos + trace.min, trace.startpos + trace.max, 0, 255, 0, 170, false, 0)
         return false
     end
 end
@@ -378,7 +382,6 @@ function PortalPlayerController:Enable()
                 -- Check if fall height is high enough
                 local trace = self:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT))
                 if not trace.hit then
-                    print("Player falling")
                     local bounceVelocity = self:GetCachedBounceVelocity()
                     if bounceVelocity then
                         self:ClearBounceCache()
