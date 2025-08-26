@@ -197,7 +197,7 @@ function base:Open(position, normal, color, reorientToPlayer)
     if Convars:GetBool("portal_use_outlines") then
         self.outline = SpawnEntityFromTableSynchronous("prop_dynamic", {
             model = "models/vrportal/portal_outline.vmdl",
-            origin = self:GetOrigin(),
+            origin = self:GetOrigin() + normal * 1,
             angles = self:GetAngles(),
             targetname = color.name .. "Portal_outline",
         })
