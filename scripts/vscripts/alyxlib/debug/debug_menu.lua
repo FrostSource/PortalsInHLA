@@ -664,16 +664,12 @@ function DebugMenu:SendCategoryToPanel(category)
         if item.type == "toggle" then
             local default = resolveDefault(item.default)
             if default == nil then
-                print("is nil", item.convar)
                 if EasyConvars:Exists(item.convar) then
-                    print("exists", item.convar)
                     default = EasyConvars:GetBool(item.convar)
                 else
-                    print("does not exist", item.convar)
                     default = Convars:GetBool(item.convar)
                 end
             end
-            print("Sending toggle", item.categoryId, item.id, item.text, default)
             Panorama:Send(panel, "AddToggle", item.categoryId, item.id, item.text, default)
 
         elseif item.type == "button" then

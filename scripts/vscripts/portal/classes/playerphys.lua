@@ -10,6 +10,18 @@ local PLAYER_MASS = 65 -- in kg
 local PORTAL_FUNNEL_AMOUNT = 6.0
 Convars:RegisterConvar("portal_funnel_amount", tostring(PORTAL_FUNNEL_AMOUNT), "Amount of portals to funnel into", 0)
 
+EasyConvars:RegisterConvar("portal_funnel_sensitivity", "1", "Overall sensitivity of portal funneling", FCVAR_NONE, function (newVal, oldVal)
+    if newVal == "0" then
+        Convars:SetFloat("portal_funnel_amount", 0.0)
+    elseif newVal == "1" then
+        Convars:SetFloat("portal_funnel_amount", 3.0)
+    elseif newVal == "2" then
+        Convars:SetFloat("portal_funnel_amount", 6.0)
+    elseif newVal == "3" then
+        Convars:SetFloat("portal_funnel_amount", 12.0)
+    end
+end)
+
 local PORTAL_HALF_WIDTH = 28
 local PORTAL_HALF_HEIGHT = 49.5
 
