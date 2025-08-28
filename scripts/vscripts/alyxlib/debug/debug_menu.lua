@@ -793,7 +793,7 @@ function DebugMenu:StopListeningForMenuActivation()
     Player:SetContextThink("debug_menu_activate", nil, 0)
 end
 
-if Convars:GetInt("developer") > 0 then
+-- if Convars:GetInt("developer") > -1 then
     local listenFunc = ListenToPlayerEvent or ListenToGameEvent
     listenFunc("vr_player_ready", function()
         -- Kill existing panel on load to avoid missing logic errors
@@ -808,7 +808,7 @@ if Convars:GetInt("developer") > 0 then
             DebugMenu:StartListeningForMenuActivation()
         end, 0.2)
     end, nil)
-end
+-- end
 
 --NOTE: Removed AlyxLib defaults for portal2
 
