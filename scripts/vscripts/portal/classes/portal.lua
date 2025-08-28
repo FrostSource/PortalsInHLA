@@ -51,6 +51,8 @@ local PORTAL_CLASS_WHITELIST = {
     "item_hlvr_clip_generic_pistol_multiple",
 }
 
+GlobalPrecache("model", "models/vrportal/portal_outline.vmdl")
+
 
 local TICKRATE = 0.05
 
