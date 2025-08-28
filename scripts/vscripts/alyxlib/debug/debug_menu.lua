@@ -5,6 +5,8 @@
     The debug menu allows for easier VR testing by offering a customizable in-game menu.
 ]]
 
+local Saver = require("portal.debug_menu_save")
+
 RegisterAlyxLibCommand("alyxlib_debug_menu_show", function (name, ...)
     DebugMenu:ShowMenu()
 end, "Forces the debug menu to show")
@@ -89,6 +91,7 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback()
+            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -111,6 +114,7 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback(on)
+            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -133,6 +137,7 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback(value, item)
+            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -155,6 +160,7 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback(index, value, item)
+            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -429,8 +435,10 @@ function DebugMenu:AddToggle(categoryId, toggleId, text, command, startsOn)
     end
 
     local callback
+    local convar = ""
     if type(command) == "string" then
-        startsOn = startsOn or Convars:GetBool(command) or false
+        convar = command
+        startsOn = nil--startsOn-- or Convars:GetBool(command) or false
         callback = function(on)
             SendToConsole(command .. " " .. (on and 1 or 0))
         end
@@ -444,7 +452,8 @@ function DebugMenu:AddToggle(categoryId, toggleId, text, command, startsOn)
         text = text,
         callback = callback,
         type = "toggle",
-        default = startsOn or false,
+        default = startsOn,
+        convar = convar
     })
 end
 
@@ -653,7 +662,19 @@ function DebugMenu:SendCategoryToPanel(category)
 
     for _, item in ipairs(category.items) do
         if item.type == "toggle" then
-            Panorama:Send(panel, "AddToggle", item.categoryId, item.id, item.text, resolveDefault(item.default))
+            local default = resolveDefault(item.default)
+            if default == nil then
+                print("is nil", item.convar)
+                if EasyConvars:Exists(item.convar) then
+                    print("exists", item.convar)
+                    default = EasyConvars:GetBool(item.convar)
+                else
+                    print("does not exist", item.convar)
+                    default = Convars:GetBool(item.convar)
+                end
+            end
+            print("Sending toggle", item.categoryId, item.id, item.text, default)
+            Panorama:Send(panel, "AddToggle", item.categoryId, item.id, item.text, default)
 
         elseif item.type == "button" then
             Panorama:Send(panel, "AddButton", item.categoryId, item.id, item.text)
@@ -785,13 +806,13 @@ if Convars:GetInt("developer") > 0 then
             panel:Kill()
         end
 
+        Saver.LoadConvars()
+
         Player:Delay(function()
             DebugMenu:StartListeningForMenuActivation()
         end, 0.2)
     end, nil)
 end
-
-require "portal.debug_menu_save"
 
 --NOTE: Removed AlyxLib defaults for portal2
 

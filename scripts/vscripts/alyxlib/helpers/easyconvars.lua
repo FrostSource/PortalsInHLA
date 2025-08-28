@@ -372,6 +372,10 @@ function EasyConvars:GetConvarData(name)
     return self.registered[name]
 end
 
+function EasyConvars:Exists(name)
+    return self.registered[name] ~= nil
+end
+
 ---
 ---Returns the convar as a string.
 ---
