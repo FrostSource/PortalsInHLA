@@ -791,6 +791,8 @@ if Convars:GetInt("developer") > 0 then
     end, nil)
 end
 
--- Removed AlyxLib defaults for portal2
+require "portal.debug_menu_save"
+
+--NOTE: Removed AlyxLib defaults for portal2
 
 return DebugMenu.version
