@@ -377,6 +377,8 @@ function base:Think()
         --     return 0
         -- end
 
+        -- DO IT WORK???
+        self:SetOrigin(traceTable.endpos)
         -- This is a hack to keep the player away from the wall
         local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
         PortalPlayerController:CacheBounceVelocity(reflected * 0.05)
