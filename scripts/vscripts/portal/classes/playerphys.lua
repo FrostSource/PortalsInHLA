@@ -543,6 +543,7 @@ function base:DrawTrajectory(color, scope)
 
     local simPos = self:GetOrigin()
     local simVel = self.velocity
+    local graycol = Vector(255,255,255)
 
     local gravity = Vector(0,0,-Convars:GetFloat("sv_gravity"))
     local lastPos = simPos
@@ -554,7 +555,9 @@ function base:DrawTrajectory(color, scope)
         simPos = simPos + simVel * step
 
         -- Draw line from lastPos → simPos
-        DebugDrawLine(lastPos, simPos, 255, 255, 255, true, 60)
+        DebugDrawLine(lastPos, simPos, graycol.x, graycol.y, graycol.z, true, 60)
+        -- make color get darker
+        graycol = (i / maxSteps) * Vector(255, 255, 255)
 
         -- Check if it hits something
         local trace = PortalPlayerController:TracePlayerSpace(simPos, simPos + (simPos - lastPos) * 1)
