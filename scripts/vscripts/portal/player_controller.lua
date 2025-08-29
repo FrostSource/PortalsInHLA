@@ -21,7 +21,7 @@ local playerIsTeleporting = false
 EasyConvars:RegisterConvar("portal_woosh_always", "0", "Always adjust the woosh instead of just when flinging")
 EasyConvars:SetPersistent("portal_woosh_always", true)
 
-EasyConvars:RegisterConvar("portal_player_speed_multiplier", "80", "Player controller estimated speed multiplier")
+EasyConvars:RegisterConvar("portal_player_speed_multiplier", "50", "Player controller estimated speed multiplier")
 EasyConvars:SetPersistent("portal_player_speed_multiplier", true)
 
 Convars:RegisterCommand("portal_playerphys", function (name, on)

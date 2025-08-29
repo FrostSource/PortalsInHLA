@@ -387,6 +387,7 @@ function base:Think()
         -- If there is nothing below the player they probably hit a wall
         if not self:TraceSpace(Vector(0, 0, -5)).hit then
             local impactVolume = Clamp(self.velocity:Length() / maxSpeed, 0, 1)
+            print("FLING WALL IMPACT!", impactVolume)
             Player:EmitSoundParams("JumpLand.HighVelocityImpact", 0, impactVolume, 0)
         end
 
