@@ -1,5 +1,5 @@
 
-local pressedUse = false
+local useAlreadyPressed = false
 ---@type PortalColor
 local currentPortalColor = nil
 
@@ -95,6 +95,40 @@ local function HandlePickupAbility()
     end
 end
 
+local function novrFirePortal(color)
+    local player = Entities:GetLocalPlayer()
+    color = color or PortalManager.colors.blue
+
+    local portalIsBlue = (color == PortalManager.colors.blue) and true or false
+
+    if color ~= nil then
+        devprint("Firing " .. color.name .. " portal from novr player...")
+
+        local result = PortalManager:TracePortalableSurface(player:EyePosition(), player:EyeAngles():Forward(), Player)
+        if result.hit then
+            -- FireUser1 for blue, FireUser2 or orange
+            if not IsWorld(result.enthit) then
+                EntFireByHandle(player, result.enthit, portalIsBlue and "FireUser1" or "FireUser2")
+            end
+
+            if not result.surfaceIsPortalable then
+                print("Novr bad portal surface")
+                PortalManager:CreateFailedPortalEffect(result.pos, result.normal, portalIsBlue and "blue" or "orange")
+                return
+            end
+
+            if PortalManager:TryCreatePortalAt(result.pos, result.normal, color) then
+                StartSoundEventFromPositionReliable("Portal.Open", result.pos)
+                if portalIsBlue then
+                    StartSoundEventFromPositionReliable("Portal.Open.Blue", result.pos)
+                else
+                    StartSoundEventFromPositionReliable("Portal.Open.Orange", result.pos)
+                end
+            end
+        end
+    end
+end
+
 local function novrPortalThink()
     local player = Player
     -- 5 e
@@ -110,7 +144,7 @@ local function novrPortalThink()
             StartSoundEventFromPositionReliable(SND_USE_FINISHED, Player:GetAbsOrigin())
         end
 
-        if not pressedUse then
+        if not useAlreadyPressed then
             local color = nil
             local portalIsBlue = false
             if player:IsVRControllerButtonPressed(5) then
@@ -122,7 +156,7 @@ local function novrPortalThink()
 
             if color ~= nil then
                 devprint("Firing " .. color.name .. " portal from novr player...")
-                pressedUse = true
+                useAlreadyPressed = true
                 -- local portalIsBlue = currentPortalColor == PortalManager.colors.blue and true or false
 
                 local result = PortalManager:TracePortalableSurface(player:EyePosition(), player:EyeAngles():Forward(), Player)
@@ -157,7 +191,7 @@ local function novrPortalThink()
             end
         else
             if not player:IsVRControllerButtonPressed(5) and not player:IsVRControllerButtonPressed(13) then
-                pressedUse = false
+                useAlreadyPressed = false
             end
         end
 
@@ -171,5 +205,15 @@ Convars:RegisterConvar("portal_novr_mouse_grabs_objects", "1", "", 0)
 
 ListenToPlayerEvent("novr_player", function(params)
     print("Player is in novr mode...")
-    Player:SetContextThink("novr_portal_testing", novrPortalThink, 0.1)
+    -- Player:SetContextThink("novr_portal_testing", novrPortalThink, 0.1)
+    NoVR:BindKey("1", function()
+        novrFirePortal(PortalManager.colors.blue)
+    end, "novrFireBluePortal")
+    NoVR:BindKey("2", function()
+        novrFirePortal(PortalManager.colors.orange)
+    end, "novrFireOrangePortal")
+
+    ListenToGameEvent("server_shutdown", function()
+        print("SHIUTDOWN")
+    end, nil)
 end)

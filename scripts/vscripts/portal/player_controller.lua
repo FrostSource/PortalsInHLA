@@ -328,10 +328,17 @@ end
 
 function PortalPlayerController:SetPlayerVelocity(velocity)
     local playerPhys = self:GetOrCreatePlayerPhys(velocity)
-    playerPhys:SetVelocity(velocity)
+    if playerPhys then
+        playerPhys:SetVelocity(velocity)
+    end
 end
 
 function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
+    if Player.HMDAnchor == nil then
+        print("PortalPlayerController:GetOrCreatePlayerPhys: Player.HMDAnchor is nil, playerphys can't be created")
+        return
+    end
+
     if IsValidEntity(self.currentPlayerPhys) then
         return self.currentPlayerPhys
     else
@@ -365,6 +372,11 @@ function PortalPlayerController:IsPlayerOnGround()
 end
 
 function PortalPlayerController:Enable()
+    if Player.HMDAnchor == nil then
+        print("PortalPlayerController:Enable: Player.HMDAnchor is nil, playerphys can't be enabled")
+        return
+    end
+
     self:UpdateWhooshSound(0)
 
     currentPlayerOrigin = Player:GetAbsOrigin()

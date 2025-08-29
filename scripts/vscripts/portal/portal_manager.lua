@@ -56,10 +56,10 @@ PortalManager.colors = {
 PortalManager.portalGun = nil
 
 ---Only allow portals to be opened on entities whose name starts with `PortalManager.PortalableSurfaceNamePrefix`
-PortalManager.AllowPortalsOnlyOnPrefixedEntities = false
+PortalManager.AllowPortalsOnlyOnPrefixedEntities = true -- default for The Courtesy Call
 
 ---The prefix part that must be on portalable surface entities.
-PortalManager.PortalableSurfaceNamePrefix = ""
+PortalManager.PortalableSurfaceNamePrefix = "@PortalableSurfaces" -- default for The Courtesy Call
 
 ---List of targetnames the portalgun cannot pickup
 ---@type string[]

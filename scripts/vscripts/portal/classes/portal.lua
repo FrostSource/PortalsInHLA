@@ -505,6 +505,9 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 dirVelocity = transformDirection(self, connectedPortal, cachedVelocity:Normalized())
                 local desiredVelocity = connectedPortal:GetForwardVector()*cachedVelocity:Length()
                 local physEnt = PortalPlayerController:GetOrCreatePlayerPhys(desiredVelocity)
+
+                assert(physEnt ~= nil, "PortalPlayerController:GetOrCreatePlayerPhys failed")
+
                 -- debugoverlay:Line(newPos, newPos + cachedVelocity, 0, 255, 0, 255, false, 6)
                 local exitOrigin = connectedPortal:GetOrigin() + connectedPortal:GetForwardVector() * 32
                 -- Player's feet need to be at the bottom of the portal to avoid ceiling clipping
