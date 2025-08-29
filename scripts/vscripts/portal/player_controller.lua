@@ -150,14 +150,10 @@ end)
 ---@param params GameEventPlayerTeleportStart
 ListenToGameEvent("player_teleport_start", function (params)
     playerIsTeleporting = true
-    -- Try to fix teleporting into portals
-    currentPlayerVelocity = Vector(0, 0, 0)
 end, nil)
 ---@param params GameEventPlayerTeleportFinish
 ListenToGameEvent("player_teleport_finish", function (params)
     playerIsTeleporting = false
-    -- Try to fix teleporting into portals
-    currentPlayerVelocity = Vector(0, 0, 0)
 end, nil)
 
 function PortalPlayerController:UpdateWhooshSound(override)
@@ -338,6 +334,7 @@ function PortalPlayerController:SetPlayerVelocity(velocity)
 end
 
 function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
+    if playerIsTeleporting then return end
     if Player.HMDAnchor == nil then
         print("PortalPlayerController:GetOrCreatePlayerPhys: Player.HMDAnchor is nil, playerphys can't be created")
         return
