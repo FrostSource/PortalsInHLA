@@ -418,6 +418,7 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, maxAttempts)
         if tr.hit then return true end
         tr = self:TraceDirection(position + direction, -normalAngles:Forward() * 30)
         if not tr.hit then return true end
+        if self.AllowPortalsOnlyOnPrefixedEntities and tr.enthit and not tr.enthit:GetName():startswith(self.PortalableSurfaceNamePrefix) then return true end
         return false
     end
 
@@ -429,9 +430,9 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, maxAttempts)
 
         if not hitUp and not hitDown and not hitLeft and not hitRight then
             DebugIf("portal_debug_portals", function()
-                debugoverlay:Sphere(startingPosition, 0.75, 255, 0, 0, 255, true, 5)
-                debugoverlay:HorzArrow(startingPosition, position, 1.5, 255, 0, 0, 255, true, 5)
-                debugoverlay:VertArrow(startingPosition, position, 1.5, 255, 0, 0, 255, true, 5)
+                debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
+                debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
+                debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
             end)
             return position - normalAngles:Forward() * 1
         end
