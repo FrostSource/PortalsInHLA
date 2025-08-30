@@ -12,6 +12,10 @@ EasyConvars:RegisterConvar("portal_use_outlines", "1", "Show portal outlines thr
             portal:SetOutlineVisible(visible)
         end
     end)
+EasyConvars:SetPersistent("portal_use_outlines", true)
+
+EasyConvars:RegisterConvar("portal_orient_to_gun", "1", "Orients portals to the portalgun instead of the player", FCVAR_NONE)
+EasyConvars:SetPersistent("portal_orient_to_gun", true)
 
 local PTX_PORTAL_EFFECT = "particles/portal_effect_parent.vpcf"
 
@@ -145,7 +149,13 @@ function base:Open(position, normal, color, reorientToPlayer)
     local normalAngles = VectorToAngles(normal)
 
     if reorientToPlayer then
-        normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+        if Convars:GetBool("portal_orient_to_gun") then
+            local forward = CurrentPortalGun:GetForwardVector()
+            forward.z = 0
+            normalAngles = PortalManager:ReorientPortalPerpendicular(normal, forward)
+        else
+            normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+        end
     end
 
     self.aimat = SpawnEntityFromTableSynchronous("point_aimat", {

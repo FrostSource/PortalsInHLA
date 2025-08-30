@@ -469,7 +469,13 @@ function PortalManager:TryCreatePortalAt(position, normal, color, reorientToPlay
     local normalAngles = VectorToAngles(normal)
 
     if reorientToPlayer then
-        normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+        if Convars:GetBool("portal_orient_to_gun") then
+            local forward = CurrentPortalGun:GetForwardVector()
+            forward.z = 0
+            normalAngles = self:ReorientPortalPerpendicular(normal, forward)
+        else
+            normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+        end
     end
 
     position = self:PortalPositionAdjust(position, normalAngles, PORTAL_SIZE_Y)
