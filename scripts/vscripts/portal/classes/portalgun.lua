@@ -44,6 +44,9 @@ local base = entity("PortalGun")
 ---The PortalGun class (not the entity)
 PortalGunClass = base
 
+---@type PortalGun
+CurrentPortalGun = nil
+
 Input.AutoStart = true
 
 ---Digital input button used to fire the blue portal.
@@ -349,6 +352,8 @@ function base:AttachToHand(useSecondary)
     if self.pickupEntity ~= nil then
         self:StartPickupSoundAndFx()
     end
+
+    CurrentPortalGun = self
 
     if Convars:GetBool("portalgun_is_physical") then
         -- This should only be used to force the gun into the hand
@@ -955,7 +960,9 @@ function base:RefreshHighlight()
     end
 
     if not IsEntity(lastNearestPickupEnt, true) then
-        return warn("Gun did not have a previous pickup entity to refresh the highlight!")
+        -- this happens consistently but doesn't cause issues so message is disabled for now
+        -- return warn("Gun did not have a previous pickup entity to refresh the highlight!")
+        return
     end
 
     self:DestroyHighlight(true)
@@ -1052,6 +1059,15 @@ end
 ---Allows the portal gun to pick up this named entity
 function CEntityInstance:EnablePortalgunPickup()
     PortalManager:SetPickupNameEnabled(self:GetName(), true)
+end
+
+---Forces the current portal gun to pickup an entity
+function CEntityInstance:ForcePortalgunPickup()
+    if IsValidEntity(CurrentPortalGun) then
+        CurrentPortalGun:PickupEntity(self)
+    else
+        warn("No portal gun exists to force pickup!")
+    end
 end
 
 ---Stops the portal gun from dropping its currently held item

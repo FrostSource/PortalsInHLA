@@ -10,7 +10,7 @@ local PLAYER_MASS = 65 -- in kg
 local PORTAL_FUNNEL_AMOUNT = 6.0
 Convars:RegisterConvar("portal_funnel_amount", tostring(PORTAL_FUNNEL_AMOUNT), "Amount of portals to funnel into", 0)
 
-EasyConvars:RegisterConvar("portal_funnel_sensitivity", "1", "Overall sensitivity of portal funneling", FCVAR_NONE, function (newVal, oldVal)
+EasyConvars:RegisterConvar("portal_funnel_sensitivity", "2", "Overall sensitivity of portal funneling", FCVAR_NONE, function (newVal, oldVal)
     if newVal == "0" then
         Convars:SetFloat("portal_funnel_amount", 0.0)
     elseif newVal == "1" then
@@ -377,16 +377,28 @@ function base:Think()
         --     return 0
         -- end
 
+        for _, portal in ipairs(PortalManager:GetAllPortals()) do
+            if portal:GetConnectedPortal() then
+                if portal:WillEntityTouchPortal(Player, traceTable.endpos) then
+                    print("\nTouch portal on fall doing instance portal!!\n")
+                    -- debugoverlay:Sphere(traceTable.endpos, 8, 0, 0, 255, 255, true, 10)
+                    -- debugoverlay:Sphere(traceTable.endpos, 6, 0, 255, 0, 255, true, 10)
+                    -- debugoverlay:Sphere(traceTable.endpos, 7, 255, 0, 0, 255, true, 10)
+                    portal:Teleport(Player)
+                    return 0
+                end
+            end
+        end
+
         -- If there is nothing below the player they probably hit a wall
-        if not self:TraceSpace(Vector(0, 0, -5)).hit then
+        if not self:TraceSpace(Vector(0, 0, -10)).hit then
             local impactVolume = Clamp(self.velocity:Length() / maxSpeed, 0, 1)
-            print("FLING WALL IMPACT!", impactVolume)
             Player:EmitSoundParams("JumpLand.HighVelocityImpact", 0, impactVolume, 0)
         end
 
-        -- Move player against the collision to allow entering portals
-        -- high speeds would cause the player to stop before hitting the portal
-        self:SetOrigin(traceTable.endpos)
+        -- -- Move player against the collision to allow entering portals
+        -- -- high speeds would cause the player to stop before hitting the portal
+        -- self:SetOrigin(traceTable.endpos)
 
         -- This is a hack to keep the player away from the wall
         local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
@@ -542,7 +554,6 @@ function base:DrawTrajectory(color, scope)
     end
 
     local simPos = self:GetOrigin()
-    debugoverlay:Sphere(simPos, 8, 255, 0, 0, 255, true, 0)
     local simVel = self.velocity
     local graycol = Vector(255,255,255)
 

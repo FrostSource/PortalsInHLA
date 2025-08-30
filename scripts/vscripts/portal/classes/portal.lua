@@ -52,6 +52,7 @@ local PORTAL_CLASS_WHITELIST = {
 }
 
 GlobalPrecache("model", "models/vrportal/portal_outline.vmdl")
+GlobalPrecache("model", "models/vrportal/portal_collision.vmdl")
 
 
 local TICKRATE = 0.05
@@ -339,8 +340,60 @@ function base:OnTriggerTouch(params, test)
         return
     end
 
+    if ent:HasAttribute("DoNotPortal") then
+        return
+    end
+
     self:Teleport(ent)
 end
+
+---
+---Test if an entity will touch this portal at a given origin and optional angles.
+---
+---@param ent EntityHandle
+---@param origin Vector
+---@param angles? QAngle
+---@return boolean
+function base:WillEntityTouchPortal(ent, origin, angles)
+    local portalCollision = SpawnEntityFromTableSynchronous("prop_physics_override", {
+        origin = self:GetOrigin(),
+        angles = self:GetAngles(),
+        model = "models/vrportal/portal_collision.vmdl",
+    })
+
+    -- ---@type TraceTableHull
+    -- local trace = {
+    --     startpos = origin,
+    --     endpos = origin,
+    --     min = ent:GetBoundingMins(),
+    --     max = ent:GetBoundingMaxs(),
+    --     ignore = GetWorld()
+    -- }
+    -- TraceHull(trace)
+
+    ---@type TraceTableCollideable
+    local trace = {
+        startpos = CalcClosestPointOnEntityOBB(ent, origin),
+        endpos = origin,
+        ent = portalCollision,
+    }
+    TraceCollideable(trace)
+
+    debugoverlay:PushDebugOverlayScope("asdf")
+    debugoverlay:Line(trace.startpos, trace.endpos, 0, 255, 0, 255, true, 100)
+    debugoverlay:Line(trace.startpos+Vector(0,0,-1), trace.endpos+Vector(0,0,-1), 255, 255, 0, 255, true, 100)
+    debugoverlay:Line(trace.startpos+Vector(0,0,-2), trace.endpos+Vector(0,0,-2), 0, 0, 255, 255, true, 100)
+
+    print("Results??", trace.hit)
+    local touch = trace.hit
+
+    -- print("Results??", trace.hit, Debug.EntStr(trace.enthit))
+    -- local touch = trace.hit and trace.enthit == portalCollision
+
+    portalCollision:Kill()
+    return touch
+end
+
 
 ---This should be fine to be a local to this class script
 local lastPlayerTeleport = 0
@@ -517,7 +570,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 if Convars:GetInt("portal_debug_portals") >= 1 then
                     -- print(PortalManager.colors[self.colorName].color:ToVector(), "portaldebug")
                     -- debugoverlay:PushDebugOverlayScope("portaldebug")
-                    physEnt:DrawTrajectory(PortalManager.colors[self.colorName].color:ToVector(), "portal_debug_portals")
+                    physEnt:DrawTrajectory(PortalManager.colors[connectedPortal.colorName].color:ToVector(), "portal_debug_portals")
                 end
 
                 local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)

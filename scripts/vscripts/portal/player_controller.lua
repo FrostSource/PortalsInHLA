@@ -10,7 +10,7 @@ local currentPlayerOrigin = Vector()
 local currentPlayerVelocity = Vector()
 
 local PLAYER_GIRTH = 7
-local PLAYER_HEIGHT = 96
+local PLAYER_HEIGHT = 72
 
 local MIN_FLING_SPEED = 300
 
@@ -341,6 +341,9 @@ function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
     end
 
     if IsValidEntity(self.currentPlayerPhys) then
+        if initialVelocity then
+            self.currentPlayerPhys.velocity = initialVelocity
+        end
         return self.currentPlayerPhys
     else
         playerOnGround = false
