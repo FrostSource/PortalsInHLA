@@ -376,6 +376,10 @@ function PortalPlayerController:IsPlayerOnGround()
 end
 
 function PortalPlayerController:Enable()
+    if IsFakeVREnabled() then
+        print("PortalPlayerController:Enable: FakeVR is enabled, playerphys can't be enabled")
+        return
+    end
     if Player.HMDAnchor == nil then
         print("PortalPlayerController:Enable: Player.HMDAnchor is nil, playerphys can't be enabled")
         return

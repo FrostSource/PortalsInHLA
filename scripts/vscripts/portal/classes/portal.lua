@@ -376,6 +376,11 @@ function base:WillEntityTouchPortal(ent, origin, angles)
         startpos = CalcClosestPointOnEntityOBB(ent, origin),
         endpos = origin,
         ent = portalCollision,
+
+        -- docs say this is local to ent,
+        -- but testing seems like it's a swept box?
+        mins = ent:GetBoundingMins(),
+        maxs = ent:GetBoundingMaxs(),
     }
     TraceCollideable(trace)
 

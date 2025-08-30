@@ -43,13 +43,17 @@ let currentlySelectedCategory = null;
  */
 let currentlyActiveButton = null;
 
-function TurnButtonIntoDebugMenuButton(button, callback)
+function TurnButtonIntoDebugMenuButton(button, callback, onmouseover, onmouseout)
 {
     if (button == null) return;
 
-    button.SetPanelEvent("onmouseover", () => currentlyActiveButton = button);
+    button.SetPanelEvent("onmouseover", () => {
+        currentlyActiveButton = button
+        if (onmouseover !== undefined) onmouseover();
+    });
     button.SetPanelEvent("onmouseout", () => {
         if (currentlyActiveButton == button) currentlyActiveButton = null;
+        if (onmouseout !== undefined) onmouseout();
     });
 
     if (callback !== null && callback !== undefined)
@@ -170,12 +174,12 @@ class Category
         if (visible)
         {
             this.panel.AddClass("Visible");
-            this.button.AddClass("Selected");
+            // this.button.AddClass("Selected");
         }
         else
         {
             this.panel.RemoveClass("Visible");
-            this.button.RemoveClass("Selected");
+            // this.button.RemoveClass("Selected");
         }
     }
 
@@ -782,7 +786,7 @@ class SubMenuLabel
      */
     AddToPanel(panel)
     {
-        this.panel = CreatePanel("Label", this.content, this.id, "custom_label");
+        this.panel = CreatePanel("Label", panel, this.id, "custom_label");
         this.panel.text = this.text;
     }
 
@@ -1143,7 +1147,7 @@ function ParseCommand(command, args)
 
 let scrollHelperScheduleCancel = false;
 let scrollHelperScheduleEvent = "";
-let scrollHelperSpeed = 0.1;
+let scrollHelperSpeed = 0.05;
 
 /**
  * Scroll logic for the scroll helper schedule.
@@ -1198,22 +1202,15 @@ function ScrollHelperClick() {
     TurnButtonIntoDebugMenuButton($("#CloseMenuButton"));
     TurnButtonIntoDebugMenuButton($("#CycleCategoryLeftButton"));
     TurnButtonIntoDebugMenuButton($("#CycleCategoryRightButton"));
-    TurnButtonIntoDebugMenuButton($("#ScrollHelperDown"));
-    TurnButtonIntoDebugMenuButton($("#ScrollHelperUp"));
+    // Scroll helpers for sub-menus
+    // Valve kindly didn't allow us to raytrace click panels like the main menu
+    // so this is a work around for scrolling
+    TurnButtonIntoDebugMenuButton($("#ScrollHelperDown"), ScrollHelperClick, () => StartScrollHelper("ScrollDown"), () => StopScrollHelper());
+    TurnButtonIntoDebugMenuButton($("#ScrollHelperUp"), ScrollHelperClick, () => StartScrollHelper("ScrollUp"), () => StopScrollHelper());
 
     // Tells Lua that the menu has been reloaded so it can repopulate the menu
     // This helps with hot reloading panel changes
     $.Schedule(0.1, () => FireOutput("_DebugMenuReloaded"));
-
-    // Scroll helpers for sub-menus
-    // Valve kindly didn't allow us to raytrace click panels like the main menu
-    // so this is a work around for scrolling
-    $('#ScrollHelperDown').SetPanelEvent("onmouseover", () => StartScrollHelper("ScrollDown"));
-    $('#ScrollHelperDown').SetPanelEvent("onmouseout", () => StopScrollHelper());
-    $('#ScrollHelperDown').SetPanelEvent("onactivate", ScrollHelperClick);
-    $('#ScrollHelperUp').SetPanelEvent("onmouseover", () => StartScrollHelper("ScrollUp"));
-    $('#ScrollHelperUp').SetPanelEvent("onmouseout", () => StopScrollHelper());
-    $('#ScrollHelperUp').SetPanelEvent("onactivate", ScrollHelperClick);
 
     $.Schedule(1.0, () => panelReady = true);
 
