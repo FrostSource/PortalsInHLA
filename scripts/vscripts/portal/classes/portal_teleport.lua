@@ -55,6 +55,18 @@ function base:Teleport(offset)
     end, 0.1)
 end
 
+---@param origin Vector
+---@param angles QAngle
+function base:TeleportTo(origin, angles)
+    self.target:SetOrigin(origin)
+    self.target:SetQAngle(angles)
+    self:Enable()
+    self:Delay(function()
+        self:Disable()
+        self.target:ResetLocal()
+    end, 0.1)
+end
+
 ---Main entity think function. Think state is saved between loads
 function base:Think()
     return 0

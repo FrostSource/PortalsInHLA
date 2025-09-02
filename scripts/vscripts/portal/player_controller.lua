@@ -146,15 +146,30 @@ ListenToPlayerEvent("item_released", function (params)
         end
     end
 end)
-
+local teleportTime = 0
 ---@param params GameEventPlayerTeleportStart
 ListenToGameEvent("player_teleport_start", function (params)
+    -- print("TELEPORT START")
     playerIsTeleporting = true
+    teleportTime = Time()
 end, nil)
 ---@param params GameEventPlayerTeleportFinish
 ListenToGameEvent("player_teleport_finish", function (params)
+    -- print("TELEPORT END")
+
+    if playerIsTeleporting and playerOnGround and not PortalPlayerController:CheckGround() then
+        print("This should only appear when teleporting into death chasm")
+        local velocity = PortalPlayerController:GetPlayerVelocity()
+        local velocity2d = Vector(velocity.x, velocity.y, 0)-- * Convars:GetFloat("portal_player_speed_multiplier")
+        PortalPlayerController:SetPlayerVelocity(velocity2d)
+    end
+
     playerIsTeleporting = false
 end, nil)
+
+function PortalPlayerController:IsTeleporting()
+    return playerIsTeleporting or ((Time() - teleportTime) < 0.3)
+end
 
 function PortalPlayerController:UpdateWhooshSound(override)
     local whooshVolume = self:GetPlayerVelocity():Length() - MIN_FLING_SPEED
@@ -310,6 +325,10 @@ local function CleanVector(vec, threshold)
     return Vector(x, y, z)
 end
 
+function PortalPlayerController:CheckGround()
+    return CheckGround()
+end
+
 function PortalPlayerController:GetPlayerVelocity()
     local velocity = Vector()
     if IsValidEntity(self.currentPlayerPhys) then
@@ -334,7 +353,6 @@ function PortalPlayerController:SetPlayerVelocity(velocity)
 end
 
 function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
-    if playerIsTeleporting then return end
     if Player.HMDAnchor == nil then
         print("PortalPlayerController:GetOrCreatePlayerPhys: Player.HMDAnchor is nil, playerphys can't be created")
         return
@@ -407,7 +425,8 @@ function PortalPlayerController:Enable()
                         self:ClearBounceCache()
                         self:CacheVelocity(bounceVelocity)
                     end
-                    self:SetPlayerVelocity(self:GetPlayerVelocity())
+                    local velocity = self:GetPlayerVelocity()
+                    self:SetPlayerVelocity(velocity)
                     playerOnGround = false
                 end
             end
