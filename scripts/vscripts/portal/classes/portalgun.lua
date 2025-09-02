@@ -493,6 +493,7 @@ function base:TryFirePortal(color)
             if not result.surfaceIsPortalable then
                 -- PortalManager:CreateFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
                 PortalManager:CreateFailedPortalEffect(result.pos, result.normal, portalIsBlue and "blue" or "orange")
+                EntFireByHandle(self, result.enthit, portalIsBlue and "FireUser3" or "FireUser4")
                 return false
             end
 
@@ -510,6 +511,7 @@ function base:TryFirePortal(color)
                 return true
             else
                 PortalManager:CreateFailedPortalEffect(result.pos, result.normal, portalIsBlue and "blue" or "orange")
+                EntFireByHandle(self, result.enthit, portalIsBlue and "FireUser3" or "FireUser4")
                 return false
             end
 
