@@ -213,6 +213,8 @@ function base:Open(position, normal, color, reorientToPlayer)
             origin = self:GetOrigin() + normal * 1,
             angles = self:GetAngles(),
             targetname = color.name .. "Portal_outline",
+	        disableshadows = "1", -- trying to fix black outline
+	        disablereceiveshadows = "1", -- ditto
         })
         self.outline:SetParent(self, "")
         -- local c = color.color:ToDecimalVector()

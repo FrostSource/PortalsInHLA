@@ -26,7 +26,7 @@ local function OpenBluePortal(params)
     else
         ent = params.caller
     end
-    PortalManager:TryCreatePortalAt(ent:GetOrigin(), ent:GetForwardVector(), "blue")
+    PortalManager:CreatePortalAt(ent:GetOrigin(), ent:GetForwardVector(), "blue", false)
 end
 Expose(OpenBluePortal, "OpenBluePortal", _G)
 
@@ -39,7 +39,7 @@ local function OpenOrangePortal(params)
     else
         ent = params.caller
     end
-    PortalManager:TryCreatePortalAt(ent:GetOrigin(), ent:GetForwardVector(), "orange")
+    PortalManager:CreatePortalAt(ent:GetOrigin(), ent:GetForwardVector(), "orange", false)
 end
 Expose(OpenOrangePortal, "OpenOrangePortal", _G)
 

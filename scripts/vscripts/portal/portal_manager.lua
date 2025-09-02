@@ -399,12 +399,15 @@ end
 ---Attempts to adjust the position of the portal to the nearest valid position.
 ---@param position Vector
 ---@param normalAngles QAngle
+---@param colorName string
 ---@param maxAttempts number
 ---@return Vector|nil # Adjusted position or nil if failed
-function PortalManager:PortalPositionAdjust(position, normalAngles, maxAttempts)
+function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, maxAttempts)
 
     local startingPosition = position
     position = position + normalAngles:Forward() * 1
+
+    local normal = normalAngles:Forward()
 
     local stepSize = 1
 
@@ -414,45 +417,109 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, maxAttempts)
     ---@param direction Vector # Direction and distance
     ---@return boolean # If the trace hit or empty space behind
     local function trace(direction)
+        -- First check if there is space for the portal in this direction
         local tr = self:TraceDirection(position, direction)
-        if tr.hit then return true end
-        tr = self:TraceDirection(position + direction, -normalAngles:Forward() * 30)
-        if not tr.hit then return true end
-        if self.AllowPortalsOnlyOnPrefixedEntities and tr.enthit and not tr.enthit:GetName():startswith(self.PortalableSurfaceNamePrefix) then return true end
+        if tr.hit then return true end -- no space, return to move
+        -- Then check if the space behind is valid
+        tr = self:TraceDirection(position + direction, -normalAngles:Forward() * 3)
+        if not tr.hit then return true end -- empty space behind (overhang), return to move
+        if self.AllowPortalsOnlyOnPrefixedEntities and tr.enthit and not tr.enthit:GetName():startswith(self.PortalableSurfaceNamePrefix) then return true end -- not a portalable surface
+        if normal:Dot(tr.normal) < 0.99 then return true end -- surface is angled differently
         return false
     end
 
-    for i = 1, maxAttempts do
-        hitUp = trace(normalAngles:Up() * PORTAL_SIZE_Z / 2)
-        hitDown = trace((-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
-        hitLeft = trace(normalAngles:Left() * PORTAL_SIZE_Y / 2)
-        hitRight = trace((-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
+    local stepsX = 2
+    local stepsY = 2
+    local debugpath = {position}
 
-        if not hitUp and not hitDown and not hitLeft and not hitRight then
-            DebugIf("portal_debug_portals", function()
-                debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
-                debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
-                debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
-            end)
-            return position - normalAngles:Forward() * 1
+    local existingPortals = self:GetAllPortals()
+
+    for i = 1, maxAttempts do
+        -- hitUp = trace(normalAngles:Up() * PORTAL_SIZE_Z / 2)
+        -- hitDown = trace((-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
+        -- hitLeft = trace(normalAngles:Left() * PORTAL_SIZE_Y / 2)
+        -- hitRight = trace((-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
+
+        -- if not hitUp and not hitDown and not hitLeft and not hitRight then
+        --     DebugIf("portal_debug_portals", function()
+        --         debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
+        --         debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
+        --         debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
+        --     end)
+        --     return position - normalAngles:Forward() * 1
+        -- end
+
+        -- local moveX = 0
+        -- local moveY = 0
+
+        -- if hitUp then moveY = -stepSize end
+        -- if hitDown then moveY = stepSize end
+        -- if hitLeft then moveX = -stepSize end
+        -- if hitRight then moveX = stepSize end
+
+        -- local newPosition = position + (normalAngles:Left() * moveX) + (normalAngles:Up() * moveY)
+
+        -- position = newPosition
+
+        -- VV NEW CODE VV
+
+        local push = Vector(0, 0, 0)
+        for ix = -stepsX, stepsX do
+            for iy = -stepsY, stepsY do
+                local offset =
+                    normalAngles:Left() * (ix/stepsX * PORTAL_SIZE_Y/2) +
+                    normalAngles:Up() * (iy/stepsY * PORTAL_SIZE_Z/2)
+                -- if i == 1 then
+                --     debugoverlay:Line(position, position + offset, 255, 0, 0, 255, false, 10)
+                --     debugoverlay:Sphere(position + offset, 1, 0, 255, 0, 255, false, 10)
+                --     debugoverlay:Line(position + offset, position + offset + (-normalAngles:Forward() * 3), 0, 0, 255, 255, false, 10)
+                -- end
+                if trace(offset) then
+                    push = push - offset -- push away from hit sample
+                else
+                    -- check intersecting portals
+                    for _, portal in ipairs(existingPortals) do
+                        if portal.colorName ~= colorName then
+                            local localPosition = portal:TransformPointWorldToEntity(position + offset)
+                            if abs(localPosition.y) < PORTAL_SIZE_Y/2 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
+                                push = push - offset -- push away from hit sample
+                            end
+                        end
+                    end
+                end
+            end
         end
 
-        local moveX = 0
-        local moveY = 0
-
-        if hitUp then moveY = -stepSize end
-        if hitDown then moveY = stepSize end
-        if hitLeft then moveX = -stepSize end
-        if hitRight then moveX = stepSize end
-
-        local newPosition = position + (normalAngles:Left() * moveX) + (normalAngles:Up() * moveY)
-
-        position = newPosition
+        if push:Length() > 0 then
+            push = push:Normalized()
+            position = position + push * stepSize
+            table.insert(debugpath, position)
+            -- position = position + push * (PORTAL_SIZE_Y/2 + PORTAL_SIZE_Z/2)
+        else
+            if #debugpath > 1 then
+                DebugIf("portal_debug_portals", function()
+                    for j = 1, #debugpath - 1 do
+                        debugoverlay:HorzArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
+                        debugoverlay:VertArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
+                    end
+                    -- debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
+                    -- debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
+                    -- debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
+                end)
+            end
+            return position - normalAngles:Forward() * 1
+        end
     end
 
     -- if Convars:GetInt("portal_debug_portalgun") >= 1 then
     DebugIf("portal_debug_portals", function()
         debugoverlay:Text(startingPosition, 0, "Failed to find position for portal", 0, 255, 0, 0, 255, 5)
+        if #debugpath > 1 then
+            for j = 1, #debugpath - 1 do
+                debugoverlay:HorzArrow(debugpath[j], debugpath[j + 1], 1.5, 255, 0, 0, 255, true, 5)
+                debugoverlay:VertArrow(debugpath[j], debugpath[j + 1], 1.5, 255, 0, 0, 255, true, 5)
+            end
+        end
     end)
 
     return nil
@@ -479,20 +546,20 @@ function PortalManager:TryCreatePortalAt(position, normal, color, reorientToPlay
         end
     end
 
-    position = self:PortalPositionAdjust(position, normalAngles, PORTAL_SIZE_Y)
+    position = self:PortalPositionAdjust(position, normalAngles, color.name, PORTAL_SIZE_Y*2)
 
     if position == nil then
         return false
     end
 
-    ---@TODO This only checks the connected portal, it should check all portals
-    local otherPortal = PortalManager:GetConnectedPortal(color)
-    if otherPortal ~= nil then
-        local localPosition = otherPortal:TransformPointWorldToEntity(position)
-        if abs(localPosition.y) < PORTAL_SIZE_Y  and abs(localPosition.z) < PORTAL_SIZE_Z and abs(localPosition.x) < 20 then
-            return false
-        end
-    end
+    -- ---@TODO This only checks the connected portal, it should check all portals
+    -- local otherPortal = PortalManager:GetConnectedPortal(color)
+    -- if otherPortal ~= nil then
+    --     local localPosition = otherPortal:TransformPointWorldToEntity(position)
+    --     if abs(localPosition.y) < PORTAL_SIZE_Y  and abs(localPosition.z) < PORTAL_SIZE_Z and abs(localPosition.x) < 20 then
+    --         return false
+    --     end
+    -- end
 
     PortalManager:CreatePortalAt(position, normal, color, reorientToPlayer)
     return true

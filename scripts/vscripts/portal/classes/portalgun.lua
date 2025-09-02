@@ -38,6 +38,10 @@ Convars:RegisterConvar("portalgun_pickup_movement_adjust", "0", "Adjust the move
 
 Convars:RegisterConvar("portalgun_is_physical", "1", "Portal gun is a physical weapon as opposed to furniture", 0)
 
+EasyConvars:RegisterConvar("portalgun_rapidfire", "1", "Portals can be fired by holding down the button", FCVAR_NONE)
+EasyConvars:SetPersistent("portalgun_rapidfire", true)
+Convars:RegisterConvar("portalgun_rapidfire_rof", "0.5", "Number of seconds between rapid fire shots", FCVAR_NONE)
+
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
 
@@ -109,6 +113,10 @@ base.lastLocalPickupTransform = Vector()
 
 ---Entity that the pickup item should look at
 base.lookAtEntity = nil
+
+---@type PortalColor?
+base.__rapidfirePortal = nil
+base.__rapidfireTime = 0
 
 local highlightPtfx = nil
 
@@ -482,11 +490,6 @@ function base:TryFirePortal(color)
 
         if result.hit then
 
-            -- FireUser1 for blue, FireUser2 or orange
-            if not IsWorld(result.enthit) then
-                EntFireByHandle(self, result.enthit, portalIsBlue and "FireUser1" or "FireUser2")
-            end
-
             if not result.surfaceIsPortalable then
                 -- PortalManager:CreateFailedPortalEffect(result.pos, result.normal, color.color:ToDecimalVector())
                 PortalManager:CreateFailedPortalEffect(result.pos, result.normal, portalIsBlue and "blue" or "orange")
@@ -499,7 +502,15 @@ function base:TryFirePortal(color)
                 else
                     StartSoundEventFromPositionReliable("Portal.Open.Orange", result.pos)
                 end
+
+                -- FireUser1 for blue, FireUser2 or orange
+                if not IsWorld(result.enthit) then
+                    EntFireByHandle(self, result.enthit, portalIsBlue and "FireUser1" or "FireUser2")
+                end
                 return true
+            else
+                PortalManager:CreateFailedPortalEffect(result.pos, result.normal, portalIsBlue and "blue" or "orange")
+                return false
             end
 
             -- Portal manager couldn't create portal
@@ -841,6 +852,9 @@ function base:SetupInputs()
     Input:ListenToButton("press", self.hand, self.bluePortalButton, 1, function (_, params)
         if self:IsEquipped() and self.allowedToFire and self.pickupEntity == nil then
             if self.bluePortalEnabled then
+                if Convars:GetBool("portalgun_rapidfire") then
+                    self.__rapidfirePortal = PortalManager.colors.blue
+                end
                 self:TryFirePortal(PortalManager.colors.blue)
             end
             self.fireButtonIsHeld = true
@@ -850,11 +864,31 @@ function base:SetupInputs()
     Input:ListenToButton("press", self.hand, self.orangePortalButton, 1, function (_, params)
         if self:IsEquipped() and self.allowedToFire and self.pickupEntity == nil then
             if self.orangePortalEnabled then
+                if Convars:GetBool("portalgun_rapidfire") then
+                    self.__rapidfirePortal = PortalManager.colors.orange
+                end
                 self:TryFirePortal(PortalManager.colors.orange)
             end
             self.fireButtonIsHeld = true
         end
     end, self)
+
+    -- Rapidfire portal release for testing
+    if Convars:GetBool("portalgun_rapidfire") then
+        Input:ListenToButton("release", self.hand, self.bluePortalButton, 1, function (_, params)
+            if self.__rapidfirePortal == PortalManager.colors.blue then
+                self.__rapidfirePortal = nil
+            end
+            self.fireButtonIsHeld = false
+        end, self)
+
+        Input:ListenToButton("release", self.hand, self.orangePortalButton, 1, function (_, params)
+            if self.__rapidfirePortal == PortalManager.colors.orange then
+                self.__rapidfirePortal = nil
+            end
+            self.fireButtonIsHeld = false
+        end, self)
+    end
 
     -- Physical gun uses standard Alyx inventory so this isn't needed
     if not Convars:GetBool("portalgun_is_physical") then
@@ -1007,21 +1041,31 @@ function base:Think()
         end
 
         self:UpdatePickupItemPosition(moveVector)
-    elseif self.itemPickupEnabled then
-        local nearestPickupEnt = self:GetNearestPickupEntity()
-        if nearestPickupEnt then
-            -- New nearest entity
-            if nearestPickupEnt ~= lastNearestPickupEnt then
-                lastNearestPickupEnt = nearestPickupEnt
-                -- Display pickup effects
-                self:SetGraphParameterBool("bTargeting", true)
-                self:CreateHighlight(nearestPickupEnt)
+    else
+        if self.itemPickupEnabled then
+            local nearestPickupEnt = self:GetNearestPickupEntity()
+            if nearestPickupEnt then
+                -- New nearest entity
+                if nearestPickupEnt ~= lastNearestPickupEnt then
+                    lastNearestPickupEnt = nearestPickupEnt
+                    -- Display pickup effects
+                    self:SetGraphParameterBool("bTargeting", true)
+                    self:CreateHighlight(nearestPickupEnt)
+                end
+            else
+                if lastNearestPickupEnt then
+                    lastNearestPickupEnt = nil
+                    self:DestroyHighlight()
+                    self:SetGraphParameterBool("bTargeting", false)
+                end
             end
-        else
-            if lastNearestPickupEnt then
-                lastNearestPickupEnt = nil
-                self:DestroyHighlight()
-                self:SetGraphParameterBool("bTargeting", false)
+        end
+
+        if self.__rapidfirePortal ~= nil then
+            local delta = Time() - self.__rapidfireTime
+            if delta >= Convars:GetFloat("portalgun_rapidfire_rof") then
+                self:TryFirePortal(self.__rapidfirePortal)
+                self.__rapidfireTime = Time()
             end
         end
     end
