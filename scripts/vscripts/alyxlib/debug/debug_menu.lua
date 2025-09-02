@@ -5,8 +5,6 @@
     The debug menu allows for easier VR testing by offering a customizable in-game menu.
 ]]
 
-local Saver = require("portal.debug_menu_save")
-
 RegisterAlyxLibCommand("alyxlib_debug_menu_show", function (name, ...)
     DebugMenu:ShowMenu()
 end, "Forces the debug menu to show")
@@ -91,7 +89,6 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback()
-            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -114,7 +111,6 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback(on)
-            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -137,7 +133,6 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback(value, item)
-            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -160,7 +155,6 @@ local debugPanelScriptScope = {
 
         if item.callback then
             item.callback(index, value, item)
-            Saver.SaveConvarsWithDelay()
         end
     end,
 
@@ -805,8 +799,6 @@ end
         if panel then
             panel:Kill()
         end
-
-        Saver.LoadConvars()
 
         Player:Delay(function()
             DebugMenu:StartListeningForMenuActivation()
