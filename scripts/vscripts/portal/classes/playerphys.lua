@@ -399,15 +399,15 @@ function base:Think()
         if not self:TraceSpace(Vector(0, 0, -10)).hit then
             local impactVolume = Clamp(self.velocity:Length() / maxSpeed, 0, 1)
             Player:EmitSoundParams("JumpLand.HighVelocityImpact", 0, impactVolume, 0)
+
+            -- This is a hack to keep the player away from the wall
+            local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
+            PortalPlayerController:CacheBounceVelocity(reflected * 0.05)
         end
 
         -- -- Move player against the collision to allow entering portals
         -- -- high speeds would cause the player to stop before hitting the portal
         -- self:SetOrigin(traceTable.endpos)
-
-        -- This is a hack to keep the player away from the wall
-        local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
-        PortalPlayerController:CacheBounceVelocity(reflected * 0.05)
 
         print("Phys hit world", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
         if traceTable.enthit:GetOwner() then print("Owner:", traceTable.enthit:GetOwner():GetClassname()) end

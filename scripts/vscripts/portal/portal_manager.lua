@@ -477,15 +477,15 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                 if trace(offset) then
                     push = push - offset -- push away from hit sample
                 else
-                    -- check intersecting portals
-                    for _, portal in ipairs(existingPortals) do
-                        if portal.colorName ~= colorName then
-                            local localPosition = portal:TransformPointWorldToEntity(position + offset)
-                            if abs(localPosition.y) < PORTAL_SIZE_Y/2 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
-                                push = push - offset -- push away from hit sample
-                            end
-                        end
-                    end
+                    -- -- check intersecting portals
+                    -- for _, portal in ipairs(existingPortals) do
+                    --     if portal.colorName ~= colorName then
+                    --         local localPosition = portal:TransformPointWorldToEntity(position + offset)
+                    --         if abs(localPosition.y) < PORTAL_SIZE_Y/2 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
+                    --             push = push - offset -- push away from hit sample
+                    --         end
+                    --     end
+                    -- end
                 end
             end
         end
