@@ -678,6 +678,10 @@ function base:ExitPlayer(velocity)
 
     velocity = velocity or PortalPlayerController:GetPlayerVelocity()
 
+    if PortalPlayerController:IsPlayerOnGround() then
+        velocity.z = 0
+    end
+
     local desiredVelocity = connectedPortal:GetForwardVector() * velocity:Length()
     local physEnt = PortalPlayerController:GetOrCreatePlayerPhys(desiredVelocity)
 
