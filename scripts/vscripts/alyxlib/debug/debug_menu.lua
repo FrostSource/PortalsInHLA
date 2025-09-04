@@ -819,7 +819,7 @@ end
 
         local hand = Player.SecondaryHand
 
-        if Player:IsDigitalActionOnForHand(hand.Literal, DIGITAL_INPUT_TOGGLE_MENU) then
+        if Player:IsDigitalActionOnForHand(hand.Literal, DIGITAL_INPUT_ARM_GRENADE) then
             if not buttonPressed then
                 buttonPressed = true
                 timeSinceLastButtonPress = Time()
