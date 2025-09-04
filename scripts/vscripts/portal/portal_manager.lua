@@ -418,6 +418,8 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
     local debugpath = {position}
     local totaltraces = 0
 
+    local failhappened = false
+
     ---Trace in a direction
     ---@param direction Vector # Direction and distance
     ---@return boolean # If the trace hit or empty space behind
@@ -460,7 +462,7 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                 if en.reason == "overhang" then
                     entsseen[id] = {str="Overhang",count=1}
                 elseif en.reason == "angle" then
-                    entsseen[id] = {str=string.format("%s : %s [%s] (%n)",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex(),en.dot),count=1}
+                    entsseen[id] = {str=string.format("%s : %s [%s] (%d)",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex(),en.dot),count=1}
                 else
                     entsseen[id] = {str=string.format("%s : %s [%s]",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex()),count=1}
                 end
@@ -505,6 +507,8 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
 
         -- VV NEW CODE VV
 
+        failhappened = false
+
         local push = Vector(0, 0, 0)
         for ix = -stepsX, stepsX do
             for iy = -stepsY, stepsY do
@@ -519,6 +523,7 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                         debugoverlay:Line(position + offset, position + offset + (-normalAngles:Forward() * 3), 0, 0, 255, 255, false, 5)
                     end
                     if trace(offset) then
+                        failhappened = true
                         push = push - offset -- push away from hit sample
                     else
                         -- check intersecting portals
@@ -526,6 +531,7 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                             if portal.colorName ~= colorName then
                                 local localPosition = portal:TransformPointWorldToEntity(position + offset)
                                 if abs(localPosition.y) < PORTAL_SIZE_Y/2 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
+                                    failhappened = true
                                     table.insert(debugents,{ent=portal,reason="portal"})
                                     push = push - offset -- push away from hit sample
                                 end
@@ -542,7 +548,7 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
             position = position + push * stepSize
             table.insert(debugpath, position)
             -- position = position + push * (PORTAL_SIZE_Y/2 + PORTAL_SIZE_Z/2)
-        else
+        elseif not failhappened then
             if #debugpath > 1 then
                 DebugIf("portal_debug_portals", function()
                     for j = 1, #debugpath - 1 do
