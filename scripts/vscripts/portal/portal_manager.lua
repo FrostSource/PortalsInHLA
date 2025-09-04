@@ -413,24 +413,66 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
 
     local hitUp, hitDown, hitLeft, hitRight
 
+    ---@type {ent:EntityHandle,reason:string,dot:number}[]
+    local debugents = {}
+    local debugpath = {position}
+    local totaltraces = 0
+
     ---Trace in a direction
     ---@param direction Vector # Direction and distance
     ---@return boolean # If the trace hit or empty space behind
     local function trace(direction)
         -- First check if there is space for the portal in this direction
         local tr = self:TraceDirection(position, direction)
-        if tr.hit then return true end -- no space, return to move
+        totaltraces = totaltraces + 1
+        if tr.hit then
+            table.insert(debugents, {ent=tr.enthit,reason="hit"})
+            return true
+        end -- no space, return to move
         -- Then check if the space behind is valid
         tr = self:TraceDirection(position + direction, -normalAngles:Forward() * 3)
-        if not tr.hit then return true end -- empty space behind (overhang), return to move
-        if self.AllowPortalsOnlyOnPrefixedEntities and tr.enthit and not tr.enthit:GetName():startswith(self.PortalableSurfaceNamePrefix) then return true end -- not a portalable surface
-        if normal:Dot(tr.normal) < 0.99 then return true end -- surface is angled differently
+        totaltraces = totaltraces + 1
+        if not tr.hit then
+            table.insert(debugents,{reason="overhang"})
+            return true
+        end -- empty space behind (overhang), return to move
+        if self.AllowPortalsOnlyOnPrefixedEntities and tr.enthit and not tr.enthit:GetName():startswith(self.PortalableSurfaceNamePrefix) then
+            table.insert(debugents,{ent=tr.enthit,reason="badsurface"})
+            return true
+        end -- not a portalable surface
+        if normal:Dot(tr.normal) < 0.99 then
+            table.insert(debugents,{ent=tr.enthit,reason="angle",dot=normal:Dot(tr.normal)})
+            return true
+        end -- surface is angled differently
         return false
+    end
+
+    local function printdebug()
+        print("Total traces: ",totaltraces)
+        print("Total adjusts:", #debugpath - 1)
+        ---@type {str:string,count:number}[]
+        local entsseen = {}
+        for _,en in ipairs(debugents) do
+            local id = tostring(en.ent)..tostring(en.reason)
+            if entsseen[id] then
+                entsseen[id].count = entsseen[id].count + 1
+            else
+                if en.reason == "overhang" then
+                    entsseen[id] = {str="Overhang",count=1}
+                elseif en.reason == "angle" then
+                    entsseen[id] = {str=string.format("%s : %s [%s] (%n)",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex(),en.dot),count=1}
+                else
+                    entsseen[id] = {str=string.format("%s : %s [%s]",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex()),count=1}
+                end
+            end
+        end
+        for k,v in pairs(entsseen) do
+            print(v.str, "Times: "..tostring(v.count))
+        end
     end
 
     local stepsX = 2
     local stepsY = 2
-    local debugpath = {position}
 
     local existingPortals = self:GetAllPortals()
 
@@ -466,32 +508,37 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
         local push = Vector(0, 0, 0)
         for ix = -stepsX, stepsX do
             for iy = -stepsY, stepsY do
-                local offset =
-                    normalAngles:Left() * (ix/stepsX * PORTAL_SIZE_Y/2) +
-                    normalAngles:Up() * (iy/stepsY * PORTAL_SIZE_Z/2)
-                -- if i == 1 then
-                --     debugoverlay:Line(position, position + offset, 255, 0, 0, 255, false, 10)
-                --     debugoverlay:Sphere(position + offset, 1, 0, 255, 0, 255, false, 10)
-                --     debugoverlay:Line(position + offset, position + offset + (-normalAngles:Forward() * 3), 0, 0, 255, 255, false, 10)
-                -- end
-                if trace(offset) then
-                    push = push - offset -- push away from hit sample
-                else
-                    -- -- check intersecting portals
-                    -- for _, portal in ipairs(existingPortals) do
-                    --     if portal.colorName ~= colorName then
-                    --         local localPosition = portal:TransformPointWorldToEntity(position + offset)
-                    --         if abs(localPosition.y) < PORTAL_SIZE_Y/2 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
-                    --             push = push - offset -- push away from hit sample
-                    --         end
-                    --     end
-                    -- end
+                -- only check outer edges
+                if ix == -stepsX or ix == stepsX or iy == -stepsY or iy == stepsY then
+                    local offset =
+                        normalAngles:Left() * (ix/stepsX * PORTAL_SIZE_Y/2) +
+                        normalAngles:Up() * (iy/stepsY * PORTAL_SIZE_Z/2)
+                    if i == 1 then
+                        debugoverlay:Line(position, position + offset, 255, 0, 0, 255, false, 10)
+                        debugoverlay:Sphere(position + offset, 1, 0, 255, 0, 255, false, 10)
+                        debugoverlay:Line(position + offset, position + offset + (-normalAngles:Forward() * 3), 0, 0, 255, 255, false, 5)
+                    end
+                    if trace(offset) then
+                        push = push - offset -- push away from hit sample
+                    else
+                        -- check intersecting portals
+                        for _, portal in ipairs(existingPortals) do
+                            if portal.colorName ~= colorName then
+                                local localPosition = portal:TransformPointWorldToEntity(position + offset)
+                                if abs(localPosition.y) < PORTAL_SIZE_Y/2 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
+                                    table.insert(debugents,{ent=portal,reason="portal"})
+                                    push = push - offset -- push away from hit sample
+                                end
+                            end
+                        end
+                    end
                 end
             end
         end
 
         if push:Length() > 0 then
             push = push:Normalized()
+            -- print("","Adjust portal",i,Debug.SimpleVector(position),Debug.SimpleVector(push),Debug.SimpleVector(position + push * stepSize))
             position = position + push * stepSize
             table.insert(debugpath, position)
             -- position = position + push * (PORTAL_SIZE_Y/2 + PORTAL_SIZE_Z/2)
@@ -507,6 +554,9 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                     -- debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
                 end)
             end
+            print("Portal adjust found valid position")
+            print("Success results:")
+            printdebug()
             return position - normalAngles:Forward() * 1
         end
     end
@@ -521,6 +571,28 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
             end
         end
     end)
+
+    print("Failed to find position for portal")
+    print("Fail results:")
+    printdebug()
+    -- print("Total traces: ",totaltraces)
+    -- print("Total adjusts:", #debugpath - 1)
+    -- ---@type {str:string,count:number}[]
+    -- local entsseen = {}
+    -- for _,en in ipairs(debugents) do
+    --     local id = tostring(en.ent)..tostring(en.reason)
+    --     if entsseen[id] then
+    --         entsseen[id].count = entsseen[id].count + 1
+    --     else
+    --         if en.reason == "overhang" then
+    --             entsseen[id] = {str="Overhang",count=1}
+    --         elseif en.reason == "angle" then
+    --             entsseen[id] = {str=string.format("%s : %s [%s] (%n)",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex(),en.dot),count=1}
+    --         else
+    --             entsseen[id] = {str=string.format("%s : %s [%s]",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex()),count=1}
+    --         end
+    --     end
+    -- end
 
     return nil
 end
@@ -546,7 +618,9 @@ function PortalManager:TryCreatePortalAt(position, normal, color, reorientToPlay
         end
     end
 
+    print("\nDoing portal adjustment, beware spam:\n")
     position = self:PortalPositionAdjust(position, normalAngles, color.name, PORTAL_SIZE_Y*2)
+    print("\nFinished portal adjustment\n")
 
     if position == nil then
         return false
