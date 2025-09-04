@@ -402,12 +402,12 @@ function base:WillEntityTouchPortal(ent, origin, angles)
     }
     TraceCollideable(trace)
 
-    debugoverlay:PushDebugOverlayScope("asdf")
-    debugoverlay:Line(trace.startpos, trace.endpos, 0, 255, 0, 255, true, 100)
-    debugoverlay:Line(trace.startpos+Vector(0,0,-1), trace.endpos+Vector(0,0,-1), 255, 255, 0, 255, true, 100)
-    debugoverlay:Line(trace.startpos+Vector(0,0,-2), trace.endpos+Vector(0,0,-2), 0, 0, 255, 255, true, 100)
+    -- debugoverlay:PushDebugOverlayScope("asdf")
+    -- debugoverlay:Line(trace.startpos, trace.endpos, 0, 255, 0, 255, true, 100)
+    -- debugoverlay:Line(trace.startpos+Vector(0,0,-1), trace.endpos+Vector(0,0,-1), 255, 255, 0, 255, true, 100)
+    -- debugoverlay:Line(trace.startpos+Vector(0,0,-2), trace.endpos+Vector(0,0,-2), 0, 0, 255, 255, true, 100)
 
-    print("Results??", trace.hit)
+    -- print("Results??", trace.hit)
     local touch = trace.hit
 
     -- print("Results??", trace.hit, Debug.EntStr(trace.enthit))

@@ -530,7 +530,9 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                         for _, portal in ipairs(existingPortals) do
                             if portal.colorName ~= colorName then
                                 local localPosition = portal:TransformPointWorldToEntity(position + offset)
-                                if abs(localPosition.y) < PORTAL_SIZE_Y/2 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
+                                if abs(localPosition.x) < PORTAL_SIZE_X/2
+                                and abs(localPosition.y) < PORTAL_SIZE_Y/2
+                                and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
                                     failhappened = true
                                     table.insert(debugents,{ent=portal,reason="portal"})
                                     push = push - offset -- push away from hit sample
