@@ -332,13 +332,17 @@ end
 function PortalPlayerController:GetPlayerVelocity()
     local velocity = Vector()
     if IsValidEntity(self.currentPlayerPhys) then
+        print("Getting velocity from playerphys")
         velocity = self.currentPlayerPhys.velocity
     else
         velocity = self:GetCachedVelocity()
         if not velocity then
             ---@TODO 100 seems too high, find good multiplier
             -- velocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
+            print("Getting velocity from player")
             velocity = currentPlayerVelocity
+        else
+            print("Getting velocity from cache")
         end
     end
 
@@ -425,6 +429,7 @@ function PortalPlayerController:Enable()
                         self:ClearBounceCache()
                         self:CacheVelocity(bounceVelocity)
                     end
+                    print("Player is falling in think!")
                     local velocity = self:GetPlayerVelocity()
                     self:SetPlayerVelocity(velocity)
                     playerOnGround = false
