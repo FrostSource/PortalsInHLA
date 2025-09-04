@@ -157,7 +157,7 @@ end, nil)
 ListenToGameEvent("player_teleport_finish", function (params)
     -- print("TELEPORT END")
 
-    if playerIsTeleporting and playerOnGround and not PortalPlayerController:CheckGround() then
+    if playerIsTeleporting and playerOnGround and not PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT)) then
         print("This should only appear when teleporting into death chasm")
         local velocity = PortalPlayerController:GetPlayerVelocity()
         local velocity2d = Vector(velocity.x, velocity.y, 0)-- * Convars:GetFloat("portal_player_speed_multiplier")
