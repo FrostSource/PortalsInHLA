@@ -339,8 +339,8 @@ function PortalPlayerController:GetPlayerVelocity()
         if not velocity then
             ---@TODO 100 seems too high, find good multiplier
             -- velocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
-            print("Getting velocity from player", velocity)
             velocity = currentPlayerVelocity
+            print("Getting velocity from player", velocity)
         else
             print("Getting velocity from cache", velocity)
         end
