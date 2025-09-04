@@ -59,7 +59,7 @@ end
 ---@param angles QAngle
 function base:TeleportTo(origin, angles)
     self.target:SetOrigin(origin)
-    self.target:SetQAngle(angles)
+    -- self.target:SetQAngle(angles)
     self:Enable()
     self:Delay(function()
         self:Disable()

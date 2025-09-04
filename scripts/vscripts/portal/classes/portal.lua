@@ -542,7 +542,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 
     DebugIf("portal_debug_portals", function()
         debugoverlay:Sphere(oldPos, 2, 255, 255, 0, 255, false, 6)
-        debugoverlay:Box(ent:GetBoundingMins(), ent:GetBoundingMaxs(), 255, 255, 0, 255, false, 6)
+        debugoverlay:Box(oldPos+ent:GetBoundingMins(), oldPos+ent:GetBoundingMaxs(), 255, 255, 0, 255, false, 6)
     end)
 
 	if not ent:IsPlayer() then
@@ -633,10 +633,10 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 -- Let the teleport entity handle VR player
                 -- self.teleport:Teleport(distanceAdjustment)
                 local exitOrigin = connectedPortal:GetOrigin() + connectedPortal:GetForwardVector() * 32
-                local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
-                local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
-                local currentAngle = Player:GetAngles()
-                newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
+                -- local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
+                -- local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
+                -- local currentAngle = Player:GetAngles()
+                -- newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
                 self.teleport:TeleportTo(exitOrigin, newang)
 
                 -- Player:Delay(function()
