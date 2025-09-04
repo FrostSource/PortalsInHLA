@@ -332,17 +332,17 @@ end
 function PortalPlayerController:GetPlayerVelocity()
     local velocity = Vector()
     if IsValidEntity(self.currentPlayerPhys) then
-        print("Getting velocity from playerphys")
+        print("Getting velocity from playerphys", velocity)
         velocity = self.currentPlayerPhys.velocity
     else
         velocity = self:GetCachedVelocity()
         if not velocity then
             ---@TODO 100 seems too high, find good multiplier
             -- velocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
-            print("Getting velocity from player")
+            print("Getting velocity from player", velocity)
             velocity = currentPlayerVelocity
         else
-            print("Getting velocity from cache")
+            print("Getting velocity from cache", velocity)
         end
     end
 
@@ -409,11 +409,11 @@ function PortalPlayerController:Enable()
 
     self:UpdateWhooshSound(0)
 
-    currentPlayerOrigin = Player:GetAbsOrigin()
+    currentPlayerOrigin = Player:GetOrigin()
 
     Player:SetContextThink("PortalFallThink", function()
 
-        currentPlayerVelocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * Convars:GetFloat("portal_player_speed_multiplier")
+        currentPlayerVelocity = (Player:GetOrigin() - currentPlayerOrigin) * Convars:GetFloat("portal_player_speed_multiplier")
 
         if Convars:GetBool("portal_woosh_always") or self.currentPlayerPhys ~= nil then
             self:UpdateWhooshSound()

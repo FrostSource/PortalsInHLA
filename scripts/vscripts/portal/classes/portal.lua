@@ -573,7 +573,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
             newPos = newPos + AnglesToVector(dirAngle) * distanceAdjustment
         end
 
-        if IsVREnabled() then
+        if IsVREnabled() or IsFakeVREnabled() then
             -- -- Anchor with parent probably means player is falling
             -- -- needs portal special logic
             -- local cachedVelocity = PortalPlayerController:GetCachedVelocity()
