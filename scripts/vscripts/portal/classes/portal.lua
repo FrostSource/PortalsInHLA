@@ -345,20 +345,25 @@ end
 ---@param params IOParams
 function base:OnTriggerTouch(params, test)
     local ent = params.activator
+    print("Trigger touched", self:GetName(), Debug.EntStr(ent))
 
     -- Disallow entities owned by player
     if ent:GetOwner() then
         local ownerClass = ent:GetOwner():GetClassname()
+        print("Owner class", ownerClass)
         if ownerClass == "player" or ownerClass == "hl_prop_vr_hand" or ownerClass == "prop_hmd_avatar" or ownerClass == "hl_vr_teleport_controller" then
+            print("Cancelling")
             return
         end
     end
 
     if not vlua.find(PORTAL_CLASS_WHITELIST, ent:GetClassname()) then
+        print("Entity is not whitelisted")
         return
     end
 
     if ent:HasAttribute("DoNotPortal") then
+        print("Entity has DoNotPortal")
         return
     end
 
