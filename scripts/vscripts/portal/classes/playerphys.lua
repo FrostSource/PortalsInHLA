@@ -385,7 +385,7 @@ function base:Think()
         for _, portal in ipairs(PortalManager:GetAllPortals()) do
             if portal:GetConnectedPortal() then
                 if portal:WillEntityTouchPortal(Player, traceTable.endpos) then
-                    print("\nTouch portal on fall doing instance portal!!\n")
+                    print("\nTouch portal on fall doing instant portal!!\n")
                     -- debugoverlay:Sphere(traceTable.endpos, 8, 0, 0, 255, 255, true, 10)
                     -- debugoverlay:Sphere(traceTable.endpos, 6, 0, 255, 0, 255, true, 10)
                     -- debugoverlay:Sphere(traceTable.endpos, 7, 255, 0, 0, 255, true, 10)
@@ -528,6 +528,8 @@ function base:DisablePlayerTeleport()
 end
 
 function base:Remove()
+    self:PauseThink()
+    PortalPlayerController:PlayerLandedOnGround()
     -- yellow sphere at death point
     debugoverlay:Sphere(self:GetAbsOrigin(), 8, 255, 255, 0, 255, true, 8)
 	self:ClearPlayerAnchorParent()

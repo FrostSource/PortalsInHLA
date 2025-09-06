@@ -373,7 +373,7 @@ end
 ---@param angles? QAngle
 ---@return boolean
 function base:WillEntityTouchPortal(ent, origin, angles)
-    local portalCollision = SpawnEntityFromTableSynchronous("prop_physics_override", {
+    local portalCollision = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
         origin = self:GetOrigin(),
         angles = self:GetAngles(),
         model = "models/vrportal/portal_collision.vmdl",
@@ -388,6 +388,13 @@ function base:WillEntityTouchPortal(ent, origin, angles)
     --     ignore = GetWorld()
     -- }
     -- TraceHull(trace)
+
+    -- debugoverlay:Sphere(CalcClosestPointOnEntityOBB(ent, origin), 1, 255, 0, 0, 255, false, 100)
+    -- debugoverlay:Sphere(CalcClosestPointOnEntityOBB(ent, origin), 2, 0, 255, 0, 255, false, 100)
+    -- debugoverlay:Sphere(CalcClosestPointOnEntityOBB(ent, origin), 3, 0, 0, 255, 255, false, 100)
+    -- debugoverlay:Line(CalcClosestPointOnEntityOBB(ent, origin), origin, 0, 255, 0, 255, false, 100)
+    -- debugoverlay:Box(ent:GetOrigin()+ent:GetBoundingMins(), ent:GetOrigin()+ent:GetBoundingMaxs(), 0, 255, 0, 255, false, 100)
+    -- debugoverlay:Box(origin+ent:GetBoundingMins(), origin+ent:GetBoundingMaxs(), 0, 0, 255, 255, false, 100)
 
     ---@type TraceTableCollideable
     local trace = {
@@ -566,11 +573,28 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
         local distanceAdjustment = 0
 
         -- Adjust position for ceiling portals to stop player standing on ceiling
-        if connectedPortal:GetForwardVector().z < 0 then
-            local biggestBound = ent:GetBiggestBounding()
-            local downFactor = -connectedPortal:GetForwardVector().z
-            distanceAdjustment = biggestBound * downFactor
-            newPos = newPos + AnglesToVector(dirAngle) * distanceAdjustment
+        -- if connectedPortal:GetForwardVector().z < 0 then
+        --     local biggestBound = ent:GetBiggestBounding()
+        --     local downFactor = -connectedPortal:GetForwardVector().z
+        --     distanceAdjustment = biggestBound * downFactor
+        --     newPos = newPos + AnglesToVector(dirAngle) * distanceAdjustment
+        -- end
+
+        newPos = newPos + connectedPortal:GetForwardVector() * 16
+
+        print('adjusting for ceiling')
+        print(newPos)
+        local playerHeight = (Player:EyePosition() - Player:GetOrigin()):Length()+16
+        print(playerHeight)
+        local newHeadPos = newPos + Vector(0, 0, playerHeight)
+        print(newHeadPos)
+        -- debugoverlay:Sphere(Player:EyePosition(), 10, 255, 255, 255, 255, true, 100)
+        -- for k,v in ipairs(PortalManager:GetAllPortals()) do v:Kill() end
+        local dist = connectedPortal:GetForwardVector():Dot(newHeadPos - connectedPortal:GetOrigin())
+        print(dist)
+        if dist < 0 then
+            -- physEnt:SetOrigin(physEnt:GetOrigin() + connectedPortal:GetForwardVector() * dist)
+            newPos = newPos - connectedPortal:GetForwardVector() * dist
         end
 
         if IsVREnabled() or IsFakeVREnabled() then
@@ -626,25 +650,47 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
             --         self:ExitPlayer()
             --     end
             -- end
+            local onground = PortalPlayerController:IsPlayerOnGround()
+            local plrvelocity = PortalPlayerController:GetPlayerVelocity()
+            print("got velocity", plrvelocity)
             if PortalPlayerController:IsTeleporting() then
-                print("player be teleporting!!")
+                print("player do be teleporting into portal!!")
+                plrvelocity = plrvelocity/10
+            end
+            plrvelocity = connectedPortal:GetForwardVector() * plrvelocity:Length() -- safest transform
+            -- plrvelocity = transformDirection(self, connectedPortal, plrvelocity) -- this is more accurate but might cause direction bugs for floor portals
+            if PortalPlayerController.currentPlayerPhys ~= nil then
+                PortalPlayerController.currentPlayerPhys:Remove()
+            end
                 -- Cache transformed exit velocity so player has horizontal movement when falling
-                PortalPlayerController:CacheVelocity(connectedPortal:GetForwardVector()*(PortalPlayerController:GetPlayerVelocity():Length()/10))
+                -- PortalPlayerController:CacheVelocity(connectedPortal:GetForwardVector()*(PortalPlayerController:GetPlayerVelocity():Length()/10))
                 -- Let the teleport entity handle VR player
                 -- self.teleport:Teleport(distanceAdjustment)
+
                 local exitOrigin = connectedPortal:GetOrigin() + connectedPortal:GetForwardVector() * 32
+
+                local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
+
                 -- local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
                 -- local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
                 -- local currentAngle = Player:GetAngles()
                 -- newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
-                self.teleport:TeleportTo(exitOrigin, newang)
+                
+                print('velocity before ExitPlayer', plrvelocity)
+                -- PortalPlayerController:UpdatePlayerPosition(newPos)
+                PortalPlayerController:CacheVelocity(plrvelocity)
+                self.teleport:TeleportTo(newPos, newang)
+                -- self:Delay(function()
+                --     self:ExitPlayer(plrvelocity, newPos, onground, false)
+                -- end, 0.05)
 
                 -- Player:Delay(function()
                     -- self:ExitPlayer()
                 -- end, 0.01)
-            end
             -- else
-                self:ExitPlayer()
+            -- else
+                -- self:ExitPlayer(nil, newPos)
+            -- end
             -- end
         else
             ent:SetOrigin(newPos)
@@ -672,27 +718,49 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
     end)
 end
 
-function base:ExitPlayer(velocity)
+function base:ExitPlayer(velocity, exitOrigin, zeroZ, dontMovePlayer)
     local connectedPortal = self:GetConnectedPortal()
     if not connectedPortal then return end
 
     velocity = velocity or PortalPlayerController:GetPlayerVelocity()
 
-    if PortalPlayerController:IsPlayerOnGround() then
+    if zeroZ or PortalPlayerController:IsPlayerOnGround() then
         velocity.z = 0
     end
+
+    print("portal velocity", velocity)
 
     local desiredVelocity = connectedPortal:GetForwardVector() * velocity:Length()
     local physEnt = PortalPlayerController:GetOrCreatePlayerPhys(desiredVelocity)
 
     assert(physEnt ~= nil, "PortalPlayerController:GetOrCreatePlayerPhys failed")
 
-    -- debugoverlay:Line(newPos, newPos + cachedVelocity, 0, 255, 0, 255, false, 6)
-    local exitOrigin = connectedPortal:GetOrigin() + connectedPortal:GetForwardVector() * 32
+    if not dontMovePlayer then
 
-    -- Player's feet need to be at the bottom of the portal to avoid ceiling clipping
-    local adjustedZ = exitOrigin - connectedPortal:GetUpVector() * 32
-    physEnt:SetOrigin(adjustedZ)
+        -- debugoverlay:Line(newPos, newPos + cachedVelocity, 0, 255, 0, 255, false, 6)
+        exitOrigin = exitOrigin or (connectedPortal:GetOrigin() + connectedPortal:GetForwardVector() * 32)
+
+        -- -- Adjust player away from portal a bit
+        -- exitOrigin = exitOrigin + connectedPortal:GetForwardVector() * 16
+
+        -- Player's feet need to be at the bottom of the portal to avoid ceiling clipping
+        -- local adjustedZ = exitOrigin - connectedPortal:GetUpVector() * 32
+        print('adjusting for ceiling')
+        print(exitOrigin)
+        local playerHeight = (Player:EyePosition() - Player:GetOrigin()):Length()+16
+        print(playerHeight)
+        local exitHeadPos = exitOrigin + Vector(0, 0, playerHeight)
+        print(exitHeadPos)
+        -- debugoverlay:Sphere(Player:EyePosition(), 10, 255, 255, 255, 255, true, 100)
+        -- for k,v in ipairs(PortalManager:GetAllPortals()) do v:Kill() end
+        local dist = connectedPortal:GetForwardVector():Dot(exitHeadPos - connectedPortal:GetOrigin())
+        print(dist)
+        if dist < 0 then
+            -- physEnt:SetOrigin(physEnt:GetOrigin() + connectedPortal:GetForwardVector() * dist)
+            exitOrigin = exitOrigin - connectedPortal:GetForwardVector() * dist
+        end
+        physEnt:SetAbsOrigin(exitOrigin)
+    end
 
     if Convars:GetInt("portal_debug_portals") >= 1 then
         -- print(PortalManager.colors[self.colorName].color:ToVector(), "portaldebug")
@@ -700,13 +768,17 @@ function base:ExitPlayer(velocity)
         physEnt:DrawTrajectory(PortalManager.colors[connectedPortal.colorName].color:ToVector(), "portal_debug_portals")
     end
 
-    local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
-    local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
-    local currentAngle = physEnt:GetAngles()
-    newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
-    physEnt:SetQAngle(newang)
+    if not dontMovePlayer then
+        local newang = transformAngles(self, connectedPortal, Player.HMDAvatar)
+        local diff = AngleDiff(connectedPortal:GetAngles().y, Player.HMDAvatar:GetAngles().y)
+        local currentAngle = physEnt:GetAngles()
+        newang = QAngle(currentAngle.x, currentAngle.y + diff, currentAngle.z)
+        physEnt:SetQAngle(newang)
+    end
 
     PortalPlayerController:ClearCache()
+    -- physEnt:Remove()
+    -- SendToConsole("noclip_vr")
 end
 
 ---Funnel entity into the portal.

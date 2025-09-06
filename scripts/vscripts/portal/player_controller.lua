@@ -332,8 +332,8 @@ end
 function PortalPlayerController:GetPlayerVelocity()
     local velocity = Vector()
     if IsValidEntity(self.currentPlayerPhys) then
-        print("Getting velocity from playerphys", velocity)
         velocity = self.currentPlayerPhys.velocity
+        print("Getting velocity from playerphys", velocity)
     else
         velocity = self:GetCachedVelocity()
         if not velocity then
@@ -356,6 +356,10 @@ function PortalPlayerController:SetPlayerVelocity(velocity)
     end
 end
 
+function PortalPlayerController:UpdatePlayerPosition(position)
+    currentPlayerOrigin = position
+end
+
 function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
     if Player.HMDAnchor == nil then
         print("PortalPlayerController:GetOrCreatePlayerPhys: Player.HMDAnchor is nil, playerphys can't be created")
@@ -364,7 +368,7 @@ function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
 
     if IsValidEntity(self.currentPlayerPhys) then
         if initialVelocity then
-            self.currentPlayerPhys.velocity = initialVelocity
+            self.currentPlayerPhys:SetVelocity(initialVelocity)
         end
         return self.currentPlayerPhys
     else
@@ -414,6 +418,9 @@ function PortalPlayerController:Enable()
     Player:SetContextThink("PortalFallThink", function()
 
         currentPlayerVelocity = (Player:GetOrigin() - currentPlayerOrigin) * Convars:GetFloat("portal_player_speed_multiplier")
+        if currentPlayerVelocity:Length() > 2000 then
+            print("Player velocity too high", Player:GetOrigin(), currentPlayerOrigin)
+        end
 
         if Convars:GetBool("portal_woosh_always") or self.currentPlayerPhys ~= nil then
             self:UpdateWhooshSound()
@@ -424,12 +431,12 @@ function PortalPlayerController:Enable()
                 -- Check if fall height is high enough
                 local trace = self:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT))
                 if not trace.hit then
+                    print('player fall')
                     local bounceVelocity = self:GetCachedBounceVelocity()
                     if bounceVelocity then
                         self:ClearBounceCache()
                         self:CacheVelocity(bounceVelocity)
                     end
-                    print("Player is falling in think!")
                     local velocity = self:GetPlayerVelocity()
                     self:SetPlayerVelocity(velocity)
                     playerOnGround = false
