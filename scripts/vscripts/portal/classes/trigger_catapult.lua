@@ -270,7 +270,9 @@ end
 function base:Launch(pVictim, vecVelocity)
 	local vecVictim = GetPhysVelocity(pVictim)
     print("Launching", pVictim:GetName())
-	StartSoundEvent("hev_suit.bell", Player)
+	if Convars:GetInt("portal_debug_flings") > 0 then
+		StartSoundEvent("hev_suit.bell", Player)
+	end
 	-- Handle a player
 	if pVictim:IsPlayer() then
 		-- Send us flying

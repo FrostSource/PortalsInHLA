@@ -95,6 +95,8 @@ Convars:RegisterCommand("portal_debug_clear", function()
     end
 end, "Clears all debugging visuals (only needed for portal_debug_portal_rendering)", 0)
 
+Convars:RegisterConvar("portal_sample_steps", "2", "Number of edge samples checked when placing a portal", 0)
+
 ---@diagnostic disable-next-line: lowercase-global
 function debugprint_portalgun(...)
     if Convars:GetInt("portal_debug_portalgun") > 0 then
@@ -396,6 +398,39 @@ function PortalManager:ReorientPortalPerpendicular(normal, forward)
     return normalAngles
 end
 
+function PortalManager:GetOrientedPortalAngles(normal)
+    local forward
+    if Convars:GetBool("portal_orient_to_gun") and IsValidEntity(CurrentPortalGun) then
+        forward = CurrentPortalGun:GetForwardVector()
+    else
+        forward = Player:GetWorldForward()
+    end
+    forward.z = 0
+    forward = forward:Normalized()
+
+    local xaxis = 0
+    if math.isclose(normal.z, -1, 1e-7) then
+        xaxis = 90 -- floor
+        return RotateOrientation(VectorToAngles(forward), QAngle(xaxis, 0, 0))
+    elseif math.isclose(normal.z, 1, 1e-7) then
+        xaxis = -90 -- ceiling
+        return RotateOrientation(VectorToAngles(forward), QAngle(xaxis, 0, 0))
+    end
+
+    return VectorToAngles(normal)
+end
+
+function CleanNormal(normal, epsilon)
+    epsilon = epsilon or 0.01
+
+    local x = math.abs(normal.x) < epsilon and 0 or (math.abs(normal.x) > 1 - epsilon and math.sign(normal.x) or normal.x)
+    local y = math.abs(normal.y) < epsilon and 0 or (math.abs(normal.y) > 1 - epsilon and math.sign(normal.y) or normal.y)
+    local z = math.abs(normal.z) < epsilon and 0 or (math.abs(normal.z) > 1 - epsilon and math.sign(normal.z) or normal.z)
+
+    local cleaned = Vector(x, y, z)
+    return cleaned:Normalized()
+end
+
 ---Attempts to adjust the position of the portal to the nearest valid position.
 ---@param position Vector
 ---@param normalAngles QAngle
@@ -473,10 +508,16 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
         end
     end
 
-    local stepsX = 2
-    local stepsY = 2
+    local stepsX = Convars:GetInt("portal_sample_steps")
+    local stepsY = Convars:GetInt("portal_sample_steps")
+
+    print("left", normalAngles:Left())
+    print("up", normalAngles:Up())
+    print("forward", normalAngles:Forward())
 
     local existingPortals = self:GetAllPortals()
+
+    local anySuccess = false
 
     for i = 1, maxAttempts do
         -- hitUp = trace(normalAngles:Up() * PORTAL_SIZE_Z / 2)
@@ -507,6 +548,7 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
 
         -- VV NEW CODE VV
 
+        anySuccess = false
         failhappened = false
 
         local push = Vector(0, 0, 0)
@@ -518,15 +560,18 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                         normalAngles:Left() * (ix/stepsX * PORTAL_SIZE_Y/2) +
                         normalAngles:Up() * (iy/stepsY * PORTAL_SIZE_Z/2)
                     if i == 1 then
-                        debugoverlay:Line(position, position + offset, 255, 0, 0, 255, false, 10)
-                        debugoverlay:Sphere(position + offset, 1, 0, 255, 0, 255, false, 10)
-                        debugoverlay:Line(position + offset, position + offset + (-normalAngles:Forward() * 3), 0, 0, 255, 255, false, 5)
+                        DebugIf("portal_debug_portals", function()
+                            debugoverlay:Line(position, position + offset, 255, 0, 0, 255, false, 5)
+                            debugoverlay:Sphere(position + offset, 1, 0, 255, 0, 255, false, 5)
+                            debugoverlay:Line(position + offset, position + offset + (-normalAngles:Forward() * 3), 0, 0, 255, 255, false, 5)
+                        end)
                     end
                     if trace(offset) then
                         failhappened = true
                         push = push - offset -- push away from hit sample
                     else
                         -- check intersecting portals
+                        local blocked = false
                         for _, portal in ipairs(existingPortals) do
                             if portal.colorName ~= colorName then
                                 local localPosition = portal:TransformPointWorldToEntity(position + offset)
@@ -534,38 +579,61 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                                 and abs(localPosition.y) < PORTAL_SIZE_Y/2
                                 and abs(localPosition.z) < PORTAL_SIZE_Z/2 then
                                     failhappened = true
+                                    blocked = true
                                     table.insert(debugents,{ent=portal,reason="portal"})
                                     push = push - offset -- push away from hit sample
                                 end
                             end
+                        end
+
+                        if not blocked then
+                            anySuccess = true
                         end
                     end
                 end
             end
         end
 
+        push = CleanVector(push)
+
+        if not anySuccess then
+            print('breaking')
+            break
+        end
+
+        -- print("push", Debug.SimpleVector(push))
         if push:Length() > 0 then
             push = push:Normalized()
+            -- print("push normalized", Debug.SimpleVector(push))
             -- print("","Adjust portal",i,Debug.SimpleVector(position),Debug.SimpleVector(push),Debug.SimpleVector(position + push * stepSize))
             position = position + push * stepSize
             table.insert(debugpath, position)
             -- position = position + push * (PORTAL_SIZE_Y/2 + PORTAL_SIZE_Z/2)
-        elseif not failhappened then
-            if #debugpath > 1 then
-                DebugIf("portal_debug_portals", function()
-                    for j = 1, #debugpath - 1 do
-                        debugoverlay:HorzArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
-                        debugoverlay:VertArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
-                    end
-                    -- debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
-                    -- debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
-                    -- debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
-                end)
+        else
+            if not failhappened then
+                if #debugpath > 1 then
+                    DebugIf("portal_debug_portals", function()
+                        for j = 1, #debugpath - 1 do
+                            debugoverlay:HorzArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
+                            debugoverlay:VertArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
+                        end
+                        -- debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
+                        -- debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
+                        -- debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
+                    end)
+                end
+                print("Portal adjust found valid position")
+                print("Success results:")
+                printdebug()
+                return position - normalAngles:Forward() * 1
+            else
+                -- nowhere to move, exit
+                break
             end
-            print("Portal adjust found valid position")
-            print("Success results:")
-            printdebug()
-            return position - normalAngles:Forward() * 1
+        end
+
+        if i == maxAttempts then
+            print("Reached max attempts")
         end
     end
 
@@ -612,18 +680,40 @@ end
 ---@param reorientToPlayer? boolean # If true, the portal will be reoriented to be perpendicular to the player when placed on the ground or ceiling.
 ---@return boolean # Returns true if the portal successfully opened, false otherwise.
 function PortalManager:TryCreatePortalAt(position, normal, color, reorientToPlayer)
+    normal = CleanNormal(normal)
+    print('\nNORMAL'..tostring(Debug.SimpleVector(normal))..'\n')
     color = resolveColor(color)
 
     local normalAngles = VectorToAngles(normal)
 
     if reorientToPlayer then
-        if Convars:GetBool("portal_orient_to_gun") then
-            local forward = CurrentPortalGun:GetForwardVector()
-            forward.z = 0
-            normalAngles = self:ReorientPortalPerpendicular(normal, forward)
-        else
-            normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
-        end
+        -- if Convars:GetBool("portal_orient_to_gun") then
+        --     local forward = CurrentPortalGun:GetForwardVector()
+        --     forward.z = 0
+        --     forward = forward:Normalized()
+        --     local a= normalAngles
+        --     normalAngles = self:ReorientPortalPerpendicular(normal, forward)
+        --     print("orient by gun", Debug.SimpleVector(a), Debug.SimpleVector(normalAngles))
+        -- else
+        --     normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+        -- end
+
+        -- local forward = Convars:GetBool("portal_orient_to_gun") and CurrentPortalGun:GetForwardVector() or Player:GetWorldForward()
+        -- forward.z = 0
+        -- forward = forward:Normalized()
+
+        -- local xaxis = 0
+        -- if math.isclose(normal.z, -1, 1e-7) then
+        --     xaxis = 90 -- floor
+        --     normalAngles = VectorToAngles(forward)
+        --     normalAngles = RotateOrientation(normalAngles, QAngle(xaxis, 0, 0))
+        -- elseif math.isclose(normal.z, 1, 1e-7) then
+        --     xaxis = -90 -- ceiling
+        --     normalAngles = VectorToAngles(forward)
+        --     normalAngles = RotateOrientation(normalAngles, QAngle(xaxis, 0, 0))
+        -- end
+        normalAngles = self:GetOrientedPortalAngles(normal)
+        
     end
 
     print("\nDoing portal adjustment, beware spam:\n")

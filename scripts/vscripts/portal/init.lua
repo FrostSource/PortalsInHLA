@@ -10,6 +10,13 @@ require "portal.classes.playerphys"
 require "portal.portal_manager"
 require "portal.player_controller"
 
-if not IsVREnabled() then
-    require "portal.novr"
+if IsInToolsMode() or Convars:GetInt("developer") > 0 then
+    require "portal.debug"
+    if not IsVREnabled() then
+        if IsFakeVREnabled() then
+            require "portal.fakevr"
+        else
+            require "portal.novr"
+        end
+    end
 end

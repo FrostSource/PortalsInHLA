@@ -479,7 +479,10 @@ end
 ---@luadoc-ignore
 function EntityClass:ResumeThink()
     if not self:IsNull() then
-        self:SetContextThink("__EntityThink", function() return self:Think() end, 0)
+        self:SetContextThink("__EntityThink", function()
+            if not self.IsThinking then return end
+            return self:Think()
+        end, 0)
         self.IsThinking = true
     end
 end
@@ -488,7 +491,7 @@ end
 ---@luadoc-ignore
 function EntityClass:PauseThink()
     if not self:IsNull() then
-        self:SetContextThink("__EntityThink", nil, 0)
+        -- self:SetContextThink("__EntityThink", nil, 0)
         self.IsThinking = false
     end
 end

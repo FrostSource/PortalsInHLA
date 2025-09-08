@@ -33,7 +33,7 @@ local PORTAL_HALF_HEIGHT = 49.5
 -- EasyConvars:RegisterConvar("portal_attract_distance", "128", "Distance at which the player is attracted to a portal when falling")
 Convars:RegisterConvar("player_funnel_into_portals", "1", "Player will move towards portals they are falling into", 0)
 
-EasyConvars:RegisterConvar("portal_max_fling_speed", "1200", "Maximum speed at which the player can move while flinging")
+EasyConvars:RegisterConvar("portal_max_fling_speed", "800", "Maximum speed at which the player can move while flinging")
 EasyConvars:SetPersistent("portal_max_fling_speed", true)
 
 local DEBUG = true

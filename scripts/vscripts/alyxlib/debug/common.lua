@@ -733,7 +733,7 @@ end
 ---
 ---Returns a simplified vector string with decimal places truncated.
 ---
----@param vector Vector
+---@param vector Vector|QAngle|{x:number,y:number,z:number}
 ---@return string
 function Debug.SimpleVector(vector)
     return "[" .. math.trunc(vector.x, 3) .. ", " .. math.trunc(vector.y, 3) .. ", " .. math.trunc(vector.z, 3) .. "]"

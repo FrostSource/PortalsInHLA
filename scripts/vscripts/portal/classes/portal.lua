@@ -32,13 +32,14 @@ local PORTAL_CLASS_WHITELIST = {
     "player",
 
     "prop_physics",
+    "prop_physics_override",
+    "prop_physics_interactive",
     "func_physbox",
+    "shatterglass_shard",
     "npc_manhack",
     "item_hlvr_grenade_frag",
     "item_hlvr_grenade_xen",
     "item_hlvr_prop_battery",
-    "prop_physics_interactive",
-    "prop_physics_override",
     "prop_ragdoll",
     "generic_actor",
     "hlvr_weapon_energygun",
@@ -149,13 +150,14 @@ function base:Open(position, normal, color, reorientToPlayer)
     local normalAngles = VectorToAngles(normal)
 
     if reorientToPlayer then
-        if Convars:GetBool("portal_orient_to_gun") then
-            local forward = CurrentPortalGun:GetForwardVector()
-            forward.z = 0
-            normalAngles = PortalManager:ReorientPortalPerpendicular(normal, forward)
-        else
-            normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
-        end
+        -- if Convars:GetBool("portal_orient_to_gun") then
+        --     local forward = CurrentPortalGun:GetForwardVector()
+        --     forward.z = 0
+        --     normalAngles = PortalManager:ReorientPortalPerpendicular(normal, forward)
+        -- else
+        --     normalAngles = PortalManager:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
+        -- end
+        normalAngles = PortalManager:GetOrientedPortalAngles(normal)
     end
 
     self.aimat = SpawnEntityFromTableSynchronous("point_aimat", {
@@ -586,6 +588,11 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
         -- end
 
         newPos = newPos + connectedPortal:GetForwardVector() * 16
+
+        if not connectedPortal:IsFloorPortal() then
+            print("adjusting player to bottom of wall portal")
+            newPos.z = connectedPortal:GetOrigin().z - PORTAL_HALF_HEIGHT
+        end
 
         print('adjusting for ceiling')
         print(newPos)

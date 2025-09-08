@@ -1,6 +1,6 @@
 Convars:RegisterCommand("portal_fire_portalgun_blue", function ()
     if PortalManager.portalGun then
-        PortalManager.portalGun:TryFirePortal(PortalManager.colors.orange)
+        PortalManager.portalGun:TryFirePortal(PortalManager.colors.blue)
     end
 end, "", 0)
 Convars:RegisterCommand("portal_fire_portalgun_orange", function ()

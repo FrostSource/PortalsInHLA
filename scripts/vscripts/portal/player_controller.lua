@@ -123,6 +123,7 @@ PortalPlayerController = {}
 ---@type PortalPlayerPhys?
 PortalPlayerController.currentPlayerPhys = nil
 
+---Why did i do this owner switching code??
 ---@param params PlayerEventItemPickup
 ListenToPlayerEvent("item_pickup", function (params)
     if params.item then
@@ -315,7 +316,7 @@ function PortalPlayerController:ClearBounceCache()
     cacheBounceTime = 0
 end
 
-local function CleanVector(vec, threshold)
+function CleanVector(vec, threshold)
     threshold = threshold or 1e-6
 
     local x = math.abs(vec.x) < threshold and 0 or vec.x
