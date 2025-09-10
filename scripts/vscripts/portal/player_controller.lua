@@ -125,30 +125,31 @@ PortalPlayerController = {}
 ---@type PortalPlayerPhys
 PortalPlayerController.currentPlayerPhys = nil
 
----Why did i do this owner switching code??
----@param params PlayerEventItemPickup
-ListenToPlayerEvent("item_pickup", function (params)
-    if params.item then
-        if params.item.portalPrevOwner == nil then
-            params.item.portalPrevOwner = params.item:GetOwner()
-            params.item:SetOwner(Player)
-        end
-    end
-end)
+-- ---Why did i do this owner switching code??
+-- ---@param params PlayerEventItemPickup
+-- ListenToPlayerEvent("item_pickup", function (params)
+--     if params.item then
+--         if params.item.portalPrevOwner == nil then
+--             params.item.portalPrevOwner = params.item:GetOwner()
+--             params.item:SetOwner(Player)
+--         end
+--     end
+-- end)
 
----@param params PlayerEventItemReleased
-ListenToPlayerEvent("item_released", function (params)
-    if params.item then
-        -- Make sure item isn't being held by either hand for two handed pickups
-        if not Player:IsHolding(params.item) then
-            params.item:Delay(function()
-                print("item released, resetting owner")
-                params.item:SetOwner(params.item.portalPrevOwner)
-                params.item.portalPrevOwner = nil
-            end, 0)
-        end
-    end
-end)
+-- ---@param params PlayerEventItemReleased
+-- ListenToPlayerEvent("item_released", function (params)
+--     if params.item then
+--         -- Make sure item isn't being held by either hand for two handed pickups
+--         if not Player:IsHolding(params.item) then
+--             params.item:Delay(function()
+--                 print("item released, resetting owner")
+--                 params.item:SetOwner(params.item.portalPrevOwner)
+--                 params.item.portalPrevOwner = nil
+--             end, 0)
+--         end
+--     end
+-- end)
+
 local teleportTime = 0
 ---@param params GameEventPlayerTeleportStart
 ListenToGameEvent("player_teleport_start", function (params)

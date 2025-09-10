@@ -22,6 +22,9 @@ EasyConvars:SetPersistent("portal_add_missing_speed_to_props", true)
 EasyConvars:RegisterConvar("portal_add_missing_speed_to_player", "0", "Add missing physical speed to player when they are teleported", FCVAR_NONE)
 EasyConvars:SetPersistent("portal_add_missing_speed_to_player", true)
 
+EasyConvars:RegisterConvar("portal_recenter_phys_objects", "1", "Objects exiting a portal are have their velocity recentered to the exit direction", FCVAR_NONE)
+EasyConvars:RegisterConvar("portal_recenter_speed", "50", "Speed at which objects are recentered if recentering is enabled", FCVAR_NONE)
+
 local PTX_PORTAL_EFFECT = "particles/portal_effect_parent.vpcf"
 
 local SND_CLOSE = "Portal.Close"
@@ -644,6 +647,10 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 
         if Convars:GetBool("portal_add_missing_speed_to_props") then
             newVel = newVel + missedVelocity
+        end
+
+        if Convars:GetBool("portal_recenter_phys_objects") and velocity:Length() >= Convars:GetFloat("portal_recenter_speed") then
+            newVel = connectedPortal:GetForwardVector() * newVel:Length()
         end
 
         print('final vel', newVel:Length(), newVel)
