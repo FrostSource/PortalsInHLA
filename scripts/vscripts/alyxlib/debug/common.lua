@@ -909,4 +909,24 @@ function Debug.GetSourceLine(f)
     return debug.getinfo(f, "S").short_src..":"..tostring(debug.getinfo(f, "l").currentline)
 end
 
+function Debug.fprint(...)
+    local args = {...}
+    local sargs = {}
+    for i, arg in ipairs(args) do
+        if IsEntity(arg) then
+            table.insert(sargs, Debug.EntStr(arg))
+        elseif IsVector(arg) or IsQAngle(arg) then
+            table.insert(sargs, Debug.SimpleVector(arg))
+        elseif type(arg) == "string" then
+            table.insert(sargs, '"'..arg..'"')
+        else
+            table.insert(sargs, tostring(arg))
+        end
+    end
+
+    print(table.concat(sargs, "\t"))
+end
+---@diagnostic disable-next-line : lowercase-global
+fprint = Debug.fprint
+
 return Debug.version

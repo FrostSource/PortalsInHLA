@@ -118,9 +118,11 @@ end)
 EasyConvars:SetPersistent("portal_physical_flings", true)
 
 ---Controls player falling into chasms.
+---@class PortalPlayerController
+---@field currentPlayerPhys PortalPlayerPhys?
 PortalPlayerController = {}
 
----@type PortalPlayerPhys?
+---@type PortalPlayerPhys
 PortalPlayerController.currentPlayerPhys = nil
 
 ---Why did i do this owner switching code??
@@ -153,12 +155,17 @@ ListenToGameEvent("player_teleport_start", function (params)
     -- print("TELEPORT START")
     playerIsTeleporting = true
     teleportTime = Time()
+
+    -- Disable all portal triggers so no teleport portalling
+    for _,portal in ipairs(PortalManager:GetAllPortals()) do
+        portal.trigger:Disable()
+    end
 end, nil)
 ---@param params GameEventPlayerTeleportFinish
 ListenToGameEvent("player_teleport_finish", function (params)
     -- print("TELEPORT END")
 
-    if playerIsTeleporting and playerOnGround and not PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT)) then
+    if playerIsTeleporting and playerOnGround and not PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin() + Vector(0, 0, 0), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT)).hit then
         print("This should only appear when teleporting into death chasm")
         local velocity = PortalPlayerController:GetPlayerVelocity()
         local velocity2d = Vector(velocity.x, velocity.y, 0)-- * Convars:GetFloat("portal_player_speed_multiplier")
@@ -166,6 +173,11 @@ ListenToGameEvent("player_teleport_finish", function (params)
     end
 
     playerIsTeleporting = false
+
+    -- Re-enable all portal triggers
+    for _,portal in ipairs(PortalManager:GetAllPortals()) do
+        portal.trigger:Enable()
+    end
 end, nil)
 
 function PortalPlayerController:IsTeleporting()
@@ -377,6 +389,11 @@ function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
         local velocity = initialVelocity or self:GetPlayerVelocity()
         velocity = CleanVector(velocity)
 
+        local model = "models/props/choreo/ghost_speaker.vmdl"
+        if Convars:GetBool("portal_debug_flings") then
+            model = "models/editor/axis_helper_thick.vmdl"
+        end
+
         local physEnt = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
             origin = Player:GetAbsOrigin(),-- + Vector(0,0,4),
             angles = Player.HMDAnchor:GetAngles(),
@@ -385,10 +402,10 @@ function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
             velocity_x = tostring(velocity.x),
             velocity_y = tostring(velocity.y),
             velocity_z = tostring(velocity.z),
-            model = "models/props/choreo/ghost_speaker.vmdl",
+            model = model,
             solid = "0",
             ScriptedMovement = "1",
-        })
+        })--[[@as PortalPlayerPhys]]
         self.currentPlayerPhys = physEnt
         return physEnt
     end

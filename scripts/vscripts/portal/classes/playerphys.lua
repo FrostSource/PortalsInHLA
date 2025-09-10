@@ -384,8 +384,10 @@ function base:Think()
 
         for _, portal in ipairs(PortalManager:GetAllPortals()) do
             if portal:GetConnectedPortal() then
-                if portal:WillEntityTouchPortal(Player, traceTable.endpos) then
-                    print("\nTouch portal on fall doing instant portal!!\n")
+                -- if portal:WillEntityTouchPortal(Player, traceTable.endpos) then
+                if self.velocity:Dot(portal:GetForwardVector()) < 0 -- moving towards portal
+                and Player:AABBIntersectsOBB(portal, traceTable.endpos, PORTAL_MINS, PORTAL_MAXS) then
+                    print("\nTouch portal on fall doing instant portal!!", portal.colorName,"\n")
                     -- debugoverlay:Sphere(traceTable.endpos, 8, 0, 0, 255, 255, true, 10)
                     -- debugoverlay:Sphere(traceTable.endpos, 6, 0, 255, 0, 255, true, 10)
                     -- debugoverlay:Sphere(traceTable.endpos, 7, 255, 0, 0, 255, true, 10)
@@ -444,19 +446,20 @@ function base:Think()
     end
 
     if turnSign ~= 0 then
-        local angles = Player.HMDAnchor:GetAngles()
+        local angles = self:GetAngles()
         local amount = 0
 
         if Convars:GetBool("vr_quick_turn_continuous_enable") then
             local speed = Convars:GetFloat("vr_quick_turn_continuous_speed") or 0
             amount = speed * FrameTime() * turnSign
+            self:SetAngles(angles.x, angles.y + amount, angles.z)
         elseif Convars:GetBool("vr_teleport_quick_turn_enable") and not quickTurnFlag then
             local speed = Convars:GetFloat("vr_teleport_quick_turn_angle") or 0
             amount = speed * turnSign
             quickTurnFlag = true
+            self:SetAngles(angles.x, angles.y + amount, angles.z)
         end
 
-        Player.HMDAnchor:SetAngles(angles.x, angles.y + amount, angles.z)
     end
 
 	self.lastTime = time
@@ -504,7 +507,22 @@ function base:TraceSpace(offset)
 	-- end
 
 	-- return traceTable
-    return PortalPlayerController:TracePlayerSpace(self:GetAbsOrigin(), self:GetAbsOrigin() + offset * 1.2)
+    -- return PortalPlayerController:TracePlayerSpace(self:GetAbsOrigin(), self:GetAbsOrigin() + offset * 1.2)
+    return PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + offset * 1.2)
+end
+
+---Snaps this playerphys to the player's current position without moving the anchor.
+---
+---The playerphys does not get teleported with the player/anchor
+---so it needs to be manually updated sometimes.
+---
+---@param origin? Vector # Optional origin to snap to instead of player position.
+function base:SnapToPlayer(origin)
+    if Player.HMDAnchor:GetMoveParent() == self then
+        Player.HMDAnchor:SetParent(nil, nil)
+        self:SetOrigin(origin or Player:GetOrigin())
+        Player.HMDAnchor:SetParent(self, nil)
+    end
 end
 
 ---Anchors the player to an entity with the given name.
@@ -564,7 +582,7 @@ function base:DrawTrajectory(color, scope)
     local simVel = self.velocity
     local graycol = Vector(255,255,255)
 
-    local gravity = Vector(0,0,-Convars:GetFloat("sv_gravity"))
+    local gravity = Vector(0,0,-Convars:GetFloat("sv_gravity")) -- default is 386
     local lastPos = simPos
     for i = 1, maxSteps do
         -- Apply gravity
