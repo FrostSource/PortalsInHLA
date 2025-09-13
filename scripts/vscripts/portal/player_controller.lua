@@ -122,62 +122,70 @@ EasyConvars:SetPersistent("portal_physical_flings", true)
 ---@field currentPlayerPhys PortalPlayerPhys?
 PortalPlayerController = {}
 
+PortalPlayerController.enabled = false
+
 ---@type PortalPlayerPhys
 PortalPlayerController.currentPlayerPhys = nil
 
--- ---Why did i do this owner switching code??
--- ---@param params PlayerEventItemPickup
--- ListenToPlayerEvent("item_pickup", function (params)
---     if params.item then
---         if params.item.portalPrevOwner == nil then
---             params.item.portalPrevOwner = params.item:GetOwner()
---             params.item:SetOwner(Player)
---         end
---     end
--- end)
+---Setting pickup owner to player allows it to be carried through portals without dropping
+---@param params PlayerEventItemPickup
+ListenToPlayerEvent("item_pickup", function (params)
+    if params.item then
+        if not (Player.LeftHand.ItemHeld == params.item and Player.RightHand.ItemHeld == params.item)
+            and params.item.portalPrevOwner == nil
+        then
+            params.item.portalPrevOwner = params.item:GetOwner()
+            params.item:SetOwner(Player)
+        end
+    end
+end)
 
--- ---@param params PlayerEventItemReleased
--- ListenToPlayerEvent("item_released", function (params)
---     if params.item then
---         -- Make sure item isn't being held by either hand for two handed pickups
---         if not Player:IsHolding(params.item) then
---             params.item:Delay(function()
---                 print("item released, resetting owner")
---                 params.item:SetOwner(params.item.portalPrevOwner)
---                 params.item.portalPrevOwner = nil
---             end, 0)
---         end
---     end
--- end)
+---@param params PlayerEventItemReleased
+ListenToPlayerEvent("item_released", function (params)
+    if params.item then
+        -- Make sure item isn't being held by either hand for two handed pickups
+        if not Player:IsHolding(params.item) then
+            params.item:Delay(function()
+                print("item released, resetting owner")
+                params.item:SetOwner(params.item.portalPrevOwner)
+                params.item.portalPrevOwner = nil
+            end, 0)
+        end
+    end
+end)
 
 local teleportTime = 0
 ---@param params GameEventPlayerTeleportStart
 ListenToGameEvent("player_teleport_start", function (params)
-    -- print("TELEPORT START")
-    playerIsTeleporting = true
-    teleportTime = Time()
+    if PortalPlayerController.enabled then
+        -- print("TELEPORT START")
+        playerIsTeleporting = true
+        teleportTime = Time()
 
-    -- Disable all portal triggers so no teleport portalling
-    for _,portal in ipairs(PortalManager:GetAllPortals()) do
-        portal.trigger:Disable()
+        -- Disable all portal triggers so no teleport portalling
+        for _,portal in ipairs(PortalManager:GetAllPortals()) do
+            portal.trigger:Disable()
+        end
     end
 end, nil)
 ---@param params GameEventPlayerTeleportFinish
 ListenToGameEvent("player_teleport_finish", function (params)
-    -- print("TELEPORT END")
+    if PortalPlayerController.enabled then
+        -- print("TELEPORT END")
 
-    if playerIsTeleporting and playerOnGround and not PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin() + Vector(0, 0, 0), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT)).hit then
-        print("This should only appear when teleporting into death chasm")
-        local velocity = PortalPlayerController:GetPlayerVelocity()
-        local velocity2d = Vector(velocity.x, velocity.y, 0)-- * Convars:GetFloat("portal_player_speed_multiplier")
-        PortalPlayerController:SetPlayerVelocity(velocity2d)
-    end
+        if playerIsTeleporting and playerOnGround and not PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin() + Vector(0, 0, 0), Player:GetAbsOrigin() + Vector(0, 0, -MIN_CHASM_HEIGHT)).hit then
+            print("This should only appear when teleporting into death chasm")
+            local velocity = PortalPlayerController:GetPlayerVelocity()
+            local velocity2d = Vector(velocity.x, velocity.y, 0)-- * Convars:GetFloat("portal_player_speed_multiplier")
+            PortalPlayerController:SetPlayerVelocity(velocity2d)
+        end
 
-    playerIsTeleporting = false
+        playerIsTeleporting = false
 
-    -- Re-enable all portal triggers
-    for _,portal in ipairs(PortalManager:GetAllPortals()) do
-        portal.trigger:Enable()
+        -- Re-enable all portal triggers
+        for _,portal in ipairs(PortalManager:GetAllPortals()) do
+            portal.trigger:Enable()
+        end
     end
 end, nil)
 
@@ -430,6 +438,9 @@ function PortalPlayerController:Enable()
         return
     end
 
+    self.enabled = true
+    Player:SaveBoolean("PortalPlayerController.enabled", self.enabled)
+
     self:UpdateWhooshSound(0)
 
     currentPlayerOrigin = Player:GetOrigin()
@@ -486,6 +497,8 @@ function PortalPlayerController:Enable()
 end
 
 function PortalPlayerController:Disable()
+    self.enabled = false
+    Player:SaveBoolean("PortalPlayerController.enabled", self.enabled)
     Player:SetContextThink("PortalFallThink", nil, 0)
     Player:SetContextThink("DisableFlingTriggers", nil, 0)
     self:UpdateWhooshSound(0)
@@ -497,6 +510,9 @@ ListenToPlayerEvent("vr_player_ready", function(params)
     -- SendToConsole("god 1")
     -- DoEntFire("speedmod", "modifyspeed", "1.6", 0, nil, nil)
 
-    -- -- Just for testing enable always
-    -- PortalPlayerController:Enable()
+    PortalPlayerController.enabled = Player:LoadBoolean("PortalPlayerController.enabled", PortalPlayerController.enabled)
+
+    if PortalPlayerController.enabled then
+        PortalPlayerController:Enable()
+    end
 end)
