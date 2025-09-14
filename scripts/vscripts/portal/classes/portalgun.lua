@@ -772,6 +772,8 @@ function base:DropEntity(dontStopThink)
 
     local item = self.pickupEntity
     if IsValidEntity(item) then
+        -- Play stop sound in all cases where a valid item is dropped
+        StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
         item:SetDynamicVsDynamicContinuous(true)
         -- Reset the owner so traces can hit
             item:SetOwner(item.portalPrevOwner)
@@ -847,7 +849,6 @@ function base:SetupInputs()
 
         if self.pickupEntity ~= nil then
             self:DropEntity()
-            StartSoundEventFromPositionReliable(SND_USE_FINISHED, self:GetAbsOrigin())
         end
     end, self)
 
