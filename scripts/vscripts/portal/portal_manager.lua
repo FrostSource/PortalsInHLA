@@ -446,8 +446,7 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
 
     local stepSize = 1
 
-    local hitUp, hitDown, hitLeft, hitRight
-
+    ---@TODO Debug tables aren't causing performance issues atm but keep an eye
     ---@type {ent:EntityHandle,reason:string,dot:number}[]
     local debugents = {}
     local debugpath = {position}
@@ -511,43 +510,11 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
     local stepsX = Convars:GetInt("portal_sample_steps")
     local stepsY = Convars:GetInt("portal_sample_steps")
 
-    print("left", normalAngles:Left())
-    print("up", normalAngles:Up())
-    print("forward", normalAngles:Forward())
-
     local existingPortals = self:GetAllPortals()
 
     local anySuccess = false
 
     for i = 1, maxAttempts do
-        -- hitUp = trace(normalAngles:Up() * PORTAL_SIZE_Z / 2)
-        -- hitDown = trace((-normalAngles:Up()) * PORTAL_SIZE_Z / 2)
-        -- hitLeft = trace(normalAngles:Left() * PORTAL_SIZE_Y / 2)
-        -- hitRight = trace((-normalAngles:Left()) * PORTAL_SIZE_Y / 2)
-
-        -- if not hitUp and not hitDown and not hitLeft and not hitRight then
-        --     DebugIf("portal_debug_portals", function()
-        --         debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
-        --         debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
-        --         debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
-        --     end)
-        --     return position - normalAngles:Forward() * 1
-        -- end
-
-        -- local moveX = 0
-        -- local moveY = 0
-
-        -- if hitUp then moveY = -stepSize end
-        -- if hitDown then moveY = stepSize end
-        -- if hitLeft then moveX = -stepSize end
-        -- if hitRight then moveX = stepSize end
-
-        -- local newPosition = position + (normalAngles:Left() * moveX) + (normalAngles:Up() * moveY)
-
-        -- position = newPosition
-
-        -- VV NEW CODE VV
-
         anySuccess = false
         failhappened = false
 
@@ -597,22 +564,17 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
         push = CleanVector(push)
 
         if not anySuccess then
-            print('breaking')
             break
         end
 
-        -- print("push", Debug.SimpleVector(push))
         if push:Length() > 0 then
             push = push:Normalized()
-            -- print("push normalized", Debug.SimpleVector(push))
-            -- print("","Adjust portal",i,Debug.SimpleVector(position),Debug.SimpleVector(push),Debug.SimpleVector(position + push * stepSize))
             position = position + push * stepSize
             table.insert(debugpath, position)
-            -- position = position + push * (PORTAL_SIZE_Y/2 + PORTAL_SIZE_Z/2)
         else
             if not failhappened then
-                if #debugpath > 1 then
-                    DebugIf("portal_debug_portals", function()
+                DebugIf("portal_debug_portals", function()
+                    if #debugpath > 1 then
                         for j = 1, #debugpath - 1 do
                             debugoverlay:HorzArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
                             debugoverlay:VertArrow(debugpath[j], debugpath[j + 1], 1.5, 0, 255, 0, 255, true, 5)
@@ -620,11 +582,11 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                         -- debugoverlay:Sphere(startingPosition, 0.75, 0, 255, 0, 255, true, 5)
                         -- debugoverlay:HorzArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
                         -- debugoverlay:VertArrow(startingPosition, position, 1.5, 0, 255, 0, 255, true, 5)
-                    end)
-                end
-                print("Portal adjust found valid position")
-                print("Success results:")
-                printdebug()
+                    end
+                    print("Portal adjust found valid position")
+                    print("Success results:")
+                    printdebug()
+                end)
                 return position - normalAngles:Forward() * 1
             else
                 -- nowhere to move, exit
@@ -632,12 +594,11 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
             end
         end
 
-        if i == maxAttempts then
-            print("Reached max attempts")
-        end
+        -- if i == maxAttempts then
+        --     print("Reached max attempts")
+        -- end
     end
 
-    -- if Convars:GetInt("portal_debug_portalgun") >= 1 then
     DebugIf("portal_debug_portals", function()
         debugoverlay:Text(startingPosition, 0, "Failed to find position for portal", 0, 255, 0, 0, 255, 5)
         if #debugpath > 1 then
@@ -646,29 +607,11 @@ function PortalManager:PortalPositionAdjust(position, normalAngles, colorName, m
                 debugoverlay:VertArrow(debugpath[j], debugpath[j + 1], 1.5, 255, 0, 0, 255, true, 5)
             end
         end
-    end)
 
-    print("Failed to find position for portal")
-    print("Fail results:")
-    printdebug()
-    -- print("Total traces: ",totaltraces)
-    -- print("Total adjusts:", #debugpath - 1)
-    -- ---@type {str:string,count:number}[]
-    -- local entsseen = {}
-    -- for _,en in ipairs(debugents) do
-    --     local id = tostring(en.ent)..tostring(en.reason)
-    --     if entsseen[id] then
-    --         entsseen[id].count = entsseen[id].count + 1
-    --     else
-    --         if en.reason == "overhang" then
-    --             entsseen[id] = {str="Overhang",count=1}
-    --         elseif en.reason == "angle" then
-    --             entsseen[id] = {str=string.format("%s : %s [%s] (%n)",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex(),en.dot),count=1}
-    --         else
-    --             entsseen[id] = {str=string.format("%s : %s [%s]",en.reason,Debug.EntStr(en.ent),en.ent:GetEntityIndex()),count=1}
-    --         end
-    --     end
-    -- end
+        print("Failed to find position for portal")
+        print("Fail results:")
+        printdebug()
+    end)
 
     return nil
 end
@@ -681,57 +624,19 @@ end
 ---@return boolean # Returns true if the portal successfully opened, false otherwise.
 function PortalManager:TryCreatePortalAt(position, normal, color, reorientToPlayer)
     normal = CleanNormal(normal)
-    print('\nNORMAL'..tostring(Debug.SimpleVector(normal))..'\n')
     color = resolveColor(color)
 
     local normalAngles = VectorToAngles(normal)
 
     if reorientToPlayer then
-        -- if Convars:GetBool("portal_orient_to_gun") then
-        --     local forward = CurrentPortalGun:GetForwardVector()
-        --     forward.z = 0
-        --     forward = forward:Normalized()
-        --     local a= normalAngles
-        --     normalAngles = self:ReorientPortalPerpendicular(normal, forward)
-        --     print("orient by gun", Debug.SimpleVector(a), Debug.SimpleVector(normalAngles))
-        -- else
-        --     normalAngles = self:ReorientPortalPerpendicular(normal, Player:GetWorldForward())
-        -- end
-
-        -- local forward = Convars:GetBool("portal_orient_to_gun") and CurrentPortalGun:GetForwardVector() or Player:GetWorldForward()
-        -- forward.z = 0
-        -- forward = forward:Normalized()
-
-        -- local xaxis = 0
-        -- if math.isclose(normal.z, -1, 1e-7) then
-        --     xaxis = 90 -- floor
-        --     normalAngles = VectorToAngles(forward)
-        --     normalAngles = RotateOrientation(normalAngles, QAngle(xaxis, 0, 0))
-        -- elseif math.isclose(normal.z, 1, 1e-7) then
-        --     xaxis = -90 -- ceiling
-        --     normalAngles = VectorToAngles(forward)
-        --     normalAngles = RotateOrientation(normalAngles, QAngle(xaxis, 0, 0))
-        -- end
         normalAngles = self:GetOrientedPortalAngles(normal)
-        
     end
 
-    print("\nDoing portal adjustment, beware spam:\n")
     position = self:PortalPositionAdjust(position, normalAngles, color.name, PORTAL_SIZE_Y*2)
-    print("\nFinished portal adjustment\n")
 
     if position == nil then
         return false
     end
-
-    -- ---@TODO This only checks the connected portal, it should check all portals
-    -- local otherPortal = PortalManager:GetConnectedPortal(color)
-    -- if otherPortal ~= nil then
-    --     local localPosition = otherPortal:TransformPointWorldToEntity(position)
-    --     if abs(localPosition.y) < PORTAL_SIZE_Y  and abs(localPosition.z) < PORTAL_SIZE_Z and abs(localPosition.x) < 20 then
-    --         return false
-    --     end
-    -- end
 
     PortalManager:CreatePortalAt(position, normal, color, reorientToPlayer)
     return true
@@ -981,68 +886,11 @@ Convars:RegisterCommand("portalgun_give", function (_, ...)
 
     if Convars:GetBool("portalgun_is_physical") then
         if portalgun == nil then
-            -- portalgun = SpawnEntityFromTableAsynchronous("item_hlvr_weapon_generic_pistol", {
-            --     targetname = "@PortalGun",
-
-            --     -- Required to attach script to gun in hand
-            --     vscripts = "portal/classes/portalgun_item",
-
-            --     origin = Player:GetOrigin() + Vector(0, 0, 10),
-
-            --     inventory_name = "portalgun",
-            --     inventory_model = "models/vrportal/portalgun.vmdl",
-            --     model = "models/vrportal/portalgun.vmdl",
-            --     model_right_handed = "models/vrportal/portalgun.vmdl",
-            --     model_left_handed = "models/vrportal/portalgun.vmdl",
-
-            --     inventory_position = "1",
-
-            --     set_spawn_ammo = "-1",
-            --     ammo_per_clip = "0",
-            --     damage = "0",
-            --     attack_interval = "0.175",
-            --     clip_grab_dist = "8.0",
-            --     bullet_count_anim_rate = "1.0",
-            --     slide_interact_min_dist = "6.0",
-            --     slide_interact_max_dist = "6.0",
-            --     bottom_grip_min_dist = "4.0",
-            --     bottom_grip_max_dist = "4.5",
-            --     bottom_grip_disengage_dist = "5.0",
-
-            --     -- Unsure if these need null assets
-            --     -- or can just be completely omitted
-            --     slide_model_right_handed = "",
-            --     slide_model_left_handed = "",
-            --     clip_model_right_handed = "",
-            --     clip_model_left_handed = "",
-            --     single_bullet_model = "",
-            --     eject_shell_model = "",
-            --     shoot_sound = "",
-            --     no_ammo_sound = "",
-            --     last_shot_chambered = "",
-            --     slide_lock_sound = "",
-            --     slide_back_sound = "",
-            --     slide_close_sound = "",
-            --     clip_insert_sound = "",
-            --     clip_release_sound = "",
-            --     muzzle_flash_effect = "",
-            --     tracer_effect = "",
-            --     eject_shell_smoke_effect = "",
-            --     glow_effect = "",
-            --     barrel_smoke_effect = "",
-            --     clip_glow_effect = "",
-            -- }, function(gun)
-            --     print("gun spawned")
-            --     Player:SetWeapon("hand_use_controller")
-            --     portalgun:Grab(Player.PrimaryHand)
-            --     portalgun:EntFire("Use", "1", 0, Player, Player)
-            -- end, {})
             warn("Could not find a portalgun item! Make sure the prefab was placed in the map!")
             return
         end
         Player:SetWeapon("hand_use_controller")
         portalgun:Grab(Player.PrimaryHand)
-        -- portalgun:EntFire("Use", "1", 0, Player, Player)
     else
         if portalgun == nil then
             portalgun = SpawnEntityFromTableSynchronous("npc_furniture", {

@@ -36,10 +36,8 @@ Convars:RegisterConvar("player_funnel_into_portals", "1", "Player will move towa
 EasyConvars:RegisterConvar("portal_max_fling_speed", "800", "Maximum speed at which the player can move while flinging")
 EasyConvars:SetPersistent("portal_max_fling_speed", true)
 
-local DEBUG = true
-
 ---@class PortalPlayerPhys : EntityClass
-local base, _, super = entity("PortalPlayerPhys")
+local base = entity("PortalPlayerPhys")
 _G.PortalPlayerPhys = base
 
 base.__expectingPortal = false
@@ -52,14 +50,9 @@ function base:OnSpawn(spawnkeys)
 	local zVelocity = tonumber(spawnkeys:GetValue("velocity_z"))
 
 	self.velocity = Vector(xVelocity, yVelocity, zVelocity)
-    print("VELOCITY NUMS", xVelocity, yVelocity, zVelocity)
-    -- -- if xVelocity == 0 and zVelocity == 0 then
-    -- -- print("VECLOTIY", self.velocity)
-    -- debugoverlay:Line(self:GetOrigin(), self:GetOrigin() + self.velocity*10, 255, 0, 255, 255, true, 100)
-    -- debugoverlay:Sphere(self:GetOrigin(), 8, 255, 0, 255, 255, true, 100)
-    -- -- end
+    -- print("VELOCITY NUMS", xVelocity, yVelocity, zVelocity)
 
-
+    -- Debug check is in function
     self:DrawTrajectory()
 
     -- self:RemoveOthers()
@@ -148,8 +141,7 @@ function base:FunnelIntoPortal(portal, wishdir)
     -- print("Funneling into portal", portal:GetName())
 
     if vPlayerToPortal.z > -8.0 then
-        -- This is handled by the portal
-        -- -- We're too close the the portal to continue correcting, but zero the velocity so our fling velocity is nice
+        -- We're too close the the portal to continue correcting, but zero the velocity so our fling velocity is nice
         wishdir.x = 0
         wishdir.y = 0
         return wishdir
@@ -165,49 +157,6 @@ function base:FunnelIntoPortal(portal, wishdir)
         wishdir.x = wishdir.x + fFunnelX
         wishdir.y = wishdir.y + fFunnelY
         return wishdir
-
-        -- local funnelStrength = 1--PORTAL_FUNNEL_AMOUNT * FrameTime()
-        -- self.velocity.x = self.velocity.x + fFunnelX*funnelStrength
-        -- self.velocity.y = self.velocity.y + fFunnelY*funnelStrength
-        -- self.velocity.x = Lerp(0.9, self.velocity.x, self.velocity.x + fFunnelX*funnelStrength)
-        -- self.velocity.y = Lerp(0.9, self.velocity.y, self.velocity.y + fFunnelY*funnelStrength)
-
-        -- local lerpFactor = 0.25 * FrameTime()
-        -- -- print(lerpFactor, 0.025, FrameTime())
-
-        -- local desiredVX = self.velocity.x + vPlayerToPortal.x * PORTAL_FUNNEL_AMOUNT
-        -- local desiredVY = self.velocity.y + vPlayerToPortal.y * PORTAL_FUNNEL_AMOUNT
-
-        -- self.velocity.x = Lerp(lerpFactor, self.velocity.x, desiredVX)
-        -- self.velocity.y = Lerp(lerpFactor, self.velocity.y, desiredVY)
-
-
-
-        --- THIS IS WORKING BUT TOO STRONG
-        -- local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, Convars:GetFloat("sv_gravity"))
-        -- self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
-
-
-
-        -- -- Funnel toward the portal in portal-local space
-        -- local toPortal = portal:GetAbsOrigin() - self:GetAbsOrigin()
-
-        -- -- Position offsets in portal space
-        -- local localX = toPortal:Dot(vPortalRight)
-        -- local localY = toPortal:Dot(vPortalUp)
-
-        -- -- Velocity components in portal space
-        -- local velX = self.velocity:Dot(vPortalRight)
-        -- local velY = self.velocity:Dot(vPortalUp)
-
-        -- -- Calculate corrections
-        -- local fFunnelX = localX * PORTAL_FUNNEL_AMOUNT - velX
-        -- local fFunnelY = localY * PORTAL_FUNNEL_AMOUNT - velY
-
-        -- local funnelStrength = PORTAL_FUNNEL_AMOUNT * FrameTime()
-        -- self.velocity = self.velocity
-        --     + vPortalRight * (fFunnelX * funnelStrength)
-        --     + vPortalUp * (fFunnelY * funnelStrength)
     end
 end
 
@@ -240,7 +189,6 @@ local quickTurnFlag = false
 ---Main entity think function. Think state is saved between loads
 function base:Think()
 	local time = Time()
-	--local deltaTime = time - lastTime
 	local frameTime = FrameTime()
 
     local gravitySpeed = Convars:GetFloat("sv_gravity") -- default is 386
@@ -252,49 +200,12 @@ function base:Think()
     wishdir.z = 0
     wishdir = wishdir * 400
 
-    -- local portalDownTrace = self:TraceSpace(Vector(0, 0, -2048))
-    -- if portalDownTrace.hit then
-
-    --     local attractDist = Convars:GetFloat("portal_attract_distance")
-    --     -- local portal = PortalManager:GetNearestPortal(portalDownTrace.pos, 128)
-    --     local portal = PortalManager:GetNearestPortalInBounds(portalDownTrace.pos,
-    --         Vector(-attractDist, -attractDist, -16),
-    --         Vector(attractDist, attractDist, 16),
-    --     attractDist)
-    --     debugoverlay:Box(
-    --         portalDownTrace.pos + Vector(-attractDist, -attractDist, -16),
-    --         portalDownTrace.pos + Vector(attractDist, attractDist, 16), 0, 255, 0, 255, false, 0)
-
-    --     if portal then
-    --         ---@TODO Move player towards all portals in their direction, not just upwards portals
-    --         if portal:GetForwardVector().z > 0.5 -- portal must be facing up
-    --         and self.velocity:Normalized():Dot(portal:GetForwardVector()) < -0.8 -- player must be moving towards portal
-    --         and portal:GetConnectedPortal() then
-    --             self.__expectingPortal = true
-    --             -- local tFall = estimateFallTime(self:GetAbsOrigin().z, self.velocity.z, portal:GetAbsOrigin().z, gravitySpeed)
-    --             -- if tFall then
-    --             --     print("Attracting to portal")
-    --                 debugoverlay:Sphere(self:GetAbsOrigin(), 2, 255, 0, 0, 255, false, 0)
-    --                 -- local targetVal = computeTargetHorizontalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), tFall)
-    --                 -- local currentHorizontalVel = Vector(self.velocity.x, self.velocity.y, 0)
-    --                 -- local lerpFactor = 0.5
-    --                 -- local newHorizontalVel = LerpVectors(currentHorizontalVel, targetVal, lerpFactor)
-    --                 local newHorizontalVel = CalculatePortalVelocity(self:GetAbsOrigin(), portal:GetAbsOrigin(), self.velocity, gravitySpeed)
-    --                 -- self.velocity = Vector(newHorizontalVel.x, newHorizontalVel.y, self.velocity.z)
-    --                 -- self.velocity = newHorizontalVel
-    --                 self.velocity = LerpVectors(self.velocity, newHorizontalVel, 0.025)
-    --             -- end
-    --         end
-    --     end
-    -- end
-
     for _, portal in ipairs(PortalManager:GetAllPortals()) do
         if portal:GetConnectedPortal() then
             local outdir = self:FunnelIntoPortal(portal, wishdir)
             if outdir ~= nil then
                 wishdir = outdir
             end
-            -- portal:FunnelIntoPortal(self, self.velocity)
         end
     end
 
@@ -304,28 +215,8 @@ function base:Think()
     end
     self.velocity = self.velocity + wishdir * frameTime
 
-    -- -- testing accel
-    -- local wishspeed = wishdir:Length()
-    -- if wishspeed ~= 0 and (wishspeed > 100) then
-    --     wishspeed = 100
-    -- end
-    -- local wishspd = wishspeed
-    -- if wishspd > 60 then wishspd = 60 end
-    -- local currentspeed = self.velocity:Dot(wishdir)
-    -- local addspeed = wishspd - currentspeed
-    -- -- if addspeed > 0 then
-    --     local accelspeed = 15 * wishspeed * frameTime * 0.25
-    --     if accelspeed > addspeed then
-    --         accelspeed = addspeed
-    --     end
-    --     -- print(Debug.SimpleVector(wishdir), accelspeed)
-    --     self.velocity = self.velocity + accelspeed * wishdir
-    -- -- end
-
     local gravity = Vector()
-    -- if not self:TraceSpace(Vector(0, 0, -5)).hit then
-	    gravity = Vector(0,0,-gravitySpeed * frameTime)
-    -- end
+    gravity = Vector(0,0,-gravitySpeed * frameTime)
 
     -- local friction = 6
     -- local decay = math.max(0, 1 - friction * frameTime)
@@ -342,17 +233,11 @@ function base:Think()
 	local origin = self:GetAbsOrigin()
 	local offset = self.velocity * frameTime
 	local newOrigin = origin + offset
-    -- print(origin.z, offset.z, self.velocity.z*frameTime, newOrigin.z, frameTime)
-
-    -- if self.velocity:Length() < 0.1 then
-    --     PortalPlayerController:PlayerLandedOnGround()
-	-- 	self:Remove()
-    --     return
-    -- end
 
     if Player:IsNoclipping() or Convars:GetBool("noclip_vr_enabled") then
         PortalPlayerController:PlayerLandedOnGround()
 		self:Remove()
+        return nil
     end
 
 	local traceTable = self:TraceSpace(offset)
@@ -366,31 +251,12 @@ function base:Think()
 			end
 		end
 
-        -- local dot = self.velocity:Dot(traceTable.normal)
-        -- print("cancel out")
-        -- print(Debug.SimpleVector(self.velocity))
-        -- print(Debug.SimpleVector(traceTable.normal))
-        -- if dot < 0 then
-        --     print("Canceling out")
-        --     self.velocity = self.velocity - traceTable.normal * dot
-        -- end
-        -- debugoverlay:Line(self:GetAbsOrigin(), self:GetAbsOrigin()+self.velocity*50, 255, 0, 128, 255, false, 10)
-
-        -- if not self:TraceSpace(self.velocity * frameTime).hit then
-        --     self:SetVelocity(self.velocity)
-        --     PortalPlayerController:CacheVelocity(self.velocity)
-        --     return 0
-        -- end
-
+        -- Check if we are about to hit a portal
         for _, portal in ipairs(PortalManager:GetAllPortals()) do
             if portal:GetConnectedPortal() then
-                -- if portal:WillEntityTouchPortal(Player, traceTable.endpos) then
                 if self.velocity:Dot(portal:GetForwardVector()) < 0 -- moving towards portal
                 and Player:AABBIntersectsOBB(portal, traceTable.endpos, PORTAL_MINS, PORTAL_MAXS) then
-                    print("\nTouch portal on fall doing instant portal!!", portal.colorName,"\n")
-                    -- debugoverlay:Sphere(traceTable.endpos, 8, 0, 0, 255, 255, true, 10)
-                    -- debugoverlay:Sphere(traceTable.endpos, 6, 0, 255, 0, 255, true, 10)
-                    -- debugoverlay:Sphere(traceTable.endpos, 7, 255, 0, 0, 255, true, 10)
+                    -- print("\nTouch portal on fall doing instant portal!!", portal.colorName,"\n")
                     portal:Teleport(Player)
                     return 0
                 end
@@ -407,6 +273,8 @@ function base:Think()
             PortalPlayerController:CacheBounceVelocity(reflected * 0.05)
         end
 
+        ---@TODO This is now handled above by portal:WillEntityTouchPortal
+        ---@TODO this still might be useful if player remains hovering when landing
         -- -- Move player against the collision to allow entering portals
         -- -- high speeds would cause the player to stop before hitting the portal
         -- self:SetOrigin(traceTable.endpos)
@@ -426,7 +294,7 @@ function base:Think()
 		self:Remove()
 		return
 	end
-	--thisEntity:SetAbsOrigin(newOrigin)
+
 	self:SetVelocity(self.velocity)
     PortalPlayerController:CacheVelocity(self.velocity)
 	if Player.PrimaryHand == nil then
@@ -464,11 +332,6 @@ function base:Think()
 
 	self.lastTime = time
 
-	-- if DEBUG then
-	-- 	debugoverlay:Sphere(newOrigin, 8, 255, 0, 0, 255, true, 0)
-	-- end
-	--print("deltaTime: "..tostring(deltaTime))
-	--print("frameTime: "..tostring(frameTime))
 	return 0
 end
 
@@ -476,38 +339,6 @@ end
 ---@param offset Vector Offset from current position to trace towards, defines end position of trace.
 ---@return TraceTableHull
 function base:TraceSpace(offset)
-	-- --local origin = Player:GetAbsOrigin()
-	-- local origin = self:GetAbsOrigin()
-
-	-- local startpos = origin
-	-- local endpos = origin + offset * 1.2
-
-	-- -- local justLaunched = false--Time() - self.launchTime < PLAYER_LAUNCH_BBOX_OFFSET_DURATION
-	-- -- local minZ = justLaunched and PLAYER_LAUNCH_BBOX_HEIGHT_OFFSET or 0
-    -- local minZ = 0
-
-	-- local min = Vector(-PLAYER_GIRTH, -PLAYER_GIRTH, minZ)
-	-- local max = Vector(PLAYER_GIRTH, PLAYER_GIRTH, PLAYER_HEIGHT)
-
-	-- local traceTable =
-	-- {
-	-- 	startpos = startpos;
-	-- 	endpos = endpos;
-	-- 	ignore = Player;
-	-- 	mask =  33636363; -- TRACE_MASK_PLAYER_SOLID from L4D2 script API, may not be correct for Source 2.
-	-- 	min = min;
-	-- 	max = max
-	-- }
-	-- TraceHull(traceTable)
-	-- if DEBUG then
-	-- 	local color = traceTable.hit and Vector(255, 0, 0) or Vector(0, 255, 0)
-	-- 	debugoverlay:Box(startpos + traceTable.min, startpos + traceTable.max, color.x, color.y, color.z, 170, false, 0)
-	-- 	debugoverlay:Box(endpos + traceTable.min, endpos + traceTable.max, color.x, color.y, color.z, 170, false, 0)
-	-- 	--debugoverlay:SweptBox(startpos, endpos, min, max, {x = 0; y = 0; z = 0; w = 1;}, 0, 255, 0, 255, 10)
-	-- end
-
-	-- return traceTable
-    -- return PortalPlayerController:TracePlayerSpace(self:GetAbsOrigin(), self:GetAbsOrigin() + offset * 1.2)
     return PortalPlayerController:TracePlayerSpace(Player:GetAbsOrigin(), Player:GetAbsOrigin() + offset * 1.2)
 end
 
