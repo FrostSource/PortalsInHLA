@@ -53,6 +53,11 @@ function base:OnReady(readyType)
                 return
             end
 
+            -- Scaled teleport triggers cause bizarre behavior
+            -- unparent from animated monitor
+            portal1Trigger:SetParent(nil, nil)
+            portal2Trigger:SetParent(nil, nil)
+
             -- Rename prefab entities so they can be found by PortalManager
             portal1Camera:SetEntityName("_portalcamera" .. self.portal1Name:lower())
             portal2Camera:SetEntityName("_portalcamera" .. self.portal2Name:lower())

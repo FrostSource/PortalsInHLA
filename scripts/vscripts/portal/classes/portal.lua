@@ -250,6 +250,12 @@ function base:Open(position, normal, color, reorientToPlayer)
 
     self.teleportTrigger = PortalManager:GetPortalTeleport(color)
 
+    -- Triggers are no longer parented, need to be moved manually
+    self.trigger:SetOrigin(self.aimat:GetOrigin())
+    self.trigger:SetQAngle(self.aimat:GetAngles())
+    self.teleportTrigger:SetOrigin(self.aimat:GetOrigin())
+    self.teleportTrigger:SetQAngle(self.aimat:GetAngles())
+
     self:UpdateEffects()
 
     if self:GetConnectedPortal() then
@@ -259,32 +265,13 @@ function base:Open(position, normal, color, reorientToPlayer)
     -- Animate portals opening by scaling up
     local animSpeed = Convars:GetFloat("portal_open_anim_speed")
     if animSpeed > 0 then
-        -- Scaled teleport triggers cause bizarre behavior
-        -- Unparent while monitor is animating
-        local oldTeleportParent = self.teleportTrigger:GetMoveParent()
-        if oldTeleportParent then
-            self.teleportTrigger:SetAbsScale(1.0)
-            self.teleportTrigger:SetOrigin(self.aimat:GetOrigin())
-            self.teleportTrigger:SetQAngle(self.aimat:GetAngles())
-            self.teleportTrigger:SetParent(nil, nil)
-        end
-        local oldTriggerParent = self.trigger:GetMoveParent()
-        if oldTeleportParent then
-            self.trigger:SetAbsScale(1.0)
-            self.trigger:SetOrigin(self.aimat:GetOrigin())
-            self.trigger:SetQAngle(self.aimat:GetAngles())
-            self.trigger:SetParent(nil, nil)
-        end
-
         self.portalModel:SetAbsScale(0.01)
         Animation:Animate(self.portalModel, self.portalModel.GetAbsScale, self.portalModel.SetAbsScale, 1, Animation.Curves.linear, animSpeed)
         self.monitor:SetAbsScale(0.01)
-        Animation:Animate(self.monitor, self.monitor.GetAbsScale, self.monitor.SetAbsScale, 1, Animation.Curves.linear, animSpeed, function()
-            self.teleportTrigger:SetParent(oldTeleportParent, nil)
-            self.teleportTrigger:ResetLocal()
-            self.trigger:SetParent(oldTriggerParent, nil)
-            self.trigger:ResetLocal()
-        end)
+        Animation:Animate(self.monitor, self.monitor.GetAbsScale, self.monitor.SetAbsScale, 1, Animation.Curves.linear, animSpeed)
+    else
+        self.portalModel:SetAbsScale(1)
+        self.monitor:SetAbsScale(1)
     end
 
 end
