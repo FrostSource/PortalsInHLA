@@ -44,19 +44,17 @@ function base:OnReady(readyType)
             local portal2Trigger = self:FindInPrefab("portal_2_trigger")
             local portal1DebugCamera = self:FindInPrefab("portal_1_debug_camera")
             local portal2DebugCamera = self:FindInPrefab("portal_2_debug_camera")
+            local portal1TeleportTrigger = self:FindInPrefab("portal_1_teleport")
+            local portal2TeleportTrigger = self:FindInPrefab("portal_2_teleport")
             if not (portal1Camera and portal2Camera
             and portal1Monitor and portal2Monitor
             and portal1Trigger and portal2Trigger
-            and portal1DebugCamera and portal2DebugCamera) then
+            and portal1DebugCamera and portal2DebugCamera
+            and portal1TeleportTrigger and portal2TeleportTrigger) then
                 Warning("Missing entity in portal pair prefab " .. self:GetName())
                 self:Kill()
                 return
             end
-
-            -- Scaled teleport triggers cause bizarre behavior
-            -- unparent from animated monitor
-            portal1Trigger:SetParent(nil, nil)
-            portal2Trigger:SetParent(nil, nil)
 
             -- Rename prefab entities so they can be found by PortalManager
             portal1Camera:SetEntityName("_portalcamera" .. self.portal1Name:lower())
@@ -72,8 +70,15 @@ function base:OnReady(readyType)
             portal2DebugCamera:SetRenderColor(self.portal2Color.x, self.portal2Color.y, self.portal2Color.z)
 
             -- test teleport
-            self:FindInPrefab("portal_1_teleport"):SetEntityName("_portalteleport" .. self.portal1Name:lower())
-            self:FindInPrefab("portal_2_teleport"):SetEntityName("_portalteleport" .. self.portal2Name:lower())
+            portal1TeleportTrigger:SetEntityName("_portalteleport" .. self.portal1Name:lower())
+            portal2TeleportTrigger:SetEntityName("_portalteleport" .. self.portal2Name:lower())
+
+            -- Scaled teleport triggers cause bizarre behavior
+            -- unparent from animated monitor
+            portal1Trigger:SetParent(nil, nil)
+            portal2Trigger:SetParent(nil, nil)
+            portal1TeleportTrigger:SetParent(nil, nil)
+            portal2TeleportTrigger:SetParent(nil, nil)
 
             ---@TODO Consider moving this to Spawn
             PortalManager:AddPortalColor(self.portal1Name, self.portal2Name, self.portal1Color)
