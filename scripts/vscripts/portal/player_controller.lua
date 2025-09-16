@@ -181,11 +181,11 @@ ListenToGameEvent("player_teleport_finish", function (params)
         end
 
         playerIsTeleporting = false
+    end
 
-        -- Re-enable all portal triggers
-        for _,portal in ipairs(PortalManager:GetAllPortals()) do
-            portal.trigger:Enable()
-        end
+    -- Re-enable all portal triggers
+    for _,portal in ipairs(PortalManager:GetAllPortals()) do
+        portal.trigger:Enable()
     end
 end, nil)
 
