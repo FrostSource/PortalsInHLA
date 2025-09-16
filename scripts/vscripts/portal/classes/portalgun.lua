@@ -370,12 +370,14 @@ function base:AttachToHand(useSecondary)
         -- ---@TODO Check for already attached?
         -- hand:AddHandAttachment(self)
 
-        local glove = Player.PrimaryHand:GetGlove()
-        if glove then
-            glove:SetRenderingEnabled(false)
-			for _,child in pairs(glove:GetChildrenMemSafe()) do
-				child:SetRenderingEnabled(false)
-			end
+        if Player:GetWeapon() == self then
+            local glove = Player.PrimaryHand:GetGlove()
+            if glove then
+                glove:SetRenderingEnabled(false)
+                for _,child in pairs(glove:GetChildrenMemSafe()) do
+                    child:SetRenderingEnabled(false)
+                end
+            end
         end
 
         self.physicalEquipped = true
@@ -1033,6 +1035,12 @@ local prevPlayerPos = nil
 function base:Think()
 
     if self.pickupEntity ~= nil then
+        -- Drop fizzled entities so they float
+        if self.pickupEntity:GetContext("Dissolved") ~= nil then
+            self:DropEntity()
+            return 0
+        end
+
         local moveVector = Vector()
         if Convars:GetBool("portalgun_pickup_movement_adjust") then
             -- Track player movement to stop item lagging behind

@@ -1,4 +1,4 @@
-PORTAL_SIZE_X = 25
+PORTAL_SIZE_X = 10
 PORTAL_SIZE_Y = 55
 PORTAL_SIZE_Z = 100
 PORTAL_MINS = Vector(-(PORTAL_SIZE_X / 2), -(PORTAL_SIZE_Y / 2), -(PORTAL_SIZE_Z / 2))
@@ -906,3 +906,37 @@ end, "", 0)
 Convars:RegisterCommand("close_all_portals", function (_, ...)
     PortalManager:CloseAllPortals()
 end, "", 0)
+
+
+-- Consider moving this to separate entity extension script
+function CBaseEntity:StartPortalLookAhead()
+    self:SetContextThink("PortalLookAhead", function()
+
+        local vel = GetPhysVelocity(self)
+
+        if Convars:GetBool("portal_debug_portals") then
+            DebugDrawOBB(GetEntityOBBData(self), self:GetOrigin() + vel*FrameTime(), self:GetAngles(), Vector(0, 255, 0), false, 0)
+        end
+
+        -- Check if we are about to hit a portal
+        for _, portal in ipairs(PortalManager:GetAllPortals()) do
+            if portal:GetConnectedPortal() then
+                if vel:Dot(portal:GetForwardVector()) < 0 -- moving towards portal
+                and OBBvsOBB(
+                    GetEntityOBBData(self), self:GetOrigin() + vel*FrameTime(), self:GetAngles(),
+                    PORTAL_OBBDATA, portal:GetOrigin(), portal:GetAngles()
+                ) then
+                    -- print("\nObject touched portal on look ahead!!", portal.colorName,"\n")
+                    portal:Teleport(self)
+                    return 0.05
+                end
+            end
+        end
+
+        return 0
+    end, 0)
+end
+
+function CBaseEntity:StopPortalLookAhead()
+    self:SetContextThink("PortalLookAhead", nil, 0)
+end

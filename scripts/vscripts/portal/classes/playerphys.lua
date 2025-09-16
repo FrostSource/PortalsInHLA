@@ -10,25 +10,30 @@ local PLAYER_MASS = 65 -- in kg
 local PORTAL_FUNNEL_AMOUNT = 6.0
 Convars:RegisterConvar("portal_funnel_amount", tostring(PORTAL_FUNNEL_AMOUNT), "Amount of portals to funnel into", 0)
 
-EasyConvars:RegisterConvar("portal_funnel_sensitivity", "2", "Overall sensitivity of portal funneling", FCVAR_NONE, function (newVal, oldVal)
-    if newVal == "0" then
-        Convars:SetBool("player_funnel_into_portals", false)
-        Convars:SetFloat("portal_funnel_amount", 0.0)
-    elseif newVal == "1" then
-        Convars:SetBool("player_funnel_into_portals", true)
-        Convars:SetFloat("portal_funnel_amount", 3.0)
-    elseif newVal == "2" then
-        Convars:SetBool("player_funnel_into_portals", true)
-        Convars:SetFloat("portal_funnel_amount", 6.0)
-    elseif newVal == "3" then
-        Convars:SetBool("player_funnel_into_portals", true)
-        Convars:SetFloat("portal_funnel_amount", 12.0)
-    end
-end)
-EasyConvars:SetPersistent("portal_funnel_sensitivity", true)
+-- EasyConvars:RegisterConvar("portal_funnel_sensitivity", "2", "Overall sensitivity of portal funneling", FCVAR_NONE, function (newVal, oldVal)
+--     if newVal == "0" then
+--         Convars:SetBool("player_funnel_into_portals", false)
+--         Convars:SetFloat("portal_funnel_amount", 0.0)
+--     elseif newVal == "1" then
+--         Convars:SetBool("player_funnel_into_portals", true)
+--         Convars:SetFloat("portal_funnel_amount", 3.0)
+--     elseif newVal == "2" then
+--         Convars:SetBool("player_funnel_into_portals", true)
+--         Convars:SetFloat("portal_funnel_amount", 6.0)
+--     elseif newVal == "3" then
+--         Convars:SetBool("player_funnel_into_portals", true)
+--         Convars:SetFloat("portal_funnel_amount", 12.0)
+--     end
+-- end)
+-- EasyConvars:SetPersistent("portal_funnel_sensitivity", true)
+
+EasyConvars:RegisterConvar("portal_funnelling", "1", "If player portal funnelling is enabled", FCVAR_NONE)
+EasyConvars:SetPersistent("portal_funnelling", true)
 
 local PORTAL_HALF_WIDTH = 28
 local PORTAL_HALF_HEIGHT = 49.5
+
+PORTAL_OBBDATA = GetBoundingOBBData(PORTAL_MINS, PORTAL_MAXS)
 
 -- EasyConvars:RegisterConvar("portal_attract_distance", "128", "Distance at which the player is attracted to a portal when falling")
 Convars:RegisterConvar("player_funnel_into_portals", "1", "Player will move towards portals they are falling into", 0)
@@ -64,7 +69,7 @@ function base:OnSpawn(spawnkeys)
 end
 
 function base:Precache(context)
-    PrecacheModel("models/props/choreo/ghost_speaker.vmdl", context)
+    PrecacheModel(self:GetModelName(), context)
 end
 
 function base:OnReady()
@@ -200,11 +205,13 @@ function base:Think()
     wishdir.z = 0
     wishdir = wishdir * 400
 
-    for _, portal in ipairs(PortalManager:GetAllPortals()) do
-        if portal:GetConnectedPortal() then
-            local outdir = self:FunnelIntoPortal(portal, wishdir)
-            if outdir ~= nil then
-                wishdir = outdir
+    if Convars:GetBool("portal_funnelling") and Convars:GetFloat("portal_funnel_amount") > 0 then
+        for _, portal in ipairs(PortalManager:GetAllPortals()) do
+            if portal:GetConnectedPortal() then
+                local outdir = self:FunnelIntoPortal(portal, wishdir)
+                if outdir ~= nil then
+                    wishdir = outdir
+                end
             end
         end
     end
@@ -255,7 +262,10 @@ function base:Think()
         for _, portal in ipairs(PortalManager:GetAllPortals()) do
             if portal:GetConnectedPortal() then
                 if self.velocity:Dot(portal:GetForwardVector()) < 0 -- moving towards portal
-                and Player:AABBIntersectsOBB(portal, traceTable.endpos, PORTAL_MINS, PORTAL_MAXS) then
+                and AABBvsOBB(
+                    traceTable.endpos + Player:GetBoundingMins(), traceTable.endpos + Player:GetBoundingMaxs(),
+                    PORTAL_OBBDATA, portal:GetOrigin(), portal:GetAngles()
+                ) then
                     -- print("\nTouch portal on fall doing instant portal!!", portal.colorName,"\n")
                     portal:Teleport(Player)
                     return 0

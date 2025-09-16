@@ -7,7 +7,7 @@ end
 
 EasyConvars:RegisterConvar("portal_use_outlines", "1", "Show portal outlines through walls", nil,
     function(newValue, oldValue)
-        local visible = truthy(newValue)
+        local visible = Convars:GetBool("portal_use_outlines")
         for _, portal in ipairs(PortalManager:GetAllPortals()) do
             portal:SetOutlineVisible(visible)
         end
@@ -221,22 +221,22 @@ function base:Open(position, normal, color, reorientToPlayer)
     --     spawnflags = "4",
     -- })
 
-    if Convars:GetBool("portal_use_outlines") then
-        self.outline = SpawnEntityFromTableSynchronous("prop_dynamic", {
-            model = "models/vrportal/portal_outline.vmdl",
-            origin = self:GetOrigin() + normal * 1,
-            angles = self:GetAngles(),
-            targetname = color.name .. "Portal_outline",
-	        disableshadows = "1", -- trying to fix black outline
-	        disablereceiveshadows = "1", -- ditto
-        })
-        self.outline:SetParent(self, "")
-        -- local c = color.color:ToDecimalVector()
-        -- DoEntFireByInstanceHandle(self.outline, "SetRenderAttribute", "tintColor="..c.x..","..c.y..","..c.z, 0, nil, nil)
-        if color.name == "blue" then
-            DoEntFireByInstanceHandle(self.outline, "SetRenderAttribute", "blueStrength=100", 0, nil, nil)
-        end
+    self.outline = SpawnEntityFromTableSynchronous("prop_dynamic", {
+        model = "models/vrportal/portal_outline.vmdl",
+        origin = self:GetOrigin() + normal * 1,
+        angles = self:GetAngles(),
+        targetname = color.name .. "Portal_outline",
+        disableshadows = "1", -- trying to fix black outline
+        disablereceiveshadows = "1", -- ditto
+    })
+    self.outline:SetParent(self, "")
+    -- local c = color.color:ToDecimalVector()
+    -- DoEntFireByInstanceHandle(self.outline, "SetRenderAttribute", "tintColor="..c.x..","..c.y..","..c.z, 0, nil, nil)
+    if color.name == "blue" then
+        DoEntFireByInstanceHandle(self.outline, "SetRenderAttribute", "blueStrength=100", 0, nil, nil)
+    end
 
+    if Convars:GetBool("portal_use_outlines") then
         self:SetOutlineVisible(Convars:GetBool("portal_use_outlines"))
     end
 
@@ -742,6 +742,13 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 
             PortalPlayerController:CacheVelocity(exitVelocity)
             self.teleportTrigger:TeleportTo(exitPos, exitAngles)
+
+            local mt = Player:GetMoveType()
+            if mt == PlayerMoveType.TeleportBlink or mt == PlayerMoveType.TeleportShift then
+                Player:Delay(function()
+                    SendToConsole("fadein")
+                end, 0.2)--unsure best delay
+            end
         else
             -- Handle novr player
             ent:SetOrigin(exitPos)

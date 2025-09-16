@@ -587,129 +587,45 @@ function CBaseEntity:ClearParent()
     self:SetParent(nil, nil)
 end
 
-local function projectOntoAxis(corners, axis)
-    local minProj = corners[1]:Dot(axis)
-    local maxProj = minProj
-    for i=2,#corners do
-        local d = corners[i]:Dot(axis)
-        if d < minProj then minProj = d end
-        if d > maxProj then maxProj = d end
-    end
-    return minProj, maxProj
-end
-
-local function overlap(minA, maxA, minB, maxB)
-    return not (maxA < minB or maxB < minA)
-end
-
-local function GetAABBCorners(mins, maxs, origin)
-    local corners = {}
-    for x=0,1 do
-        for y=0,1 do
-            for z=0,1 do
-                local lx = (x==0) and mins.x or maxs.x
-                local ly = (y==0) and mins.y or maxs.y
-                local lz = (z==0) and mins.z or maxs.z
-                table.insert(corners, origin + Vector(lx, ly, lz))
-            end
-        end
-    end
-    return corners
-end
-
----@param ent EntityHandle
----@param mins? Vector # Optional min bounds to use instead of entity bounds.
----@param maxs? Vector # Optional max bounds to use instead of entity bounds.
-function GetOBBCorners(ent, mins, maxs)
-    mins = mins or ent:GetBoundingMins()
-    maxs = maxs or ent:GetBoundingMaxs()
-    local ang = ent:GetAngles()
-    local origin = ent:GetOrigin()
-
-    local f = ang:Forward()
-    local r = ang:Left()
-    local u = ang:Up()
-
-    local corners = {}
-    for x=0,1 do
-        for y=0,1 do
-            for z=0,1 do
-                local lx = (x==0) and mins.x or maxs.x
-                local ly = (y==0) and mins.y or maxs.y
-                local lz = (z==0) and mins.z or maxs.z
-                local world = origin + f*lx + r*ly + u*lz
-                table.insert(corners, world)
-            end
-        end
-    end
-    return corners, f, r, u
-end
-
-local function AABBvsOBB(aMins, aMaxs, aOrigin, obbEnt, obbMins, obbMaxs)
-    local aCorners = GetAABBCorners(aMins, aMaxs, aOrigin)
-    local bCorners, f, r, u = GetOBBCorners(obbEnt, obbMins, obbMaxs)
-
-    local axes = {
-        Vector(1,0,0), Vector(0,1,0), Vector(0,0,1),
-        f, r, u
-    }
-
-    local baseAxes = {
-        Vector(1,0,0), Vector(0,1,0), Vector(0,0,1)
-    }
-    for _,a in ipairs(baseAxes) do
-        for _,b in ipairs({f,r,u}) do
-            local cross = a:Cross(b)
-            if cross:Length() > 0.0001 then
-                table.insert(axes, cross:Normalized())
-            end
-        end
-    end
-
-    for _,axis in ipairs(axes) do
-        local minA,maxA = projectOntoAxis(aCorners, axis)
-        local minB,maxB = projectOntoAxis(bCorners, axis)
-        if not overlap(minA,maxA,minB,maxB) then
-            return false
-        end
-    end
-
-    return true
-end
-
-local function OBBvsOBB(obbEnt1, obbEnt2)
-    local aCorners, af, ar, au = GetOBBCorners(obbEnt1)
-    local bCorners, bf, br, bu = GetOBBCorners(obbEnt2)
-
-    local axes = {af, ar, au, bf, br, bu}
-
-    for _,a in ipairs({af, ar, au}) do
-        for _,b in ipairs({bf, br, bu}) do
-            local cross = a:Cross(b)
-            if cross:Length() > 0.0001 then
-                table.insert(axes, cross:Normalized())
-            end
-        end
-    end
-
-    for _,axis in ipairs(axes) do
-        local minA,maxA = projectOntoAxis(aCorners, axis)
-        local minB,maxB = projectOntoAxis(bCorners, axis)
-        if not overlap(minA,maxA,minB,maxB) then
-            return false
-        end
-    end
-
-    return true
-end
-
----Tests if the AABB of this entity intersects with the OBB of another entity.
+---
+---Tests if the OBB of this entity intersects with the OBB of another entity.
+---
 ---@param other EntityHandle # The other entity.
----@param origin? Vector # Optional origin to use instead of this entity's current origin.
----@param mins? Vector # Optional mins to use instead of other entity's bounding mins.
----@param maxs? Vector # Optional maxs to use instead of other entity's bounding maxs.
-function CBaseEntity:AABBIntersectsOBB(other, origin, mins, maxs)
-    return AABBvsOBB(self:GetBoundingMins(), self:GetBoundingMaxs(), origin or self:GetOrigin(), other, mins, maxs)
+---@return boolean # True if the OBB of this entity intersects with the OBB of another entity.
+function CBaseEntity:OBBvsOBB(other)
+    return OBBvsOBB(
+        GetEntityOBBData(self), self:GetOrigin(), self:GetAngles(),
+        GetEntityOBBData(other), other:GetOrigin(), other:GetAngles()
+    )
+end
+
+---
+---Tests if the AABB of this entity intersects with the OBB of another entity.
+---
+---The AABB is defined by the entity's bounding mins/maxs and its current origin/angles.
+---
+---@param other EntityHandle # The other entity.
+---@return boolean # True if the AABB of this entity intersects with the OBB of another entity.
+function CBaseEntity:AABBvsOBB(other)
+    local aMin, aMax = GetEntityAABB(self)
+
+    return AABBvsOBB(
+        aMin, aMax,
+        GetEntityOBBData(other), other:GetOrigin(), other:GetAngles()
+    )
+end
+
+---
+---Tests if the AABB of this entity intersects with the AABB of another entity.
+---
+---The AABB is defined by the entity's bounding mins/maxs and its current origin/angles.
+---
+---@param other EntityHandle # The other entity.
+---@return boolean # True if the AABB of this entity intersects with the AABB of another entity.
+function CBaseEntity:AABBvsAABB(other)
+    local aMin, aMax = GetEntityAABB(self)
+    local bMin, bMax = GetEntityAABB(other)
+    return AABBvsAABB(aMin, aMax, bMin, bMax)
 end
 
 return version

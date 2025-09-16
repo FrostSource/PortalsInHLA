@@ -170,6 +170,7 @@ ListenToGameEvent("player_teleport_start", function (params)
 end, nil)
 ---@param params GameEventPlayerTeleportFinish
 ListenToGameEvent("player_teleport_finish", function (params)
+    playerIsTeleporting = false
     if PortalPlayerController.enabled then
         -- print("TELEPORT END")
 
@@ -180,7 +181,11 @@ ListenToGameEvent("player_teleport_finish", function (params)
             PortalPlayerController:SetPlayerVelocity(velocity2d)
         end
 
-        playerIsTeleporting = false
+    end
+
+    if Player:GetMoveType() == PlayerMoveType.TeleportBlink then
+        -- Update player origin so there isn't a sudden jump in speed
+        currentPlayerOrigin = Vector(params.positionX, params.positionY, params.positionZ)
     end
 
     -- Re-enable all portal triggers
@@ -355,16 +360,16 @@ function PortalPlayerController:GetPlayerVelocity()
     local velocity = Vector()
     if IsValidEntity(self.currentPlayerPhys) then
         velocity = self.currentPlayerPhys.velocity
-        print("Getting velocity from playerphys", velocity)
+        -- print("Getting velocity from playerphys", velocity)
     else
         velocity = self:GetCachedVelocity()
         if not velocity then
             ---@TODO 100 seems too high, find good multiplier
             -- velocity = (Player:GetAbsOrigin() - currentPlayerOrigin) * 100
             velocity = currentPlayerVelocity
-            print("Getting velocity from player", velocity)
+            -- print("Getting velocity from player", velocity)
         else
-            print("Getting velocity from cache", velocity)
+            -- print("Getting velocity from cache", velocity)
         end
     end
 
