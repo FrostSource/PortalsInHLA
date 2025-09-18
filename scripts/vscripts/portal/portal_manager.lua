@@ -918,6 +918,10 @@ function CBaseEntity:StartPortalLookAhead()
             DebugDrawOBB(GetEntityOBBData(self), self:GetOrigin() + vel*FrameTime(), self:GetAngles(), Vector(0, 255, 0), false, 0)
         end
 
+        if vel:Length() < 1 then
+            return 0.05
+        end
+
         -- Check if we are about to hit a portal
         for _, portal in ipairs(PortalManager:GetAllPortals()) do
             if portal:GetConnectedPortal() then

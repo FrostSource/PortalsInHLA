@@ -404,9 +404,9 @@ function PortalPlayerController:GetOrCreatePlayerPhys(initialVelocity)
         velocity = CleanVector(velocity)
 
         local model = "models/props/choreo/ghost_speaker.vmdl"
-        if Convars:GetBool("portal_debug_flings") then
-            model = "models/editor/axis_helper_thick.vmdl"
-        end
+        -- if Convars:GetBool("portal_debug_flings") then
+        --     model = "models/editor/axis_helper_thick.vmdl"
+        -- end
 
         local physEnt = SpawnEntityFromTableSynchronous("prop_dynamic_override", {
             origin = Player:GetAbsOrigin(),-- + Vector(0,0,4),

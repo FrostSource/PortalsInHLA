@@ -236,9 +236,7 @@ function base:Open(position, normal, color, reorientToPlayer)
         DoEntFireByInstanceHandle(self.outline, "SetRenderAttribute", "blueStrength=100", 0, nil, nil)
     end
 
-    if Convars:GetBool("portal_use_outlines") then
-        self:SetOutlineVisible(Convars:GetBool("portal_use_outlines"))
-    end
+    self:SetOutlineVisible(Convars:GetBool("portal_use_outlines"))
 
     self.camera = PortalManager:GetPortalCamera(color)
     self.monitor = PortalManager:GetPortalMonitor(color)
