@@ -719,11 +719,14 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 -- Hopefully it won't hit anything while teleporting
                 PortalPlayerController.currentPlayerPhys:SetVelocity(exitVelocity)
 
+                PortalPlayerController.currentPlayerPhys:DrawTrajectory(PortalManager.colors[connectedPortal.colorName].color:ToVector(), "portal_debug_portals")
+
                 -- The playerphys does not get teleported with the player/anchor
                 -- so it needs to be manually updated sometimes.
                 PortalPlayerController.currentPlayerPhys:Delay(function()
                     PortalPlayerController.currentPlayerPhys:SnapToPlayer()
                 end, 0.05)
+
             end
 
             local exitAngles = Player:EyeAngles()
