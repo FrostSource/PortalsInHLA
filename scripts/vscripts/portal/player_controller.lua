@@ -154,10 +154,18 @@ ListenToPlayerEvent("item_released", function (params)
     end
 end)
 
+local currentEnableStatus = nil
+
 local teleportTime = 0
 ---@param params GameEventPlayerTeleportStart
 ListenToGameEvent("player_teleport_start", function (params)
     if PortalPlayerController.enabled then
+        -- Fix for areas that need playerphys disabled
+        if Player:GetMoveType() == PlayerMoveType.TeleportBlink then
+            currentEnableStatus = PortalPlayerController.enabled
+            PortalPlayerController.enabled = false
+        end
+
         -- print("TELEPORT START")
         playerIsTeleporting = true
         teleportTime = Time()
@@ -168,9 +176,16 @@ ListenToGameEvent("player_teleport_start", function (params)
         end
     end
 end, nil)
+
 ---@param params GameEventPlayerTeleportFinish
 ListenToGameEvent("player_teleport_finish", function (params)
     playerIsTeleporting = false
+
+    if currentEnableStatus ~= nil then
+        PortalPlayerController.enabled = currentEnableStatus
+        currentEnableStatus = nil
+    end
+
     if PortalPlayerController.enabled then
         -- print("TELEPORT END")
 
