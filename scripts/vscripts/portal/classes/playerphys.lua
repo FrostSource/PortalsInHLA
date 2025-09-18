@@ -419,7 +419,7 @@ function base:DrawTrajectory(color, scope)
         debugoverlay:PushDebugOverlayScope(scope)
     end
 
-    local simPos = self:GetOrigin()
+    local simPos = Player:GetOrigin()
     local simVel = self.velocity
     local graycol = Vector(255,255,255)
 

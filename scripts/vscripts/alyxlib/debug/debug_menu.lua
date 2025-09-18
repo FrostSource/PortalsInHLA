@@ -10,14 +10,13 @@ RegisterAlyxLibCommand("alyxlib_debug_menu_show", function (name, ...)
 end, "Forces the debug menu to show")
 
 RegisterAlyxLibConvar("alyxlib_debug_menu_hand", "1", "Hand to attach the debug menu to, 0 = Secondary : 1 = Primary")
-EasyConvars:RegisterConvar("alyxlib_debug_menu_floating", function()
-    -- Float menu for inside-out tracking
-    if Player:GetVRControllerType() == 3 then
-        return true
-    end
 
-    return false
-end, "Menu will float in world instead of attached to hand")
+RegisterAlyxLibConvar("alyxlib_debug_menu_height", "12", "Height of the debug menu, min=7 : max=30", 0, function(newVal, oldVal)
+    if DebugMenu:IsOpen() then
+        DebugMenu:CloseMenu()
+        DebugMenu:ShowMenu()
+    end
+end)
 
 ---
 ---The debug menu allows for easier VR testing by offering a customizable in-game menu.
@@ -69,6 +68,10 @@ if not IsVREnabled() then
     end, "", FCVAR_HIDDEN)
 end
 
+local function empty(str)
+    return type(str) ~= "string" or str == ""
+end
+
 ---
 ---The scope of the debug menu script.
 ---
@@ -88,7 +91,7 @@ local debugPanelScriptScope = {
         end
 
         if item.callback then
-            item.callback()
+            item.callback(item)
         end
     end,
 
@@ -105,12 +108,12 @@ local debugPanelScriptScope = {
         end
 
         -- Update default if user is tracking manually
-        if item.default ~= nil and type(item.default) ~= "function" then
+        if empty(item.convar) or (item.default ~= nil and type(item.default) ~= "function") then
             item.default = on
         end
 
         if item.callback then
-            item.callback(on)
+            item.callback(on, item)
         end
     end,
 
@@ -196,7 +199,7 @@ function DebugMenu:ShowMenu()
         targetname = "alyxlib_debug_menu",
         dialog_layout_name = "file://{resources}/layout/custom_game/alyxlib_debug_menu.xml",
         width = 16,--24,
-        height = 12,--16
+        height = Convars:GetInt("alyxlib_debug_menu_height"),--12,--16
         panel_dpi = 64,
         ignore_input = 0,
         lit = 0,
@@ -217,37 +220,24 @@ function DebugMenu:ShowMenu()
         self.panel:SetOrigin(eyePos + dir * 16)
 
         -- r is used to fire orange portal
-        -- SendToConsole("bind r _debug_menu_test_button_press")
+        SendToConsole("bind t _debug_menu_test_button_press")
     else
-        local handType = -1
-        if Convars:GetBool("alyxlib_debug_menu_floating") then
-            local localPlayer = Entities:GetLocalPlayer()
-            local eyePos = localPlayer:EyePosition()
-            local dir = localPlayer:EyeAngles():Forward()
-            local a = VectorToAngles(dir)
-            a = RotateOrientation(a, QAngle(0,-90,90))
-            self.panel:SetQAngle(a)
-            self.panel:SetOrigin(eyePos + dir * 16)
-        else
-            self:UpdateMenuAttachment()
-
-            handType = Convars:GetInt("alyxlib_debug_menu_hand") == 1 and InputHandSecondary or InputHandPrimary
-
-            handChangedListener = ListenToPlayerEvent("primary_hand_changed", function()
-                self:UpdateMenuAttachment()
-            end)
-        end
+        self:UpdateMenuAttachment()
 
         -- Cough handpose gets in the way for close menus
         Player:SetCoughHandEnabled(false)
 
         -- Handle distant button presses
         Input:ListenToButton("press",
-            handType,
+            Convars:GetInt("alyxlib_debug_menu_hand") == 1 and InputHandSecondary or InputHandPrimary,
             DIGITAL_INPUT_MENU_INTERACT, 1,
-            function (context, params)
+            function (params)
                 self:ClickHoveredButton()
             end, self)
+
+        handChangedListener = ListenToPlayerEvent("primary_hand_changed", function()
+            self:UpdateMenuAttachment()
+        end)
 
     end
 
@@ -263,6 +253,10 @@ function DebugMenu:ShowMenu()
     self.panel:Delay(function()
         debugMenuOpen = true
     end, 0.2)
+
+    local panelHeight = Clamp(Convars:GetInt("alyxlib_debug_menu_height"), 7, 30)
+    local cssHeight = (64 * panelHeight) - 111
+    Panorama:Send(self.panel, "SetHeight", cssHeight)
 
     self:SendCategoriesToPanel()
 end
@@ -286,11 +280,11 @@ function DebugMenu:CloseMenu()
 
         Player:SetCoughHandEnabled(true)
 
-        -- if Player.HMDAvatar then
-        --     self:StartListeningForMenuActivation()
-        -- else
-        --     SendToConsole("unbind r")
-        -- end
+        if not Player.HMDAvatar or IsFakeVREnabled() then
+            SendToConsole("unbind t")
+        else
+            self:StartListeningForMenuActivation()
+        end
     end
 end
 
@@ -387,7 +381,7 @@ end
 ---@param categoryId string # The category ID to add the button to
 ---@param buttonId string # The unique ID for this button
 ---@param text string # The text to display on this button
----@param command string|function # The console command or function to run when this button is pressed
+---@param command string|fun(button:DebugMenuItem) # The console command or function to run when this button is pressed
 function DebugMenu:AddButton(categoryId, buttonId, text, command)
     local category = self:GetCategory(categoryId)
     if not category then
@@ -419,25 +413,20 @@ end
 ---@param categoryId string # The category ID to add the toggle to
 ---@param toggleId string # The unique ID for this toggle
 ---@param text string # The text to display on this toggle
----@param command string|function # The console command or function to run when this toggle is toggled (will run with 1 if it's on, 0 if it's off)
+---@param convar? string # The console variable tied to this toggle
+---@param callback? fun(on:boolean,toggle:DebugMenuItem) # Function to run when this toggle is toggled
 ---@param startsOn? boolean|fun():boolean # Whether the toggle is on by default
-function DebugMenu:AddToggle(categoryId, toggleId, text, command, startsOn)
+function DebugMenu:AddToggle(categoryId, toggleId, text, convar, callback, startsOn)
     local category = self:GetCategory(categoryId)
     if not category then
         warn("Cannot add toggle '"..toggleId.."': Category '"..categoryId.."' does not exist!")
         return
     end
 
-    local callback
-    local convar = ""
-    if type(command) == "string" then
-        convar = command
-        startsOn = nil--startsOn-- or Convars:GetBool(command) or false
+    if callback == nil and not empty(convar) then
         callback = function(on)
-            SendToConsole(command .. " " .. (on and 1 or 0))
+            SendToConsole(convar .. " " .. (on and 1 or 0))
         end
-    elseif type(command) == "function" then
-        callback = command
     end
 
     table.insert(category.items, {
@@ -478,35 +467,27 @@ end
 ---@param categoryId string # The ID of the category to add this slider to
 ---@param sliderId string # A unique ID for this slider
 ---@param text string # Display text for the slider
+---@param convar string # The console variable to tie this slider to
 ---@param min number # Minimum allowed value
 ---@param max number # Maximum allowed value
 ---@param isPercentage boolean # If true, value will be displayed as a percentage (0-100)
----@param command string|fun(value:number,slider:DebugMenuItem) # Convar name or callback function
 ---@param truncate? number # Number of decimal places (0 = integer, -1 = no truncating)
 ---@param increment? number # Snap increment (0 disables snapping)
+---@param callback? fun(value:number,slider:DebugMenuItem) # Callback function
 ---@param defaultValue? number|fun():number # Starting value. Set nil to use the convar value whenever the menu opens
-function DebugMenu:AddSlider(categoryId, sliderId, text, min, max, isPercentage, command, truncate, increment, defaultValue)
+function DebugMenu:AddSlider(categoryId, sliderId, text, convar, min, max, isPercentage, truncate, increment, callback, defaultValue)
     local category = self:GetCategory(categoryId)
     if not category then
         warn("Cannot add toggle '"..sliderId.."': Category '"..categoryId.."' does not exist!")
         return
     end
 
-    local callback
-    local convar = ""
-    if type(command) == "string" then
-        if command == "" then
-            error("Command must not be a blank string", 2)
-        end
-        convar = command
-
+    if callback == nil and type(convar) == "string" and convar ~= "" then
         ---@param value number
         ---@param slider DebugMenuItem
         callback = function(value, slider)
             Convars:SetStr(slider.convar, tostring(value))
         end
-    elseif type(command) == "function" then
-        callback = command
     end
 
     table.insert(category.items, {
@@ -520,7 +501,7 @@ function DebugMenu:AddSlider(categoryId, sliderId, text, min, max, isPercentage,
         max = max,
         convar = convar,
         isPercentage = isPercentage or false,
-        truncate = truncate or -1,
+        truncate = truncate or 2,
         increment = increment or 0
     })
 end
@@ -532,10 +513,12 @@ end
 ---
 ---@param categoryId string # The id of the category to add this cycle to
 ---@param cycleId string # The unique id for this new cycle
----@param values {text:string,value:any}[] # List of text/value pairs for this cycle
----@param command string|fun(index:number, item:{text:string,value:any?}, cycle:DebugMenuItem) # Convar name or function callback
+---@param title string|nil # The text to display next to each value
+---@param convar? string # The console variable tied to this cycle
+---@param values {text:string,value:any}[]|string[] # List of text/value pairs for this cycle, or a list of values
+---@param callback? fun(index:number, item:{text:string,value:any?}, cycle:DebugMenuItem) # Function callback
 ---@param defaultValue? any|fun():any # Value for this cycle to start with
-function DebugMenu:AddCycle(categoryId, cycleId, values, command, defaultValue)
+function DebugMenu:AddCycle(categoryId, cycleId, title, convar, values, callback, defaultValue)
     local category = self:GetCategory(categoryId)
     if not category then
         warn("Cannot add toggle '"..cycleId.."': Category '"..categoryId.."' does not exist!")
@@ -546,36 +529,37 @@ function DebugMenu:AddCycle(categoryId, cycleId, values, command, defaultValue)
         error("Cycle values must be a table with at least 1 value", 2)
     end
 
-    for k,v in ipairs(values) do
-        v.value = tostring(v.value or (k - 1))
+    ---@type {text:string,value:any}
+    local parsedValues = {}
+
+    if type(values[1]) == "string" then
+        for k,v in ipairs(values) do
+            table.insert(parsedValues, {text = v, value = k - 1})
+        end
+    else
+        for k,v in ipairs(values) do
+            table.insert(parsedValues, {text = v.text, value = v.value or (k - 1)})
+        end
     end
 
-    local callback
-    local convar = ""
-    if type(command) == "string" then
-        if command == "" then
-            error("Command must not be a blank string", 2)
-        end
-        convar = command
-
+    if callback == nil and not empty(convar) then
         ---@param index number
         ---@param item {text:string,value:any?}
         ---@param cycle DebugMenuItem
         callback = function(index, item, cycle)
             Convars:SetStr(cycle.convar, tostring(item.value))
         end
-    elseif type(command) == "function" then
-        callback = command
     end
 
     table.insert(category.items, {
         categoryId = categoryId,
         id = cycleId,
-        callback = callback,
         type = "cycle",
-        values = values,
+        text = title,
+        convar = convar,
+        callback = callback,
+        values = parsedValues,
         default = defaultValue,
-        convar = convar
     })
 end
 
@@ -630,12 +614,24 @@ function DebugMenu:SetCategoryIndex(categoryId, index)
 end
 
 ---Resolves the default value of an element by running any value getter functions.
----@param default any|fun():any # The default value to resolve
+---@param item DebugMenuItem # The item to resolve
+---@param tFunc? `Convars.GetStr`|`Convars.GetInt`|`Convars.GetFloat`|`Convars.GetBool` # The value getter function
+---@param default? any # The default value
 ---@return any # The resolved value
-local function resolveDefault(default)
-    if type(default) == "function" then
-        return default()
+local function resolveDefault(item, tFunc, default)
+    if type(item.default) == "function" then
+        return item.default()
     end
+
+    if item.default ~= nil then
+        return item.default
+    end
+
+    if item.convar and item.convar ~= "" then
+        tFunc = tFunc or Convars.GetStr
+        return tFunc(Convars, item.convar)
+    end
+
     return default
 end
 
@@ -655,19 +651,11 @@ function DebugMenu:SendCategoryToPanel(category)
     Panorama:Send(panel, "AddCategory", category.id, category.name)
 
     for _, item in ipairs(category.items) do
-        if item.type == "toggle" then
-            local default = resolveDefault(item.default)
-            if default == nil then
-                if EasyConvars:Exists(item.convar) then
-                    default = EasyConvars:GetBool(item.convar)
-                else
-                    default = Convars:GetBool(item.convar)
-                end
-            end
-            Panorama:Send(panel, "AddToggle", item.categoryId, item.id, item.text, default)
-
-        elseif item.type == "button" then
+        if item.type == "button" then
             Panorama:Send(panel, "AddButton", item.categoryId, item.id, item.text)
+
+        elseif item.type == "toggle" then
+            Panorama:Send(panel, "AddToggle", item.categoryId, item.id, item.text, resolveDefault(item, Convars.GetBool, false))
 
         elseif item.type == "label" then
             Panorama:Send(panel, "AddLabel", item.categoryId, item.id, item.text)
@@ -676,29 +664,24 @@ function DebugMenu:SendCategoryToPanel(category)
             Panorama:Send(panel, "AddSeparator", item.categoryId, item.id, item.text)
 
         elseif item.type == "slider" then
-            local default = resolveDefault(item.default)
-            if default == nil then
-                default = Convars:GetFloat(item.convar) or item.min
-            end
-            Panorama:Send(panel, "AddSlider", item.categoryId, item.id, item.text, item.convar, item.min, item.max, default, item.isPercentage, item.truncate, item.increment)
+            local default = resolveDefault(item, Convars.GetFloat, item.min)
+            Panorama:Send(panel, "AddSlider", item.categoryId, item.id, item.text or item.convar, item.convar, item.min, item.max, default, item.isPercentage, item.truncate, item.increment)
 
         elseif item.type == "cycle" then
-            -- Flatten values into an array of text
-            local values = {}
-            local index = 1
-            for i = 1, #item.values do
-                values[index] = item.values[i].text
-                values[index+1] = item.values[i].value or (i - 1)
-                index = index + 2
+
+            local default = resolveDefault(item)
+
+            if default ~= nil then
+                -- find the index of the default value
+                local index = TableFindIndex(item.values, function(v) return tostring(v.value) == tostring(default) end)
+                if index > 0 then
+                    default = index
+                else
+                    default = nil
+                end
             end
 
-            local default = resolveDefault(item.default)
-            -- Use convar value if default isn't set
-            if default == nil and item.convar ~= "" then
-                default = Convars:GetStr(item.convar)
-            end
-
-            Panorama:Send(panel, "AddCycle", item.categoryId, item.id, item.convar, default, values)
+            Panorama:Send(panel, "AddCycle", item.categoryId, item.id, item.convar, item.text, default, TablePluck(item.values, "text"))
         else
             warn("Unknown item type '"..item.type.."'")
         end
@@ -768,14 +751,11 @@ function DebugMenu:StartListeningForMenuActivation()
                 buttonPresses = buttonPresses + 1
 
                 if buttonPresses >= buttonPressesToActivate then
-                    buttonPresses = 0
                     if debugMenuOpen then
                         self:CloseMenu()
                     else
                         self:ShowMenu()
                     end
-                    -- -- Stop think
-                    -- return nil
                 end
             end
         else
@@ -791,9 +771,8 @@ function DebugMenu:StopListeningForMenuActivation()
     Player:SetContextThink("debug_menu_activate", nil, 0)
 end
 
--- if Convars:GetInt("developer") > -1 then
-    local listenFunc = ListenToPlayerEvent or ListenToGameEvent
-    listenFunc("vr_player_ready", function()
+-- if Convars:GetInt("developer") > 0 then
+    ListenToPlayerEvent("vr_player_ready", function()
         -- Kill existing panel on load to avoid missing logic errors
         local panel = Entities:FindByName(nil, "alyxlib_debug_menu")
         if panel then
@@ -805,6 +784,7 @@ end
         end, 0.2)
     end, nil)
 -- end
+
 
 --NOTE: Removed AlyxLib defaults for portal2
 

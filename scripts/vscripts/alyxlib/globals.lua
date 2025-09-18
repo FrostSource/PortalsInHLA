@@ -1,5 +1,5 @@
 --[[
-    v2.6.0
+    v2.7.0
     https://github.com/FrostSource/alyxlib
 
     Provides common global functions used throughout extravaganza libraries.
@@ -14,7 +14,7 @@
 -- These are expected by globals
 require 'alyxlib.utils.common'
 
-local _version = "v2.6.0"
+local _version = "v2.7.0"
 
 ---
 ---A registered AlyxLib addon.
@@ -581,6 +581,37 @@ function TableSize(tbl)
 end
 
 ---
+---Collects all values for a specific key from a list of tables.
+---
+---@param tbl table[] # List of tables.
+---@param key any # Key to get values from.
+---@return any[] # List of values found for the key.
+function TablePluck(tbl, key)
+    local out = {}
+    for _, v in ipairs(tbl) do
+        if type(v) == "table" and v[key] ~= nil then
+            table.insert(out, v[key])
+        end
+    end
+    return out
+end
+
+---
+---Returns the index of the first value that matches the predicate.
+---
+---@param list table
+---@param predicate fun(value:any):boolean
+---@return integer
+function TableFindIndex(list, predicate)
+    for i, v in ipairs(list) do
+        if predicate(v) then
+            return i
+        end
+    end
+    return 0
+end
+
+---
 ---Returns a random value from an array.
 ---
 ---@generic T
@@ -717,10 +748,8 @@ end
 ---@return boolean
 function TraceLineExt(parameters)
     if IsEntity(parameters.ignore) then
-        ---@diagnostic disable-next-line: inject-field
         parameters.ignoreent = {parameters.ignore}
     else
-        ---@diagnostic disable-next-line: inject-field
         parameters.ignoreent = parameters.ignore
         parameters.ignore = nil
     end
@@ -763,7 +792,7 @@ function TraceLineExt(parameters)
 end
 
 ---
----Does a raytrace along a line until it hits or the world or reaches the end of the line.
+---Does a raytrace along a line until it hits the world or reaches the end of the line.
 ---
 ---@param parameters TraceTableLine
 ---@return TraceTableLine
@@ -1069,6 +1098,14 @@ function CalcClosestCornerOnEntityAABB(entity, position)
         end
     end
     return closestCorner
+end
+
+---
+---Sets the absolute world velocity of an entity.
+---
+---@param velocity Vector The target velocity in units/second.
+function SetPhysVelocity(entity, velocity)
+    entity:SetAbsVelocity(velocity)
 end
 
 return _version

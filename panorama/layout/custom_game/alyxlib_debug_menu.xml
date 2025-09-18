@@ -35,19 +35,21 @@
                             </Button>
 
                             <!-- Cycle left -->
-                            <!-- <Panel id="CategoryCycler" class="cycle_item custom_cycle">
+                            <Panel id="CategoryCycler" class="cycle_item custom_cycle">
                                 <Button id="CycleCategoryLeftButton" class="CycleCategoryLeft" onactivate="CycleCategories(-1)">
                                     <Panel class="cycle_image cycle_image_left"/>
-                                </Button> -->
+                                    <Label id="CycleCategoryLeftButtonLabel" text="" />
+                                </Button>
 
                                 <!-- Category buttons are kept here -->
-                                <!-- <Panel id="CategoryBar" class="CategoryBar" /> -->
+                                <Panel id="CategoryBar" class="CategoryBar" />
 
                                 <!-- Cycle right -->
-                                <!-- <Button id="CycleCategoryRightButton" class="CycleCategoryRight" onactivate="CycleCategories(1)">
+                                <Button id="CycleCategoryRightButton" class="CycleCategoryRight" onactivate="CycleCategories(1)">
                                     <Panel class="cycle_image cycle_image_right"/>
+                                    <Label id="CycleCategoryRightButtonLabel" text="" />
                                 </Button>
-                            </Panel> -->
+                            </Panel>
                             
                             <!-- Category sub menu separator -->
                             <Panel class="row_divider">

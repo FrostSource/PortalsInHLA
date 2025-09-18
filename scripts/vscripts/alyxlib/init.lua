@@ -1,5 +1,5 @@
 --[[
-    v1.2.1
+    v1.2.2
     https://github.com/FrostSource/alyxlib
 
     The main initializer script loads any standard libraries that it can find.
@@ -11,7 +11,7 @@
 ]]
 
 -- Version of this file
-local version = "v1.2.1"
+local version = "v1.2.2"
 
 ---ID of AlyxLib in the Steam workshop
 ALYXLIB_WORKSHOP_ID = "3329679071"
@@ -35,6 +35,7 @@ end
 
 ---Loads a library if it exists and prints version.
 ---@param path string # The path to the library
+---@param required? boolean # If not true, any errors will be suppressed
 local function alyxlib_require(path, required)
     if required then
         print_version(path, require(path))
@@ -88,12 +89,13 @@ alyxlib_require "alyxlib.panorama.core"
 alyxlib_require "alyxlib.debug.common"
 alyxlib_require "alyxlib.debug.commands"
 alyxlib_require "alyxlib.debug.controller"
-if IsVREnabled() then
+if IsVREnabled() or IsFakeVREnabled() then
     alyxlib_require "alyxlib.debug.vr"
 else
     alyxlib_require "alyxlib.debug.novr"
 end
 alyxlib_require "alyxlib.debug.debug_menu"
+alyxlib_require "alyxlib.debug.debug_menu_cfg"
 
 -- Common third-party libraries
 
