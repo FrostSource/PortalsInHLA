@@ -18,6 +18,15 @@ RegisterAlyxLibConvar("alyxlib_debug_menu_height", "12", "Height of the debug me
     end
 end)
 
+RegisterAlyxLibConvar("alyxlib_debug_menu_floating", function()
+    -- Float menu for inside-out tracking
+    if Player:GetVRControllerType() == 3 then
+        return true
+    end
+
+    return false
+end, "Menu will float in world instead of attached to hand")
+
 ---
 ---The debug menu allows for easier VR testing by offering a customizable in-game menu.
 ---
@@ -222,22 +231,35 @@ function DebugMenu:ShowMenu()
         -- r is used to fire orange portal
         SendToConsole("bind t _debug_menu_test_button_press")
     else
-        self:UpdateMenuAttachment()
+        local handType = -1
+        if Convars:GetBool("alyxlib_debug_menu_floating") then
+            local localPlayer = Entities:GetLocalPlayer()
+            local eyePos = localPlayer:EyePosition()
+            local dir = localPlayer:EyeAngles():Forward()
+            local a = VectorToAngles(dir)
+            a = RotateOrientation(a, QAngle(0,-90,90))
+            self.panel:SetQAngle(a)
+            self.panel:SetOrigin(eyePos + dir * 16)
+        else
+            self:UpdateMenuAttachment()
+
+            handType = Convars:GetInt("alyxlib_debug_menu_hand") == 1 and InputHandSecondary or InputHandPrimary
+
+            handChangedListener = ListenToPlayerEvent("primary_hand_changed", function()
+                self:UpdateMenuAttachment()
+            end)
+        end
 
         -- Cough handpose gets in the way for close menus
         Player:SetCoughHandEnabled(false)
 
         -- Handle distant button presses
         Input:ListenToButton("press",
-            Convars:GetInt("alyxlib_debug_menu_hand") == 1 and InputHandSecondary or InputHandPrimary,
+            handType,
             DIGITAL_INPUT_MENU_INTERACT, 1,
-            function (params)
+            function (context, params)
                 self:ClickHoveredButton()
             end, self)
-
-        handChangedListener = ListenToPlayerEvent("primary_hand_changed", function()
-            self:UpdateMenuAttachment()
-        end)
 
     end
 

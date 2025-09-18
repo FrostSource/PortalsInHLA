@@ -11,6 +11,8 @@ local function listenForNoClipVrActivation()
 
     -- Debug noclip vr activation
     Player:SetContextThink("debug_noclip_activate", function()
+        if Convars:GetInt("developer") < 2 then return 5 end
+
         if Time() - timeSinceLastButtonPress > timeToResetBetweenPresses then
             buttonPresses = 0
             timeSinceLastButtonPress = math.huge
