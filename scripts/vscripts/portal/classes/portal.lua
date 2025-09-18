@@ -743,9 +743,16 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
 
             local mt = Player:GetMoveType()
             if mt == PlayerMoveType.TeleportBlink or mt == PlayerMoveType.TeleportShift then
-                Player:Delay(function()
-                    SendToConsole("fadein")
-                end, 0.2)--unsure best delay
+                local startTime = Time()
+                local timeToFade = 2
+                Player:QuickThink(function()
+                    if Time() > startTime + timeToFade then
+                        return nil
+                    end
+
+                    DoEntFire("@FadeFix", "Fade", "", 0, nil, nil)
+                    return 0.01
+                end, 0.1)
             end
         else
             -- Handle novr player
