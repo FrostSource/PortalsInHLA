@@ -71,7 +71,7 @@ local function checkDebugScope(scope)
     end
 end
 
-local startAllDebugOn = "1"
+local startAllDebugOn = "0"
 
 EasyConvars:RegisterConvar("portal_debug_portals", startAllDebugOn, "Shows debugging visuals for portals", 0, function() checkDebugScope("portal_debug_portals") end)
 EasyConvars:RegisterConvar("portal_debug_portalgun", startAllDebugOn, "Shows debugging visuals for the portalgun", 0, function() checkDebugScope("portal_debug_portalgun") end)
@@ -96,6 +96,8 @@ Convars:RegisterCommand("portal_debug_clear", function()
 end, "Clears all debugging visuals (only needed for portal_debug_portal_rendering)", 0)
 
 Convars:RegisterConvar("portal_sample_steps", "2", "Number of edge samples checked when placing a portal", 0)
+
+Convars:RegisterConvar("portal_wall_offset", "0", "How much to offset portals from the wall", 0)
 
 ---@diagnostic disable-next-line: lowercase-global
 function debugprint_portalgun(...)
@@ -638,6 +640,12 @@ function PortalManager:TryCreatePortalAt(position, normal, color, reorientToPlay
         return false
     end
 
+    -- Debugging wall offset
+    -- if this should happen for map placed portals, move this into below function
+    if Convars:GetFloat("portal_wall_offset") ~= 0 then
+        position = position + normal * Convars:GetFloat("portal_wall_offset")
+    end
+
     PortalManager:CreatePortalAt(position, normal, color, reorientToPlayer)
     return true
 end
@@ -915,7 +923,12 @@ function CBaseEntity:StartPortalLookAhead()
         local vel = GetPhysVelocity(self)
 
         if Convars:GetBool("portal_debug_portals") then
-            DebugDrawOBB(GetEntityOBBData(self), self:GetOrigin() + vel*FrameTime(), self:GetAngles(), Vector(0, 255, 0), false, 0)
+            -- try fix still flicker
+            local pos = self:GetOrigin()
+            if vel:Length() >= 1 then
+                pos = self:GetOrigin() + vel*FrameTime()
+            end
+            DebugDrawOBB(GetEntityOBBData(self), pos, self:GetAngles(), Vector(0, 255, 0), false, 0)
         end
 
         if vel:Length() < 1 then

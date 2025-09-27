@@ -389,8 +389,6 @@ end
 function base:Remove()
     self:PauseThink()
     PortalPlayerController:PlayerLandedOnGround()
-    -- yellow sphere at death point
-    debugoverlay:Sphere(self:GetAbsOrigin(), 8, 255, 255, 0, 255, true, 8)
 	self:ClearPlayerAnchorParent()
     if not Convars:GetBool("noclip_vr_enabled") then
     	self:EnablePlayerTeleport()

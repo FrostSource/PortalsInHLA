@@ -776,6 +776,10 @@ function DebugMenu:StartListeningForMenuActivation()
                     if debugMenuOpen then
                         self:CloseMenu()
                     else
+                        local panel = Entities:FindByName(nil, "alyxlib_debug_menu")
+                        if panel then
+                            panel:Kill()
+                        end
                         self:ShowMenu()
                     end
                 end
@@ -798,7 +802,7 @@ end
         -- Kill existing panel on load to avoid missing logic errors
         local panel = Entities:FindByName(nil, "alyxlib_debug_menu")
         if panel then
-            panel:Kill()
+            DoEntFire("alyxlib_debug_menu", "Kill", "", 0, nil, nil)
         end
 
         Player:Delay(function()
