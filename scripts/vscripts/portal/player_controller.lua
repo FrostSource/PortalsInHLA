@@ -146,9 +146,15 @@ ListenToPlayerEvent("item_released", function (params)
         -- Make sure item isn't being held by either hand for two handed pickups
         if not Player:IsHolding(params.item) then
             params.item:Delay(function()
-                print("item released, resetting owner")
                 params.item:SetOwner(params.item.portalPrevOwner)
                 params.item.portalPrevOwner = nil
+
+                for _, portal in ipairs(PortalManager:GetAllPortals()) do
+                    if portal.trigger:IsTouching(params.item) then
+                        portal:OnTriggerTouch({activator = params.item})
+                        break
+                    end
+                end
             end, 0)
         end
     end

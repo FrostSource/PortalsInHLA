@@ -326,6 +326,10 @@ function base:UpdateConnection()
             portal.monitor:SetRenderAlpha(255)
             -- EntFire(portal.camera, portal.camera:GetName(), "Enable")
             EntFire(portal.monitor, portal.monitor:GetName(), "Enable")
+
+            -- Toggle trigger to force it to re-evaluate touching entities
+            portal.trigger:Disable()
+            portal.trigger:Enable()
         end
 
         self:ResumeThink()
@@ -379,7 +383,7 @@ end
 
 ---Called
 ---@param params IOParams
-function base:OnTriggerTouch(params, test)
+function base:OnTriggerTouch(params)
     local ent = params.activator
     print("Trigger touched", self:GetName(), Debug.EntStr(ent))
 

@@ -283,13 +283,11 @@ function base:Think()
             PortalPlayerController:CacheBounceVelocity(reflected * 0.05)
         end
 
-        ---@TODO This is now handled above by portal:WillEntityTouchPortal
         ---@TODO this still might be useful if player remains hovering when landing
-        -- -- Move player against the collision to allow entering portals
-        -- -- high speeds would cause the player to stop before hitting the portal
-        -- self:SetOrigin(traceTable.endpos)
+        -- Move player against the collision, hopefully triggering footstep sound
+        self:SetOrigin(traceTable.endpos)
 
-        print("Phys hit world", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
+        -- print("Phys hit world", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
         if traceTable.enthit:GetOwner() then print("Owner:", traceTable.enthit:GetOwner():GetClassname()) end
 
         DebugIf("portal_debug_flings", function()
@@ -397,7 +395,6 @@ function base:Remove()
 	-- self:RemoveVignette()
 	-- self:SetEntityName("old_"..ENT_NAME)
     PortalPlayerController.currentPlayerPhys = nil
-    print('killing')
 	DoEntFireByInstanceHandle(self, "Kill", "", 0.1, self, self)
 end
 
