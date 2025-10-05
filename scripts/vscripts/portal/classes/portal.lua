@@ -248,12 +248,6 @@ function base:Open(position, normal, color, reorientToPlayer)
 
     self.teleportTrigger = PortalManager:GetPortalTeleport(color)
 
-    -- Triggers are no longer parented, need to be moved manually
-    self.trigger:SetOrigin(self.aimat:GetOrigin())
-    self.trigger:SetQAngle(self.aimat:GetAngles())
-    self.teleportTrigger:SetOrigin(self.aimat:GetOrigin())
-    self.teleportTrigger:SetQAngle(self.aimat:GetAngles())
-
     self:UpdateEffects()
 
     if self:GetConnectedPortal() then
@@ -317,7 +311,10 @@ function base:UpdateConnection()
     if connectedPortal then
         local ents = {self, connectedPortal}
 
-        for _, portal in ipairs(ents) do
+        for i = 1, 2 do
+            local portal = ents[i]
+            local otherPortal = ents[3 - i]
+
             ---@TODO Monitor was pushed out 2 units, was there a specific reason for this?
             portal.monitor:SetOrigin(portal.aimat:GetOrigin() + portal.aimat:GetForwardVector() * 0.1)
             local angles = VectorToAngles(portal.aimat:GetForwardVector())
@@ -326,6 +323,14 @@ function base:UpdateConnection()
             portal.monitor:SetRenderAlpha(255)
             -- EntFire(portal.camera, portal.camera:GetName(), "Enable")
             EntFire(portal.monitor, portal.monitor:GetName(), "Enable")
+
+            -- Triggers are no longer parented, need to be moved manually
+            self.trigger:SetOrigin(self.aimat:GetOrigin())
+            self.trigger:SetQAngle(self.aimat:GetAngles())
+            self.teleportTrigger:SetOrigin(self.aimat:GetOrigin())
+            self.teleportTrigger:SetQAngle(self.aimat:GetAngles())
+            self.teleportTrigger.targetEnt:SetOrigin(otherPortal.aimat:GetOrigin())
+            self.teleportTrigger.targetEnt:SetQAngle(otherPortal.aimat:GetAngles())
 
             -- Toggle trigger to force it to re-evaluate touching entities
             portal.trigger:Disable()

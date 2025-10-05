@@ -35,7 +35,6 @@ function base:OnReady(readyType)
     if readyType ~= READY_GAME_LOAD then
         -- Must wait until player exists to save color table
         -- ListenToPlayerEvent("player_activate", function (params)
-        --     print("PLAYER ACTIVATE")
             local portal1Camera = self:FindInPrefab("portal_1_camera")
             local portal2Camera = self:FindInPrefab("portal_2_camera")
             local portal1Monitor = self:FindInPrefab("portal_1_monitor")
@@ -44,8 +43,8 @@ function base:OnReady(readyType)
             local portal2Trigger = self:FindInPrefab("portal_2_trigger")
             local portal1DebugCamera = self:FindInPrefab("portal_1_debug_camera")
             local portal2DebugCamera = self:FindInPrefab("portal_2_debug_camera")
-            local portal1TeleportTrigger = self:FindInPrefab("portal_1_teleport")
-            local portal2TeleportTrigger = self:FindInPrefab("portal_2_teleport")
+            local portal1TeleportTrigger = self:FindInPrefab("portal_1_teleport")--[[@as PortalTeleport]]
+            local portal2TeleportTrigger = self:FindInPrefab("portal_2_teleport")--[[@as PortalTeleport]]
             if not (portal1Camera and portal2Camera
             and portal1Monitor and portal2Monitor
             and portal1Trigger and portal2Trigger
@@ -73,12 +72,15 @@ function base:OnReady(readyType)
             portal1TeleportTrigger:SetEntityName("_portalteleport" .. self.portal1Name:lower())
             portal2TeleportTrigger:SetEntityName("_portalteleport" .. self.portal2Name:lower())
 
-            -- Scaled teleport triggers cause bizarre behavior
-            -- unparent from animated monitor
+            --- Scaled teleport triggers cause bizarre behavior
+            --- Unparent from animated monitor
+            ---@NOTE positioning is handled in portal.lua:UpdateConnection
             portal1Trigger:SetParent(nil, nil)
             portal2Trigger:SetParent(nil, nil)
             portal1TeleportTrigger:SetParent(nil, nil)
             portal2TeleportTrigger:SetParent(nil, nil)
+            portal1TeleportTrigger.targetEnt:SetParent(nil, nil)
+            portal2TeleportTrigger.targetEnt:SetParent(nil, nil)
 
             ---@TODO Consider moving this to Spawn
             PortalManager:AddPortalColor(self.portal1Name, self.portal2Name, self.portal1Color)
