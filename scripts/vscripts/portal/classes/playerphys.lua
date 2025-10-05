@@ -59,6 +59,7 @@ function (newVal, oldVal)
         end
     end
 end)
+EasyConvars:SetPersistent("portal_use_fling_vignette", true)
 
 ---@class PortalPlayerPhys : EntityClass
 local base = entity("PortalPlayerPhys")
