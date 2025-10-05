@@ -10,6 +10,8 @@ local PLAYER_MASS = 65 -- in kg
 local PORTAL_FUNNEL_AMOUNT = 6.0
 Convars:RegisterConvar("portal_funnel_amount", tostring(PORTAL_FUNNEL_AMOUNT), "Amount of portals to funnel into", 0)
 
+Convars:RegisterConvar("portal_playerphys_wallbounce_multiplier", "0.05", "Multiplier for wall bounces", 0)
+
 -- EasyConvars:RegisterConvar("portal_funnel_sensitivity", "2", "Overall sensitivity of portal funneling", FCVAR_NONE, function (newVal, oldVal)
 --     if newVal == "0" then
 --         Convars:SetBool("player_funnel_into_portals", false)
@@ -280,12 +282,11 @@ function base:Think()
 
             -- This is a hack to keep the player away from the wall
             local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
-            PortalPlayerController:CacheBounceVelocity(reflected * 0.05)
+            PortalPlayerController:CacheBounceVelocity(reflected * Convars:GetFloat("portal_playerphys_wallbounce_multiplier"))
+        else
+            -- Move player against the collision, hopefully triggering footstep sound
+            self:SetOrigin(traceTable.endpos)
         end
-
-        ---@TODO this still might be useful if player remains hovering when landing
-        -- Move player against the collision, hopefully triggering footstep sound
-        self:SetOrigin(traceTable.endpos)
 
         -- print("Phys hit world", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
         if traceTable.enthit:GetOwner() then print("Owner:", traceTable.enthit:GetOwner():GetClassname()) end
