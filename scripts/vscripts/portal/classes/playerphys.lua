@@ -43,11 +43,30 @@ Convars:RegisterConvar("player_funnel_into_portals", "1", "Player will move towa
 EasyConvars:RegisterConvar("portal_max_fling_speed", "800", "Maximum speed at which the player can move while flinging")
 EasyConvars:SetPersistent("portal_max_fling_speed", true)
 
+EasyConvars:RegisterConvar("portal_use_fling_vignette",
+function()
+    -- Default on for teleport movement
+    local mt = Convars:GetInt("hlvr_movetype_default")
+    return mt == 0 or mt == 1
+end,
+"If a vision vignette should be used when flinging", FCVAR_NONE,
+function (newVal, oldVal)
+    if IsValidEntity(PortalPlayerController.currentPlayerPhys) then
+        if Convars:GetBool("portal_use_fling_vignette") then
+            PortalPlayerController.currentPlayerPhys:CreateVignette()
+        else
+            PortalPlayerController.currentPlayerPhys:RemoveVignette()
+        end
+    end
+end)
+
 ---@class PortalPlayerPhys : EntityClass
 local base = entity("PortalPlayerPhys")
 _G.PortalPlayerPhys = base
 
 base.__expectingPortal = false
+
+base.__vignettePtfxIndex = -1
 
 ---Called automatically on spawn
 ---@param spawnkeys CScriptKeyValues
@@ -76,6 +95,10 @@ end
 
 function base:OnReady()
     self:ResumeThink()
+
+    if Convars:GetBool("portal_use_fling_vignette") then
+        self:CreateVignette()
+    end
 end
 
 ---Sets the velocity for this player phys.
@@ -365,6 +388,21 @@ function base:SnapToPlayer(origin)
     end
 end
 
+---Creates the anti motion sickness screen effect, if it doesn't exist yet.
+---Used for players with non-continuous movement types.
+function base:CreateVignette()
+	if self.__vignettePtfxIndex ~= -1 then return end
+	self.__vignettePtfxIndex = ParticleManager:CreateParticle("particles/vrportal/motion_sickness_vignette.vpcf", 0, Player)
+end
+
+---Removes the anti motion sickness screen effect if it exist.
+---Used for players with non-continuous movement types.
+function base:RemoveVignette()
+	if self.__vignettePtfxIndex == -1 then return end
+	ParticleManager:DestroyParticle(self.__vignettePtfxIndex, false)
+	self.__vignettePtfxIndex = -1
+end
+
 ---Anchors the player to an entity with the given name.
 ---@param targetname string Name of entity to anchor player to.
 function base:SetPlayerAnchorParent(targetname)
@@ -393,10 +431,16 @@ function base:Remove()
     	self:EnablePlayerTeleport()
     end
     PortalPlayerController:UpdateWhooshSound(0)
-	-- self:RemoveVignette()
+	self:RemoveVignette()
 	-- self:SetEntityName("old_"..ENT_NAME)
     PortalPlayerController.currentPlayerPhys = nil
 	DoEntFireByInstanceHandle(self, "Kill", "", 0.1, self, self)
+end
+
+---Destroy references on death
+---Fallback for if entity is destroyed without calling Remove
+function base:UpdateOnRemove()
+	self:RemoveVignette()
 end
 
 ---Draws the expected trajectory path for this phys object based on its current velocity.
