@@ -99,6 +99,8 @@ Convars:RegisterConvar("portal_sample_steps", "2", "Number of edge samples check
 
 Convars:RegisterConvar("portal_wall_offset", "0", "How much to offset portals from the wall", 0)
 
+Convars:RegisterConvar("portal_look_ahead_min_speed", "2", "If portal is not a floor portal, how fast object must be moving to portal", 0)
+
 ---@diagnostic disable-next-line: lowercase-global
 function debugprint_portalgun(...)
     if Convars:GetInt("portal_debug_portalgun") > 0 then
@@ -924,14 +926,11 @@ function CBaseEntity:StartPortalLookAhead()
 
         if Convars:GetBool("portal_debug_portals") then
             -- try fix still flicker
-            local pos = self:GetOrigin()
-            if vel:Length() >= 1 then
-                pos = self:GetOrigin() + vel*FrameTime()
-            end
-            DebugDrawOBB(GetEntityOBBData(self), pos, self:GetAngles(), Vector(0, 255, 0), false, 0)
+            local t = vel:Length() > 0 and 0 or 0.05
+            DebugDrawOBB(GetEntityOBBData(self), self:GetOrigin(), self:GetAngles(), Vector(0, 255, 0), false, t)
         end
 
-        if vel:Length() < 1 then
+        if vel:Length() < Convars:GetFloat("portal_look_ahead_min_speed") then
             return 0.05
         end
 
