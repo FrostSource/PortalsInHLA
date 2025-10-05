@@ -304,8 +304,10 @@ function base:Think()
             Player:EmitSoundParams("JumpLand.HighVelocityImpact", 0, impactVolume, 0)
 
             -- This is a hack to keep the player away from the wall
-            local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
-            PortalPlayerController:CacheBounceVelocity(reflected * Convars:GetFloat("portal_playerphys_wallbounce_multiplier"))
+            if Convars:GetFloat("portal_playerphys_wallbounce_multiplier") > 0 then
+                local reflected = self.velocity - 2 * self.velocity:Dot(traceTable.normal) * traceTable.normal
+                PortalPlayerController:CacheBounceVelocity(reflected * Convars:GetFloat("portal_playerphys_wallbounce_multiplier"))
+            end
         else
             -- Move player against the collision, hopefully triggering footstep sound
             self:SetOrigin(traceTable.endpos)
