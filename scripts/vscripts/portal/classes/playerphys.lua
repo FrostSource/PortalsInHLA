@@ -311,7 +311,8 @@ function base:Think()
             end
         else
             -- Move player against the collision, hopefully triggering footstep sound
-            self:SetOrigin(traceTable.endpos)
+            -- self:SetOrigin(traceTable.pos)
+            self.velocity = Vector()
         end
 
         -- print("Phys hit world", traceTable.enthit:GetClassname(), traceTable.enthit:GetName(), traceTable.enthit:GetModelName())
@@ -322,7 +323,7 @@ function base:Think()
             debugoverlay:Sphere(self:GetOrigin(), 5, 255, 0, 0, 255, false, 10)
             local hull = PortalPlayerController:GetPlayerHull()
             debugoverlay:Box(Player:GetOrigin() + hull.mins, Player:GetOrigin() + hull.maxs, 255, 0, 0, 255, false, 10)
-            debugoverlay:Box(traceTable.pos + hull.mins, traceTable.pos + hull.maxs, 255, 0, 0, 255, false, 10)
+            debugoverlay:Box(traceTable.pos + hull.mins, traceTable.pos + hull.maxs, 255, 0, 255, 255, false, 10)
             debugoverlay:Line(self:GetOrigin(), self:GetOrigin() + self.velocity, 255, 0, 0, 255, false, 10)
         end)
         PortalPlayerController:PlayerLandedOnGround()

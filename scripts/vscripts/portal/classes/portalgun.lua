@@ -961,9 +961,14 @@ function base:CreateHighlight(entityToHighlight)
     ---@NOTE Highlight colors are slightly different than portal colors to make them stand out differently
 
     -- Box is highlighted based on its skin
-    if entityToHighlight:GetModelName() == "models/props/metal_box_dirty.vmdl" then
+    ---@TODO This should be dynamic for all boxes somehow
+    if entityToHighlight:GetModelName() == "models/props/metal_box_dirty.vmdl"
+    or entityToHighlight:GetModelName() == "models/props/metal_box_more_dirty.vmdl"
+    then
         -- 722709575 is the activated skin
-        if entityToHighlight:GetMaterialGroupHash() == 722709575 then
+        if entityToHighlight:GetMaterialGroupHash() == 722709575 --metal_box_dirty
+        or entityToHighlight:GetMaterialGroupHash() == 1977497166 --metal_box_more_dirty
+        then
             color = HIGHLIGHT_COLOR_ORANGE:ToDecimalVector()
         else
             color = HIGHLIGHT_COLOR_BLUE:ToDecimalVector()

@@ -30,7 +30,7 @@ Convars:RegisterCommand("portal_playerphys", function (name, on)
     else
         PortalPlayerController:Disable()
     end
-end, "", FCVAR_HIDDEN)
+end, "", 0)
 
 local mapFlingTriggers = {
     -- first area
@@ -176,12 +176,15 @@ ListenToGameEvent("player_teleport_start", function (params)
         playerIsTeleporting = true
         teleportTime = Time()
 
-        -- Disable all portal triggers so no teleport portalling
-        for _,portal in ipairs(PortalManager:GetAllPortals()) do
-            portal.trigger:Disable()
-        end
+        -- Stop the player from portaling while teleporting
+        Player:Attribute_SetIntValue("DoNotPortal", 1)
     end
 end, nil)
+
+---Keeps track of the last portal we portaled to
+---Used to stop infinite portaling after teleport
+---@type Portal?
+local lastTpConnectedPortal = nil
 
 ---@param params GameEventPlayerTeleportFinish
 ListenToGameEvent("player_teleport_finish", function (params)
@@ -209,9 +212,25 @@ ListenToGameEvent("player_teleport_finish", function (params)
         currentPlayerOrigin = Vector(params.positionX, params.positionY, params.positionZ)
     end
 
-    -- Re-enable all portal triggers
+    -- Allow the player to portal
+    Player:DeleteAttribute("DoNotPortal")
+    local foundPortal = false
+
+    -- After teleporting the trigger might have already activated
+    -- so we need to check all of them and manually trigger them
     for _,portal in ipairs(PortalManager:GetAllPortals()) do
-        portal.trigger:Enable()
+        if portal.trigger:IsTouching(Player) then
+            foundPortal = true
+            if lastTpConnectedPortal ~= portal then
+                lastTpConnectedPortal = portal:GetConnectedPortal()
+                portal:OnTriggerTouch({activator = Player})
+            end
+            break
+        end
+    end
+
+    if not foundPortal then
+        lastTpConnectedPortal = nil
     end
 end, nil)
 

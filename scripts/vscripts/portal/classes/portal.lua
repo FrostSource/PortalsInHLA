@@ -688,7 +688,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
         elseif connectedPortal:IsFloorPortal() then
             -- Adjust exit pos to rest at the floor
             -- print("adjusting player to floor of portal")
-            exitPos = connectedPortal:GetOrigin() + connectedPortal:GetForwardVector() * 2
+            exitPos = connectedPortal:GetOrigin()-- + connectedPortal:GetForwardVector() * 1
         else
             -- print('adjusting for ceiling')
             -- print(exitPos)
@@ -723,7 +723,7 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 exitVelocity = exitVelocity + missedVelocity
             end
 
-            if PortalPlayerController.currentPlayerPhys ~= nil then
+            if IsValidEntity(PortalPlayerController.currentPlayerPhys) then
                 -- Immediately set the playerphys velocity instead of killing it
                 -- Hopefully it won't hit anything while teleporting
                 PortalPlayerController.currentPlayerPhys:SetVelocity(exitVelocity)
@@ -733,7 +733,9 @@ function base:TeleportPhysicalEntity(ent, connectedPortal)
                 -- The playerphys does not get teleported with the player/anchor
                 -- so it needs to be manually updated sometimes.
                 PortalPlayerController.currentPlayerPhys:Delay(function()
-                    PortalPlayerController.currentPlayerPhys:SnapToPlayer()
+                    if IsValidEntity(PortalPlayerController.currentPlayerPhys) then
+                        PortalPlayerController.currentPlayerPhys:SnapToPlayer()
+                    end
                 end, 0.05)
 
             end
