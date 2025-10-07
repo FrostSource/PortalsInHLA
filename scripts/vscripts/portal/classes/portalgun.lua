@@ -130,6 +130,7 @@ function base:Precache(context)
     PrecacheResource("particle", "particles/portalgun_barrel.vpcf", context)
     PrecacheResource("particle", "particles/portalgun_light.vpcf", context)
     PrecacheResource("particle", "particles/portalgun/portalgun_beam_holding_fp.vpcf", context)
+    PrecacheResource("particle", "particles/portalgun/portalgun_beam_holding_fp_nolight.vpcf", context)
     PrecacheResource("particle", "particles/portal_projectile/portal_badsurface.vpcf", context)
     PrecacheResource("particle", PTX_PROJECTILE_BLUE, context)
     PrecacheResource("particle", PTX_PROJECTILE_ORANGE, context)
@@ -702,11 +703,16 @@ end
 ---
 function base:StartPickupSoundAndFx()
     StartSoundEvent(SND_USE_LOOP, self)
+
     -- Electric particle
+    local ptName = "particles/portalgun/portalgun_beam_holding_fp.vpcf"
+    if Convars:GetBool("r_light_sensitivity_mode") then
+        ptName = "particles/portalgun/portalgun_beam_holding_fp_nolight.vpcf"
+    end
     if self.__ptxPickup ~= -1 then
         ParticleManager:DestroyParticle(self.__ptxPickup, true)
     end
-    self.__ptxPickup = ParticleManager:CreateParticle("particles/portalgun/portalgun_beam_holding_fp.vpcf", 1, self)
+    self.__ptxPickup = ParticleManager:CreateParticle(ptName, 1, self)
     ParticleManager:SetParticleAlwaysSimulate(self.__ptxPickup)
     ParticleManager:SetParticleControlEnt(self.__ptxPickup, 0, self, 5, "muzzle", Vector(0,0,0), true)
     ParticleManager:SetParticleControlEnt(self.__ptxPickup, 1, self, 5, "Arm1_attach3", Vector(0,0,0), true)
@@ -966,8 +972,7 @@ function base:CreateHighlight(entityToHighlight)
     or entityToHighlight:GetModelName() == "models/props/metal_box_more_dirty.vmdl"
     then
         -- 722709575 is the activated skin
-        if entityToHighlight:GetMaterialGroupHash() == 722709575 --metal_box_dirty
-        or entityToHighlight:GetMaterialGroupHash() == 1977497166 --metal_box_more_dirty
+        if entityToHighlight:GetMaterialGroupHash() == 722709575 -- kid named "active"
         then
             color = HIGHLIGHT_COLOR_ORANGE:ToDecimalVector()
         else
