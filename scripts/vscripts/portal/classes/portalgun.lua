@@ -9,6 +9,12 @@ local SND_TOGGLEEQUIP = "Inventory.Select"
 
 local PTX_PROJECTILE_BLUE = "particles/portal_projectile/portal_1_projectile_stream.vpcf"
 local PTX_PROJECTILE_ORANGE = "particles/portal_projectile/portal_2_projectile_stream.vpcf"
+local PTX_TARGETING_LASER = "particles/weapon_fx/pistol_targeting_laser.vpcf"
+
+-- default RGB of the laser
+local TARGETING_LASER_COLOR = Vector(255, 255, 255)
+-- name of laser attachment
+local TARGETING_LASER_ATTACHMENT = "laser_sight"
 
 ---List of classnames that can be picked up by the gun
 local PICKUP_CLASS_WHITELIST = {
@@ -41,6 +47,15 @@ Convars:RegisterConvar("portalgun_is_physical", "1", "Portal gun is a physical w
 EasyConvars:RegisterConvar("portalgun_rapidfire", "1", "Portals can be fired by holding down the button", FCVAR_NONE)
 EasyConvars:SetPersistent("portalgun_rapidfire", true)
 Convars:RegisterConvar("portalgun_rapidfire_rof", "0.5", "Number of seconds between rapid fire shots", FCVAR_NONE)
+
+EasyConvars:RegisterConvar("portalgun_laser_sight", "0", "Use targeting laser", FCVAR_NONE, function (newVal, oldVal)
+    if IsValidEntity(PortalManager.portalGun) then
+        if Convars:GetBool("portalgun_laser_sight") then
+            PortalManager.portalGun:CreateLaserParticle()
+        else
+            PortalManager.portalGun:DestroyLaserParticle()
+    end
+end)
 
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
@@ -86,6 +101,7 @@ base.finishedFiringAnimation = true
 base.__ptxBarrel = -1
 base.__ptxLight = -1
 base.__ptxPickup = -1
+base.__ptxLaser = -1
 
 base.__timeSinceLastFire = 0
 base.__lastUsedTime = 0
@@ -136,6 +152,7 @@ function base:Precache(context)
     PrecacheResource("particle", PTX_PROJECTILE_ORANGE, context)
     PrecacheResource("particle", "particles/portals/portal_close.vpcf", context)
     PrecacheResource("particle", "particles/vortigaunt_fx/vort_energy_hand_residual.vpcf", context)
+    PrecacheResource("particle", PTX_TARGETING_LASER, context)
     -- for debugging
     PrecacheModel("models/editor/point_aimat.vmdl", context)
     PrecacheModel("models/effects/cube_empty.vmdl", context)
@@ -197,6 +214,48 @@ function base:CreateGunParticles()
     if self.__lastFiredColor ~= nil then
         self:SetGunPortalParticlesColor(self.__lastFiredColor.color:ToDecimalVector())
     end
+
+    if Convars:GetBool("portalgun_laser_sight") then
+        self:CreateLaserParticle()
+    end
+end
+
+function base:CreateLaserParticle()
+    -- 0 - start pos
+    -- 1 - end pos
+    -- 2 - color
+    -- 4 - sparkle endpos
+    -- 7 - supposedly x component is sparkle emission rate
+
+    if self.__ptxLaser ~= -1 then
+        self:DestroyLaserParticle()
+    end
+
+    self.__ptxLaser = ParticleManager:CreateParticle(PTX_TARGETING_LASER, PATTACH_ABSORIGIN_FOLLOW, self)
+    ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 0, self, 5, "laser_sight", Vector(0,0,0), true)
+    ParticleManager:SetParticleControl(self.__ptxLaser, 2, TARGETING_LASER_COLOR)
+    self:UpdateLaserParticle()
+end
+
+function base:DestroyLaserParticle()
+    if self.__ptxLaser ~= -1 then
+        ParticleManager:DestroyParticle(self.__ptxLaser, true)
+        self.__ptxLaser = -1
+    end
+end
+
+function base:UpdateLaserParticle()
+    if self.__ptxLaser ~= -1 then
+
+        local startpos = self:GetAttachmentNameOrigin(TARGETING_LASER_ATTACHMENT)
+        local trace = TraceLineSimple(
+            startpos,
+            startpos + self:GetAttachmentNameForward(TARGETING_LASER_ATTACHMENT) * 2048,
+            self
+        )
+        ParticleManager:SetParticleControl(self.__ptxLaser, 1, trace.pos)
+        ParticleManager:SetParticleControl(self.__ptxLaser, 4, trace.pos)
+    end
 end
 
 ---Destroys the coloured particles showing which portal was shot last.
@@ -209,6 +268,7 @@ function base:DestroyGunPortalParticles()
         ParticleManager:DestroyParticle(self.__ptxLight, true)
         self.__ptxLight = -1
     end
+    self:DestroyLaserParticle()
 end
 
 ---Destroys all particles existing on the gun.
@@ -230,6 +290,9 @@ function base:SetGunPortalParticlesColor(color)
     end
     if self.__ptxLight ~= -1 then
         ParticleManager:SetParticleControl(self.__ptxLight, 5, color)
+    end
+    if self.__ptxLaser ~= -1 then
+        ParticleManager:SetParticleControl(self.__ptxLaser, 2, color)
     end
 end
 
@@ -363,6 +426,10 @@ function base:AttachToHand(useSecondary)
     end
 
     CurrentPortalGun = self
+
+    if Convars:GetBool("portalgun_laser_sight") then
+        self:CreateLaserParticle()
+    end
 
     if Convars:GetBool("portalgun_is_physical") then
         -- This should only be used to force the gun into the hand
@@ -1043,6 +1110,8 @@ end
 local prevPlayerPos = nil
 
 function base:Think()
+
+    self:UpdateLaserParticle()
 
     if self.pickupEntity ~= nil then
         -- Drop fizzled entities so they float
