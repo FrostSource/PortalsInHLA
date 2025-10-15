@@ -9,7 +9,7 @@ local SND_TOGGLEEQUIP = "Inventory.Select"
 
 local PTX_PROJECTILE_BLUE = "particles/portal_projectile/portal_1_projectile_stream.vpcf"
 local PTX_PROJECTILE_ORANGE = "particles/portal_projectile/portal_2_projectile_stream.vpcf"
-local PTX_TARGETING_LASER = "particles/vrportal/portalgun_laser_sight.vpcf"
+local PTX_TARGETING_LASER = "particles/portalgun/portalgun_laser_sight.vpcf"
 
 -- default RGB of the laser
 local TARGETING_LASER_COLOR = Vector(255, 255, 255)
