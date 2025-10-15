@@ -347,6 +347,9 @@ function base:InitPhysical()
     -- Required to stop player ignored traces from hitting the gun
     self:SetOwner(Player)
 
+    -- Force shadows to match hands
+    self:EntFire("EnableShadow")
+
     ---@param params PlayerEventWeaponSwitch
     ListenToPlayerEvent("weapon_switch", function (params)
         if params.item == self then
