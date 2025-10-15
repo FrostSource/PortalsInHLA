@@ -9,7 +9,7 @@ local SND_TOGGLEEQUIP = "Inventory.Select"
 
 local PTX_PROJECTILE_BLUE = "particles/portal_projectile/portal_1_projectile_stream.vpcf"
 local PTX_PROJECTILE_ORANGE = "particles/portal_projectile/portal_2_projectile_stream.vpcf"
-local PTX_TARGETING_LASER = "particles/weapon_fx/pistol_targeting_laser.vpcf"
+local PTX_TARGETING_LASER = "particles/vrportal/portalgun_laser_sight.vpcf"
 
 -- default RGB of the laser
 local TARGETING_LASER_COLOR = Vector(255, 255, 255)
@@ -54,8 +54,10 @@ EasyConvars:RegisterConvar("portalgun_laser_sight", "0", "Use targeting laser", 
             PortalManager.portalGun:CreateLaserParticle()
         else
             PortalManager.portalGun:DestroyLaserParticle()
+        end
     end
 end)
+EasyConvars:SetPersistent("portalgun_laser_sight", true)
 
 ---@class PortalGun : EntityClass
 local base = entity("PortalGun")
@@ -234,6 +236,7 @@ function base:CreateLaserParticle()
     self.__ptxLaser = ParticleManager:CreateParticle(PTX_TARGETING_LASER, PATTACH_ABSORIGIN_FOLLOW, self)
     ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 0, self, 5, "laser_sight", Vector(0,0,0), true)
     ParticleManager:SetParticleControl(self.__ptxLaser, 2, TARGETING_LASER_COLOR)
+    -- ParticleManager:SetParticleControl(self.__ptxLaser, 7, Vector(1.0))
     self:UpdateLaserParticle()
 end
 
@@ -506,9 +509,9 @@ function base:TryFirePortal(color)
         -- so it should be safe to only check one
         if self.__ptxBarrel == -1 then
             self:CreateGunParticles()
-        else
-            self:SetGunPortalParticlesColor(color.color:ToDecimalVector())
         end
+
+        self:SetGunPortalParticlesColor(color.color:ToDecimalVector())
 
         debugprint_portalgun("Portal gun trying to fire portal", color)
 
