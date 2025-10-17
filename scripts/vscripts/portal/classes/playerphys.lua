@@ -92,6 +92,7 @@ end
 
 function base:Precache(context)
     PrecacheModel(self:GetModelName(), context)
+    PrecacheResource("particle", "particles/vrportal/motion_sickness_vignette.vpcf", context)
 end
 
 function base:OnReady()

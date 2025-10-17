@@ -234,8 +234,14 @@ function base:CreateLaserParticle()
     end
 
     self.__ptxLaser = ParticleManager:CreateParticle(PTX_TARGETING_LASER, PATTACH_ABSORIGIN_FOLLOW, self)
-    ParticleManager:SetParticleControlEnt(self.__ptxBarrel, 0, self, 5, "laser_sight", Vector(0,0,0), true)
-    ParticleManager:SetParticleControl(self.__ptxLaser, 2, TARGETING_LASER_COLOR)
+    ParticleManager:SetParticleControlEnt(self.__ptxLaser, 0, self, 5, "laser_sight", Vector(0,0,0), true)
+
+    if self.__lastFiredColor ~= nil then
+        ParticleManager:SetParticleControl(self.__ptxLaser, 2, self.__lastFiredColor.color:ToVector())
+    else
+        ParticleManager:SetParticleControl(self.__ptxLaser, 2, TARGETING_LASER_COLOR)
+    end
+
     -- ParticleManager:SetParticleControl(self.__ptxLaser, 7, Vector(1.0))
     self:UpdateLaserParticle()
 end
