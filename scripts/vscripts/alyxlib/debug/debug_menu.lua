@@ -635,6 +635,23 @@ function DebugMenu:SetCategoryIndex(categoryId, index)
     end
 end
 
+function DebugMenu:RemoveItem(categoryId, itemId)
+    local category = self:GetCategory(categoryId)
+    if not category then
+        warn("Cannot remove item '"..itemId.."': Category '"..categoryId.."' does not exist!")
+        return
+    end
+
+    for i, v in ipairs(category.items) do
+        if v.id == itemId then
+            table.remove(category.items, i)
+            return
+        end
+    end
+
+    warn("Cannot remove item '"..itemId.."': Item does not exist!")
+end
+
 ---Resolves the default value of an element by running any value getter functions.
 ---@param item DebugMenuItem # The item to resolve
 ---@param tFunc? `Convars.GetStr`|`Convars.GetInt`|`Convars.GetFloat`|`Convars.GetBool` # The value getter function
