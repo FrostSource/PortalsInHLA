@@ -889,6 +889,9 @@ end)
 ListenToGameEvent("player_spawn", function()
     PortalManager:SetPortalableSurfaceNamePrefix(PortalManager.PortalableSurfaceNamePrefix)
     PortalManager:SetAllowPortalsOnlyOnPrefixedEntities(PortalManager.AllowPortalsOnlyOnPrefixedEntities)
+
+    -- User settings, loaded before EasyConvars saved values
+    SendToConsole("exec portal_cfg")
 end, nil)
 
 Convars:RegisterCommand("portalgun_give", function (_, ...)
