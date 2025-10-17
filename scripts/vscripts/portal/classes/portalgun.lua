@@ -265,6 +265,7 @@ function base:UpdateLaserParticle()
             self
         )
         ParticleManager:SetParticleControl(self.__ptxLaser, 1, trace.pos)
+        ParticleManager:SetParticleControlForward(self.__ptxLaser, 1, trace.normal)
         ParticleManager:SetParticleControl(self.__ptxLaser, 4, trace.pos)
     end
 end
