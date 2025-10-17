@@ -239,7 +239,7 @@ function base:CreateLaserParticle()
     ParticleManager:SetParticleControlEnt(self.__ptxLaser, 0, self, 5, "laser_sight", Vector(0,0,0), true)
 
     if self.__lastFiredColor ~= nil then
-        ParticleManager:SetParticleControl(self.__ptxLaser, 2, self.__lastFiredColor.color:ToVector())
+        ParticleManager:SetParticleControl(self.__ptxLaser, 2, self.__lastFiredColor.color:ToDecimalVector())
     else
         ParticleManager:SetParticleControl(self.__ptxLaser, 2, TARGETING_LASER_COLOR)
     end
@@ -1111,6 +1111,11 @@ function base:Fizzle()
         end
         self:DestroyGunPortalParticles()
         self.__lastFiredColor = nil
+
+        -- Recreate laser after fizzle
+        if Convars:GetBool("portalgun_laser_sight") then
+            self:CreateLaserParticle()
+        end
     end
 end
 
