@@ -51,7 +51,9 @@ Convars:RegisterConvar("portalgun_rapidfire_rof", "0.5", "Number of seconds betw
 EasyConvars:RegisterConvar("portalgun_laser_sight", "0", "Use targeting laser", FCVAR_NONE, function (newVal, oldVal)
     if IsValidEntity(PortalManager.portalGun) then
         if Convars:GetBool("portalgun_laser_sight") then
-            PortalManager.portalGun:CreateLaserParticle()
+            if PortalManager.portalGun:IsEquipped() then
+                PortalManager.portalGun:CreateLaserParticle()
+            end
         else
             PortalManager.portalGun:DestroyLaserParticle()
         end
